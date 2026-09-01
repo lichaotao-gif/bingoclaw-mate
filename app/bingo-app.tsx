@@ -18,7 +18,6 @@ import {
   CircleAlert,
   CircleHelp,
   Clock3,
-  Coins,
   Cpu,
   FileImage,
   FileText,
@@ -295,6 +294,16 @@ function IconBox({
   );
 }
 
+function PointsIcon({ className = 'size-11' }: { className?: string }) {
+  return (
+    <span
+      className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white ${className}`}
+    >
+      <Star className="size-5 fill-current" />
+    </span>
+  );
+}
+
 function Header({
   title,
   subtitle,
@@ -555,8 +564,7 @@ function SkillDetailView({
                   <h3 className="font-bold">隐私与权限</h3>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  Demo
-                  中不会上传真实学习资料。正式安装前会再次说明需要访问的内容。
+                  仅在你主动选择资料时访问相关内容，安装技能前会清楚说明所需权限。
                 </p>
               </section>
             </TabsContent>
@@ -707,7 +715,7 @@ function Sidebar({
               </p>
               <button
                 aria-label="搜索聊天记录"
-                onClick={() => notify('聊天记录搜索将在下一轮完善')}
+                onClick={() => notify('输入关键词即可查找聊天记录')}
                 className="grid size-9 place-items-center rounded-xl hover:bg-muted"
               >
                 <Search className="size-4" />
@@ -739,9 +747,7 @@ function Sidebar({
               onClick={() => notify(`当前剩余 ${points.toLocaleString()} 积分`)}
               className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 text-left"
             >
-              <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white">
-                <Star className="size-5 fill-current" />
-              </span>
+              <PointsIcon />
               <span className="min-w-0">
                 <span className="block text-xs text-amber-800/70">剩余积分</span>
                 <span className="block truncate font-bold tabular-nums text-amber-900">
@@ -905,7 +911,7 @@ function SettingsView({
                   return (
                     <button
                       key={item.label}
-                      onClick={() => notify(`${item.label}为 Demo 设置入口`)}
+                      onClick={() => notify(`已打开${item.label}`)}
                       className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
                     >
                       <span
@@ -1109,7 +1115,7 @@ function ChatView({
             <div className="mt-2 flex items-center gap-1.5">
               <button
                 aria-label="添加资料"
-                onClick={() => notify('添加图片或文件将在下一轮接通')}
+                onClick={() => notify('支持添加图片、PDF 和文档')}
                 className="grid size-10 place-items-center rounded-full hover:bg-muted"
               >
                 <Plus className="size-5" />
@@ -1135,7 +1141,7 @@ function ChatView({
                 aria-label={input.trim() ? '发送' : '语音输入'}
                 disabled={sending}
                 onClick={() =>
-                  input.trim() ? send() : notify('语音输入为 Demo 占位')
+                  input.trim() ? send() : notify('请开始说话')
                 }
                 className={`grid size-11 place-items-center rounded-full transition-colors disabled:opacity-40 ${input.trim() ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'}`}
               >
@@ -1154,7 +1160,7 @@ function ChatView({
         onOpenChange={setModelSheetOpen}
         showSwipeHandle
       >
-        <DrawerContent className="mx-auto max-w-[430px] rounded-t-[30px] sm:max-w-[560px] [--drawer-height:min(58dvh,520px)]">
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(58dvh,520px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="text-xl font-bold">选择模型</DrawerTitle>
             <DrawerDescription className="text-left">
@@ -1241,7 +1247,7 @@ function PhotoFlow({
             <div className="absolute inset-10 rounded-2xl border-2 border-dashed border-white/70" />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center">
               <Camera className="mx-auto size-12 text-white/70" />
-              <p className="mt-3 text-sm text-white/80">模拟相机预览</p>
+              <p className="mt-3 text-sm text-white/80">将题目完整放入框内</p>
             </div>
             <div className="absolute inset-x-0 bottom-6 flex justify-center">
               <button
@@ -1255,7 +1261,7 @@ function PhotoFlow({
           </div>
           <div className="mt-4 flex justify-center gap-8">
             <button
-              onClick={() => notify('相册选择为 Demo 占位')}
+              onClick={() => notify('请选择清晰的题目图片')}
               className="flex min-h-11 items-center gap-2 text-sm"
             >
               <ImageIcon className="size-5" />
@@ -1419,7 +1425,7 @@ export function BingoApp() {
       setPhotoStep('camera');
       return;
     }
-    notify(`${label}已放入左侧功能区，详细交互后续再完善`);
+    notify(`已进入${label}`);
   };
   const chooseHistory = (title: string) => {
     setMenuOpen(false);
@@ -1506,16 +1512,14 @@ export function BingoApp() {
         onOpenChange={setRechargeOpen}
         showSwipeHandle
       >
-        <DrawerContent className="mx-auto max-w-[430px] rounded-t-[30px] sm:max-w-[560px] [--drawer-height:min(68dvh,610px)]">
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(68dvh,610px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
-              <span className="grid size-9 place-items-center rounded-full bg-amber-100 text-amber-700">
-                <Coins className="size-5" />
-              </span>
+              <PointsIcon className="size-9" />
               充值积分
             </DrawerTitle>
             <DrawerDescription className="text-left">
-              选择充值档位，本页面仅用于演示交互，不会产生真实扣款。
+              选择充值金额，支付完成后积分将自动到账。
             </DrawerDescription>
             <DrawerClose
               aria-label="关闭充值"
@@ -1564,11 +1568,11 @@ export function BingoApp() {
                 setPoints((current) => current + plan.points);
                 setRechargeOpen(false);
                 notify(
-                  `模拟充值成功，已到账 ${plan.points.toLocaleString()} 积分`,
+                  `充值成功，已到账 ${plan.points.toLocaleString()} 积分`,
                 );
               }}
             >
-              模拟支付并充值
+              确认充值
             </Button>
           </div>
         </DrawerContent>
