@@ -31,9 +31,11 @@ import {
   MessageSquarePlus,
   Mic,
   MonitorSmartphone,
+  Pencil,
   PenLine,
   Plus,
   RotateCcw,
+  ScanLine,
   Search,
   Send,
   ShieldCheck,
@@ -986,23 +988,44 @@ function DevicesView({
   currentDeviceId,
   onBack,
   onBind,
+  onRename,
 }: {
   devices: BingoDevice[];
   currentDeviceId: string;
   onBack: () => void;
-  onBind: (deviceCode: string, activationCode: string) => void;
+  onBind: (deviceCode: string, activationCode: string, name: string) => void;
+  onRename: (deviceId: string, name: string) => void;
 }) {
   const [addDeviceOpen, setAddDeviceOpen] = useState(false);
   const [deviceCode, setDeviceCode] = useState('');
   const [activationCode, setActivationCode] = useState('');
-  const canBind = deviceCode.trim().length > 0 && activationCode.trim().length > 0;
+  const [deviceName, setDeviceName] = useState('我的 BingoMate');
+  const [renameDevice, setRenameDevice] = useState<BingoDevice | null>(null);
+  const [renameName, setRenameName] = useState('');
+  const canBind =
+    deviceCode.trim().length > 0 &&
+    activationCode.trim().length > 0 &&
+    deviceName.trim().length > 0;
 
   const bindDevice = () => {
     if (!canBind) return;
-    onBind(deviceCode.trim(), activationCode.trim());
+    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
     setDeviceCode('');
     setActivationCode('');
+    setDeviceName('我的 BingoMate');
     setAddDeviceOpen(false);
+  };
+
+  const openRename = (device: BingoDevice) => {
+    setRenameDevice(device);
+    setRenameName(device.name);
+  };
+
+  const saveDeviceName = () => {
+    if (!renameDevice || !renameName.trim()) return;
+    onRename(renameDevice.id, renameName.trim());
+    setRenameDevice(null);
+    setRenameName('');
   };
 
   return (
@@ -1069,17 +1092,24 @@ function DevicesView({
                         </Badge>
                       )}
                     </div>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
-                      设备码 {device.code}
-                    </p>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <span
+                          aria-hidden="true"
+                          className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        />
+                        {device.online ? '在线' : '离线'}
+                      </span>
+                      <span className="truncate">设备码 {device.code}</span>
+                    </div>
                   </div>
-                  <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <span
-                      aria-hidden="true"
-                      className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                    />
-                    {device.online ? '在线' : '离线'}
-                  </span>
+                  <button
+                    aria-label={`编辑设备名称：${device.name}`}
+                    onClick={() => openRename(device)}
+                    className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
                 </div>
               );
             })}
@@ -1088,7 +1118,7 @@ function DevicesView({
       </div>
 
       <Drawer open={addDeviceOpen} onOpenChange={setAddDeviceOpen} showSwipeHandle>
-        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(58dvh,500px)]">
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(68dvh,560px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
               <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
@@ -1108,17 +1138,27 @@ function DevicesView({
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
             <div className="space-y-4">
-              <label className="block">
+              <div>
                 <span className="mb-2 block text-sm font-semibold">设备码</span>
-                <input
-                  aria-label="设备码"
-                  value={deviceCode}
-                  onChange={(event) => setDeviceCode(event.target.value)}
-                  placeholder="例如 BM-20260901"
-                  autoComplete="off"
-                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
+                <div className="flex gap-2">
+                  <input
+                    aria-label="设备码"
+                    value={deviceCode}
+                    onChange={(event) => setDeviceCode(event.target.value)}
+                    placeholder="例如 BM-20260901"
+                    autoComplete="off"
+                    className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <button
+                    aria-label="扫码录入设备码"
+                    onClick={() => setDeviceCode('BM-20260901')}
+                    className="flex h-12 shrink-0 items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    <ScanLine className="size-5" />
+                    扫码
+                  </button>
+                </div>
+              </div>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold">激活码</span>
                 <input
@@ -1130,6 +1170,17 @@ function DevicesView({
                   className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">设备名称</span>
+                <input
+                  aria-label="设备名称"
+                  value={deviceName}
+                  onChange={(event) => setDeviceName(event.target.value)}
+                  placeholder="给设备起一个名称"
+                  autoComplete="off"
+                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
             </div>
             <Button
               disabled={!canBind}
@@ -1137,6 +1188,49 @@ function DevicesView({
               className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
             >
               绑定设备
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        open={Boolean(renameDevice)}
+        onOpenChange={(open) => {
+          if (!open) setRenameDevice(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(40dvh,330px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">编辑设备名称</DrawerTitle>
+            <DrawerDescription className="text-left">
+              设置一个容易辨认的名称，后续还可以继续修改。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭编辑名称"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">设备名称</span>
+              <input
+                aria-label="修改设备名称"
+                value={renameName}
+                onChange={(event) => setRenameName(event.target.value)}
+                placeholder="请输入设备名称"
+                autoComplete="off"
+                className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+            <Button
+              disabled={!renameName.trim()}
+              onClick={saveDeviceName}
+              className="mt-5 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              保存名称
             </Button>
           </div>
         </DrawerContent>
@@ -1833,20 +1927,32 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('devices');
   };
-  const bindDevice = (deviceCode: string, _activationCode: string) => {
+  const bindDevice = (
+    deviceCode: string,
+    _activationCode: string,
+    deviceName: string,
+  ) => {
     const deviceId = `device-${Date.now()}`;
     const normalizedCode = deviceCode.toUpperCase();
     setDevices((current) => [
       ...current,
       {
         id: deviceId,
-        name: `BingoMate ${normalizedCode.slice(-4)}`,
+        name: deviceName,
         code: normalizedCode,
         online: true,
       },
     ]);
     setCurrentDeviceId(deviceId);
     notify('设备绑定成功，已设为当前连接设备');
+  };
+  const renameDevice = (deviceId: string, name: string) => {
+    setDevices((current) =>
+      current.map((device) =>
+        device.id === deviceId ? { ...device, name } : device,
+      ),
+    );
+    notify('设备名称已更新');
   };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
@@ -1907,6 +2013,7 @@ export function BingoApp() {
               currentDeviceId={currentDeviceId}
               onBack={() => setView('settings')}
               onBind={bindDevice}
+              onRename={renameDevice}
             />
           ) : photoStep ? (
             <PhotoFlow
