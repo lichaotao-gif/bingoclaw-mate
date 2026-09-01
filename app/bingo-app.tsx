@@ -1046,8 +1046,15 @@ function ChatView({
           )}
           {messages.length === 0 && (
             <div className="flex min-h-full flex-col items-center justify-center pb-2 text-center">
-              <span className="relative grid size-[72px] place-items-center rounded-[24px] bg-primary text-white shadow-[0_16px_40px_rgba(37,99,235,.18)]">
-                <Bot className="size-8" />
+              <span className="relative grid size-[76px] place-items-center">
+                <img
+                  src="/brand/bingomate-owl.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={72}
+                  height={72}
+                  className="size-[72px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.2)]"
+                />
                 <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
               </span>
               <h2 className="mt-5 text-[28px] font-bold tracking-tight">
