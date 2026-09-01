@@ -61,7 +61,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
-type AppView = 'chat' | 'skills' | 'settings' | 'points';
+type AppView = 'chat' | 'skills' | 'settings' | 'points' | 'devices';
+type BingoDevice = {
+  id: string;
+  name: string;
+  code: string;
+  online: boolean;
+};
 type PointTransaction = {
   id: string;
   title: string;
@@ -802,11 +808,15 @@ function Sidebar({
 function SettingsView({
   onBack,
   onPoints,
+  onDevices,
+  currentDeviceName,
   points,
   notify,
 }: {
   onBack: () => void;
   onPoints: () => void;
+  onDevices: () => void;
+  currentDeviceName: string;
   points: number;
   notify: (message: string) => void;
 }) {
@@ -864,7 +874,7 @@ function SettingsView({
       items: [
         {
           label: 'BingoMate 设备',
-          description: 'BM-20260830 · 在线',
+          description: `${currentDeviceName} · 当前已连接`,
           icon: MonitorSmartphone,
           color: 'bg-orange-50 text-orange-600',
         },
@@ -931,6 +941,8 @@ function SettingsView({
                       onClick={() =>
                         item.label === 'AI 积分与明细'
                           ? onPoints()
+                          : item.label === 'BingoMate 设备'
+                            ? onDevices()
                           : notify(`已打开${item.label}`)
                       }
                       className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
@@ -965,6 +977,170 @@ function SettingsView({
           </button>
         </div>
       </div>
+    </>
+  );
+}
+
+function DevicesView({
+  devices,
+  currentDeviceId,
+  onBack,
+  onBind,
+}: {
+  devices: BingoDevice[];
+  currentDeviceId: string;
+  onBack: () => void;
+  onBind: (deviceCode: string, activationCode: string) => void;
+}) {
+  const [addDeviceOpen, setAddDeviceOpen] = useState(false);
+  const [deviceCode, setDeviceCode] = useState('');
+  const [activationCode, setActivationCode] = useState('');
+  const canBind = deviceCode.trim().length > 0 && activationCode.trim().length > 0;
+
+  const bindDevice = () => {
+    if (!canBind) return;
+    onBind(deviceCode.trim(), activationCode.trim());
+    setDeviceCode('');
+    setActivationCode('');
+    setAddDeviceOpen(false);
+  };
+
+  return (
+    <>
+      <Header
+        title="设备管理"
+        subtitle="管理已绑定的 BingoMate"
+        onBack={onBack}
+        backLabel="返回设置"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-3xl">
+          <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+            <div className="flex items-center gap-3">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                <MonitorSmartphone className="size-6" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-bold">我的 BingoMate 设备</h2>
+                <p className="mt-1 text-xs text-slate-600">
+                  一个账号可以绑定并管理多台设备
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div className="mb-3 mt-6 flex items-end justify-between px-1">
+            <div>
+              <h2 className="text-lg font-bold">设备列表</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                已绑定 {devices.length} 台设备
+              </p>
+            </div>
+            <Button
+              onClick={() => setAddDeviceOpen(true)}
+              className="h-10 rounded-xl px-4"
+            >
+              <Plus className="size-4" />
+              添加设备
+            </Button>
+          </div>
+
+          <section className="overflow-hidden rounded-3xl border bg-white">
+            {devices.map((device, index) => {
+              const isCurrent = device.id === currentDeviceId;
+              return (
+                <div
+                  key={device.id}
+                  className={`flex min-h-[82px] items-center gap-3 px-4 py-3 ${index ? 'border-t' : ''}`}
+                >
+                  <span
+                    className={`grid size-12 shrink-0 place-items-center rounded-2xl ${isCurrent ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}
+                  >
+                    <MonitorSmartphone className="size-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold">
+                        {device.name}
+                      </p>
+                      {isCurrent && (
+                        <Badge className="shrink-0 bg-blue-50 text-blue-700">
+                          当前设备
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      设备码 {device.code}
+                    </p>
+                  </div>
+                  <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <span
+                      aria-hidden="true"
+                      className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                    />
+                    {device.online ? '在线' : '离线'}
+                  </span>
+                </div>
+              );
+            })}
+          </section>
+        </div>
+      </div>
+
+      <Drawer open={addDeviceOpen} onOpenChange={setAddDeviceOpen} showSwipeHandle>
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(58dvh,500px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+                <MonitorSmartphone className="size-5" />
+              </span>
+              添加 BingoMate 设备
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              输入设备机身上的设备码和激活码完成绑定。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭添加设备"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">设备码</span>
+                <input
+                  aria-label="设备码"
+                  value={deviceCode}
+                  onChange={(event) => setDeviceCode(event.target.value)}
+                  placeholder="例如 BM-20260901"
+                  autoComplete="off"
+                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">激活码</span>
+                <input
+                  aria-label="激活码"
+                  value={activationCode}
+                  onChange={(event) => setActivationCode(event.target.value)}
+                  placeholder="请输入设备激活码"
+                  autoComplete="off"
+                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+            <Button
+              disabled={!canBind}
+              onClick={bindDevice}
+              className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              绑定设备
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
@@ -1542,6 +1718,27 @@ export function BingoApp() {
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
   const [points, setPoints] = useState(1280);
+  const [devices, setDevices] = useState<BingoDevice[]>([
+    {
+      id: 'my-bingoclaw',
+      name: 'My BingoClaw',
+      code: 'BM-20260830',
+      online: true,
+    },
+    {
+      id: 'study-room',
+      name: '书房 BingoMate',
+      code: 'BM-20260718',
+      online: true,
+    },
+    {
+      id: 'living-room',
+      name: '客厅 BingoMate',
+      code: 'BM-20260526',
+      online: false,
+    },
+  ]);
+  const [currentDeviceId, setCurrentDeviceId] = useState('my-bingoclaw');
   const [pointTransactions, setPointTransactions] = useState<
     PointTransaction[]
   >([
@@ -1630,6 +1827,27 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('points');
   };
+  const chooseDevices = () => {
+    setMenuOpen(false);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('devices');
+  };
+  const bindDevice = (deviceCode: string, _activationCode: string) => {
+    const deviceId = `device-${Date.now()}`;
+    const normalizedCode = deviceCode.toUpperCase();
+    setDevices((current) => [
+      ...current,
+      {
+        id: deviceId,
+        name: `BingoMate ${normalizedCode.slice(-4)}`,
+        code: normalizedCode,
+        online: true,
+      },
+    ]);
+    setCurrentDeviceId(deviceId);
+    notify('设备绑定成功，已设为当前连接设备');
+  };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
@@ -1668,6 +1886,11 @@ export function BingoApp() {
             <SettingsView
               onBack={() => setView('chat')}
               onPoints={choosePoints}
+              onDevices={chooseDevices}
+              currentDeviceName={
+                devices.find((device) => device.id === currentDeviceId)?.name ??
+                '未连接设备'
+              }
               points={points}
               notify={notify}
             />
@@ -1677,6 +1900,13 @@ export function BingoApp() {
               transactions={pointTransactions}
               onBack={() => setView('chat')}
               onRecharge={() => setRechargeOpen(true)}
+            />
+          ) : view === 'devices' ? (
+            <DevicesView
+              devices={devices}
+              currentDeviceId={currentDeviceId}
+              onBack={() => setView('settings')}
+              onBind={bindDevice}
             />
           ) : photoStep ? (
             <PhotoFlow
