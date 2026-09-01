@@ -335,12 +335,16 @@ function Header({
             <ArrowLeft className="size-5" />
           )}
         </button>
-        {brandMark}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-bold">{title}</h1>
-          {subtitle && (
-            <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-          )}
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          {brandMark}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base font-bold">{title}</h1>
+            {subtitle && (
+              <p className="truncate text-xs text-muted-foreground">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
         {right}
       </div>
