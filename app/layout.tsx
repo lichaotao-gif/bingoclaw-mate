@@ -4,6 +4,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'BingoMate 缤果学伴',
   description: '让每一次提问，都成为看得见的成长。',
+  icons: {
+    icon: '/favicon.svg',
+  },
   openGraph: {
     title: 'BingoMate 缤果学伴',
     description: '让每一次提问，都成为看得见的成长。',
