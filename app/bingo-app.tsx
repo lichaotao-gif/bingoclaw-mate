@@ -16,7 +16,6 @@ import {
   ChevronRight,
   CircleAlert,
   Clock3,
-  Coins,
   Cpu,
   FileImage,
   FileText,
@@ -668,14 +667,15 @@ function Sidebar({
             ))}
           </section>
         </div>
-        <div className="flex items-center gap-2 border-t bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+        <div className="flex items-center gap-3 border-t bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
           <button
             aria-label="查看积分明细，当前剩余1280积分"
             onClick={() => notify('当前剩余 1,280 积分')}
-            className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl bg-amber-50 px-3 text-left transition-colors hover:bg-amber-100"
+            className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-2xl bg-amber-50 px-3 text-left transition-colors hover:bg-amber-100"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
-              <Coins className="size-5" />
+            <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white">
+              <Star className="size-5 fill-current" />
+              <Sparkle className="absolute -right-1 -top-1 size-4 fill-amber-100 text-amber-100 drop-shadow-sm" />
             </span>
             <span className="min-w-0">
               <span className="block text-xs text-amber-800/70">剩余积分</span>
@@ -687,10 +687,12 @@ function Sidebar({
           <button
             aria-label="打开设置"
             onClick={() => notify('设置入口已保留')}
-            className="flex min-h-14 shrink-0 items-center gap-2 rounded-2xl border bg-white px-4 text-sm font-semibold transition-colors hover:bg-muted"
+            className="flex min-h-16 min-w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <Settings2 className="size-5 text-muted-foreground" />
-            设置
+            <span className="grid size-11 place-items-center rounded-full border bg-white text-slate-600 shadow-sm">
+              <Settings2 className="size-5" />
+            </span>
+            <span>设置</span>
           </button>
         </div>
       </aside>
