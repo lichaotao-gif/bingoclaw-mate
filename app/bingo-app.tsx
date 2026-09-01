@@ -16,6 +16,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronsUpDown,
   CircleAlert,
   CircleHelp,
   Cpu,
@@ -652,6 +653,8 @@ function Sidebar({
   onHistory,
   onSettings,
   onPoints,
+  currentDeviceName,
+  onSwitchDevice,
   points,
   onRecharge,
   notify,
@@ -662,6 +665,8 @@ function Sidebar({
   onHistory: (title: string) => void;
   onSettings: () => void;
   onPoints: () => void;
+  currentDeviceName: string;
+  onSwitchDevice: () => void;
   points: number;
   onRecharge: () => void;
   notify: (message: string) => void;
@@ -684,14 +689,19 @@ function Sidebar({
             </span>
             <div className="min-w-0">
               <p className="truncate font-bold">林小满</p>
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <button
+                aria-label={`切换设备，当前为${currentDeviceName}`}
+                onClick={onSwitchDevice}
+                className="mt-0.5 flex max-w-[190px] items-center gap-1.5 rounded-lg text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
                 <span
                   aria-hidden="true"
                   className="size-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
                 />
                 <span className="sr-only">设备连接正常：</span>
-                <span className="truncate">My BingoClaw</span>
-              </p>
+                <span className="truncate">{currentDeviceName}</span>
+                <ChevronsUpDown className="size-3.5 shrink-0" />
+              </button>
             </div>
           </div>
           <button
@@ -1880,6 +1890,7 @@ export function BingoApp() {
     },
   ]);
   const [rechargeOpen, setRechargeOpen] = useState(false);
+  const [deviceSwitcherOpen, setDeviceSwitcherOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
 
   const notify = (message: string) => {
@@ -1954,6 +1965,16 @@ export function BingoApp() {
     );
     notify('设备名称已更新');
   };
+  const switchDevice = (device: BingoDevice) => {
+    setCurrentDeviceId(device.id);
+    setDevices((current) =>
+      current.map((item) =>
+        item.id === device.id ? { ...item, online: true } : item,
+      ),
+    );
+    setDeviceSwitcherOpen(false);
+    notify(`已切换至 ${device.name}`);
+  };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
@@ -1970,6 +1991,11 @@ export function BingoApp() {
           onHistory={chooseHistory}
           onSettings={chooseSettings}
           onPoints={choosePoints}
+          currentDeviceName={
+            devices.find((device) => device.id === currentDeviceId)?.name ??
+            '未连接设备'
+          }
+          onSwitchDevice={() => setDeviceSwitcherOpen(true)}
           points={points}
           onRecharge={() => setRechargeOpen(true)}
           notify={notify}
@@ -2119,6 +2145,72 @@ export function BingoApp() {
             >
               确认充值
             </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+      <Drawer
+        open={deviceSwitcherOpen}
+        onOpenChange={setDeviceSwitcherOpen}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(54dvh,460px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+                <ChevronsUpDown className="size-5" />
+              </span>
+              切换设备
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              选择要连接和使用的 BingoMate 设备。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭设备选择"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="overflow-hidden rounded-3xl border bg-white">
+              {devices.map((device, index) => {
+                const isCurrent = device.id === currentDeviceId;
+                return (
+                  <button
+                    key={device.id}
+                    aria-label={`切换到${device.name}`}
+                    aria-pressed={isCurrent}
+                    onClick={() => switchDevice(device)}
+                    className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors ${index ? 'border-t' : ''} ${isCurrent ? 'bg-blue-50/70' : 'hover:bg-muted'}`}
+                  >
+                    <span
+                      className={`grid size-11 shrink-0 place-items-center rounded-2xl ${isCurrent ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}
+                    >
+                      <MonitorSmartphone className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">
+                        {device.name}
+                      </span>
+                      <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span
+                          aria-hidden="true"
+                          className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        />
+                        {device.online ? '在线' : '离线'} · {device.code}
+                      </span>
+                    </span>
+                    {isCurrent ? (
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-600 text-white">
+                        <Check className="size-4" />
+                      </span>
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
