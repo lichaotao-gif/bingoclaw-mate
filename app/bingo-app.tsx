@@ -18,6 +18,7 @@ import {
   CircleAlert,
   CircleHelp,
   Clock3,
+  Coins,
   Cpu,
   FileImage,
   FileText,
@@ -87,13 +88,55 @@ type ModelOption = {
   color: string;
 };
 
-const features: { label: string; hint: string; icon: LucideIcon }[] = [
-  { label: '技能广场', hint: '发现并安装学习技能', icon: Blocks },
-  { label: '拍题辅导', hint: '拍照后分步讲解', icon: Camera },
-  { label: '作业批阅', hint: '识别整页与错因', icon: PenLine },
-  { label: '错题本', hint: '今天 6 道待复习', icon: RotateCcw },
-  { label: '智能练习', hint: '针对薄弱点出题', icon: BrainCircuit },
-  { label: '成长报告', hint: '本周正确率 +12%', icon: BarChart3 },
+const features: {
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+  iconColor: string;
+}[] = [
+  {
+    label: '技能广场',
+    hint: '发现并安装学习技能',
+    icon: Blocks,
+    iconColor: 'bg-violet-50 text-violet-600',
+  },
+  {
+    label: '拍题辅导',
+    hint: '拍照后分步讲解',
+    icon: Camera,
+    iconColor: 'bg-blue-50 text-blue-600',
+  },
+  {
+    label: '作业批阅',
+    hint: '识别整页与错因',
+    icon: PenLine,
+    iconColor: 'bg-orange-50 text-orange-600',
+  },
+  {
+    label: '错题本',
+    hint: '今天 6 道待复习',
+    icon: RotateCcw,
+    iconColor: 'bg-rose-50 text-rose-600',
+  },
+  {
+    label: '智能练习',
+    hint: '针对薄弱点出题',
+    icon: BrainCircuit,
+    iconColor: 'bg-emerald-50 text-emerald-600',
+  },
+  {
+    label: '成长报告',
+    hint: '本周正确率 +12%',
+    icon: BarChart3,
+    iconColor: 'bg-indigo-50 text-indigo-600',
+  },
+];
+
+const rechargePlans = [
+  { id: 'starter', price: 6, points: 600, label: '轻量补充' },
+  { id: 'popular', price: 18, points: 2000, label: '最受欢迎' },
+  { id: 'value', price: 30, points: 3600, label: '加赠 600' },
+  { id: 'max', price: 68, points: 8800, label: '加赠 2,000' },
 ];
 
 const skills: Skill[] = [
@@ -236,9 +279,17 @@ const histories = [
   },
 ];
 
-function IconBox({ icon: Icon }: { icon: LucideIcon }) {
+function IconBox({
+  icon: Icon,
+  color,
+}: {
+  icon: LucideIcon;
+  color: string;
+}) {
   return (
-    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+    <span
+      className={`grid size-10 shrink-0 place-items-center rounded-xl ${color}`}
+    >
       <Icon className="size-5" />
     </span>
   );
@@ -578,7 +629,7 @@ function Sidebar({
   onHistory,
   onSettings,
   points,
-  onResetPoints,
+  onRecharge,
   notify,
 }: {
   open: boolean;
@@ -587,7 +638,7 @@ function Sidebar({
   onHistory: (title: string) => void;
   onSettings: () => void;
   points: number;
-  onResetPoints: () => void;
+  onRecharge: () => void;
   notify: (message: string) => void;
 }) {
   return (
@@ -630,13 +681,13 @@ function Sidebar({
               其他功能
             </p>
             <div className="space-y-1">
-              {features.map(({ label, hint, icon }) => (
+              {features.map(({ label, hint, icon, iconColor }) => (
                 <button
                   key={label}
                   onClick={() => onFeature(label)}
-                  className="flex min-h-[62px] w-full items-center gap-3 rounded-2xl px-2 text-left hover:bg-muted"
+                  className="flex min-h-[62px] w-full items-center gap-3 rounded-2xl px-2 text-left transition-colors hover:bg-muted"
                 >
-                  <IconBox icon={icon} />
+                  <IconBox icon={icon} color={iconColor} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{label}</p>
                     <p className="truncate text-xs text-muted-foreground">
@@ -690,7 +741,6 @@ function Sidebar({
             >
               <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white">
                 <Star className="size-5 fill-current" />
-                <Sparkle className="absolute -right-1 -top-1 size-4 fill-amber-100 text-amber-100 drop-shadow-sm" />
               </span>
               <span className="min-w-0">
                 <span className="block text-xs text-amber-800/70">剩余积分</span>
@@ -700,11 +750,11 @@ function Sidebar({
               </span>
             </button>
             <button
-              aria-label="重置积分"
-              onClick={onResetPoints}
+              aria-label="充值积分"
+              onClick={onRecharge}
               className="min-h-11 shrink-0 rounded-xl border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
             >
-              重置
+              充值
             </button>
           </div>
           <button
@@ -1349,6 +1399,8 @@ export function BingoApp() {
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
   const [points, setPoints] = useState(1280);
+  const [rechargeOpen, setRechargeOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState('popular');
 
   const notify = (message: string) => {
     setToast(message);
@@ -1399,10 +1451,7 @@ export function BingoApp() {
           onHistory={chooseHistory}
           onSettings={chooseSettings}
           points={points}
-          onResetPoints={() => {
-            setPoints(1280);
-            notify('积分已重置为 1,280');
-          }}
+          onRecharge={() => setRechargeOpen(true)}
           notify={notify}
         />
         <div className="min-w-0 flex-1">
@@ -1452,6 +1501,78 @@ export function BingoApp() {
           </output>
         )}
       </div>
+      <Drawer
+        open={rechargeOpen}
+        onOpenChange={setRechargeOpen}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto max-w-[430px] rounded-t-[30px] sm:max-w-[560px] [--drawer-height:min(68dvh,610px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="grid size-9 place-items-center rounded-full bg-amber-100 text-amber-700">
+                <Coins className="size-5" />
+              </span>
+              充值积分
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              选择充值档位，本页面仅用于演示交互，不会产生真实扣款。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭充值"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="grid grid-cols-2 gap-3">
+              {rechargePlans.map((plan) => {
+                const selected = plan.id === selectedPlanId;
+                return (
+                  <button
+                    key={plan.id}
+                    aria-label={`充值${plan.price}元，获得${plan.points}积分`}
+                    aria-pressed={selected}
+                    onClick={() => setSelectedPlanId(plan.id)}
+                    className={`relative min-h-[116px] rounded-2xl border p-4 text-left transition-colors ${selected ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-100' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                  >
+                    <span className="block text-2xl font-black text-slate-900">
+                      ¥{plan.price}
+                    </span>
+                    <span className="mt-1 block font-semibold text-amber-700">
+                      {plan.points.toLocaleString()} 积分
+                    </span>
+                    <span className="mt-2 block text-xs text-muted-foreground">
+                      {plan.label}
+                    </span>
+                    {selected && (
+                      <span className="absolute right-3 top-3 grid size-6 place-items-center rounded-full bg-amber-500 text-white">
+                        <Check className="size-4" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              className="mt-5 h-12 w-full rounded-2xl bg-amber-500 text-base font-bold text-white hover:bg-amber-600"
+              onClick={() => {
+                const plan = rechargePlans.find(
+                  (item) => item.id === selectedPlanId,
+                );
+                if (!plan) return;
+                setPoints((current) => current + plan.points);
+                setRechargeOpen(false);
+                notify(
+                  `模拟充值成功，已到账 ${plan.points.toLocaleString()} 积分`,
+                );
+              }}
+            >
+              模拟支付并充值
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </main>
   );
 }
