@@ -662,13 +662,22 @@ function Sidebar({
       >
         <div className="flex items-center justify-between border-b px-4 pb-4 pt-[max(20px,env(safe-area-inset-top))]">
           <div className="flex items-center gap-3">
-            <span className="relative grid size-10 place-items-center rounded-2xl bg-primary text-white shadow-sm shadow-blue-200">
-              <Bot className="size-5" />
-              <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-white bg-orange-500" />
+            <span
+              aria-hidden="true"
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm shadow-blue-200 ring-2 ring-blue-50"
+            >
+              <UserRound className="size-6" />
             </span>
-            <div>
-              <p className="font-bold">BingoMate</p>
-              <p className="text-xs text-muted-foreground">林小满 · 学生</p>
+            <div className="min-w-0">
+              <p className="truncate font-bold">林小满</p>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span
+                  aria-hidden="true"
+                  className="size-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
+                />
+                <span className="sr-only">设备连接正常：</span>
+                <span className="truncate">My BingoClaw</span>
+              </p>
             </div>
           </div>
           <button
