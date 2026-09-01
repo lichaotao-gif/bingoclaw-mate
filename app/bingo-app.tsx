@@ -1180,10 +1180,10 @@ function ChatView({
               <h2 className="mt-5 text-[28px] font-bold tracking-tight">
                 今天想学点什么？
               </h2>
-              <p className="mt-2 max-w-[300px] text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-2 max-w-full whitespace-nowrap text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
                 问一道题、检查思路，或者把今天的复习交给我安排。
               </p>
-              <div className="mt-7 grid w-full max-w-[300px] grid-cols-1 gap-2.5 md:max-w-xl md:grid-cols-2">
+              <div className="mt-7 grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2">
                 {[
                   {
                     label: '拍题问思路',
@@ -1218,7 +1218,7 @@ function ChatView({
                     onClick={() =>
                       label === '拍题问思路' ? onCamera() : send(label)
                     }
-                    className={`flex min-h-[52px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 active:scale-[.98] ${hoverStyle}`}
+                    className={`flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 active:scale-[.98] ${hoverStyle}`}
                   >
                     <span
                       className={`grid size-9 shrink-0 place-items-center rounded-xl ${iconStyle}`}
