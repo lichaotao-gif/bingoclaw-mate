@@ -310,6 +310,7 @@ function Header({
   onBack,
   onMenu,
   backLabel = '返回聊天',
+  brandMark,
   right,
 }: {
   title: string;
@@ -317,6 +318,7 @@ function Header({
   onBack?: () => void;
   onMenu?: () => void;
   backLabel?: string;
+  brandMark?: ReactNode;
   right?: ReactNode;
 }) {
   return (
@@ -333,6 +335,7 @@ function Header({
             <ArrowLeft className="size-5" />
           )}
         </button>
+        {brandMark}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-bold">{title}</h1>
           {subtitle && (
@@ -988,6 +991,16 @@ function ChatView({
         title="BingoMate 学伴"
         subtitle="在线 · 启发式辅导"
         onMenu={onMenu}
+        brandMark={
+          <img
+            src="/brand/bingomate-owl.png"
+            alt=""
+            aria-hidden="true"
+            width={44}
+            height={44}
+            className="size-11 shrink-0 object-contain"
+          />
+        }
         right={
           <button
             aria-label={`选择模型，当前为${selectedModel.name}`}
