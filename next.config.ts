@@ -1,11 +1,11 @@
 import type { NextConfig } from 'next';
 
-const isTencentStaticExport = process.env.TENCENT_STATIC_EXPORT === '1';
+const isStaticExport = process.env.STATIC_EXPORT === '1';
 
 const nextConfig: NextConfig = {
-  // 腾讯云静态网站托管只能提供 HTML/CSS/JS 文件，不能运行默认构建中的
-  // Cloudflare Worker。仅在腾讯专用构建中启用纯静态导出，避免影响 Sites 部署。
-  output: isTencentStaticExport ? 'export' : undefined,
+  // 默认构建导出可部署到任意静态托管平台的 HTML/CSS/JS；Worker 构建
+  // 不设置该环境变量，继续保留服务端运行能力。
+  output: isStaticExport ? 'export' : undefined,
 };
 
 export default nextConfig;

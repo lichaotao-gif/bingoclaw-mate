@@ -7,8 +7,9 @@
   },
   "scripts": {
     "dev": "vinext dev",
-    "build": "vinext build",
-    "build:tencent": "TENCENT_STATIC_EXPORT=1 vinext build",
+    "build": "STATIC_EXPORT=1 vinext build && node scripts/prepare-static-output.mjs",
+    "build:tencent": "STATIC_EXPORT=1 vinext build",
+    "build:worker": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt"

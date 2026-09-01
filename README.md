@@ -11,18 +11,29 @@ npm run dev
 
 浏览器打开终端显示的本地地址。
 
-## 腾讯云静态网站托管
+## 构建与静态部署
 
-在腾讯云的自动部署配置中填写：
+执行标准构建：
 
-- 构建命令：`npm run build:tencent`
-- 输出目录：`dist/client`
+```bash
+npm run build
+```
+
+构建完成后，`dist` 目录直接包含 `index.html` 和全部静态资源，可部署到任意
+静态网站托管平台。平台配置统一填写：
+
+- 构建命令：`npm run build`
+- 输出目录：`dist`
 - 网站目录：留空（部署到根目录）
 - 首页文档：`index.html`
 
 不要在输出目录或网站目录末尾添加 `/`，也不要把仓库名
 `bingoclaw-mate` 填入网站目录；否则腾讯云可能拼出重复斜杠或将首页部署到
 错误的子目录。
+
+旧的腾讯云配置可暂时继续使用 `npm run build:tencent` 和 `dist/client`，方便
+平滑切换。需要部署 Cloudflare Worker 或 OpenAI Sites 时，使用
+`npm run build:worker`。
 
 ## 当前可演示路径
 
