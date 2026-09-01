@@ -16,11 +16,11 @@ import {
   ChevronRight,
   CircleAlert,
   Clock3,
+  Coins,
   Cpu,
   FileImage,
   FileText,
   Flame,
-  GraduationCap,
   Gauge,
   History,
   Image as ImageIcon,
@@ -668,19 +668,31 @@ function Sidebar({
             ))}
           </section>
         </div>
-        <button
-          onClick={() => notify('个人设置入口已保留')}
-          className="flex min-h-20 items-center gap-3 border-t px-4 text-left"
-        >
-          <span className="grid size-11 place-items-center rounded-2xl bg-orange-50 text-orange-600">
-            <GraduationCap className="size-6" />
-          </span>
-          <div className="flex-1">
-            <p className="font-semibold">林小满</p>
-            <p className="text-xs text-muted-foreground">八年级 · 数学人教版</p>
-          </div>
-          <Settings2 className="size-5 text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-2 border-t bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+          <button
+            aria-label="查看积分明细，当前剩余1280积分"
+            onClick={() => notify('当前剩余 1,280 积分')}
+            className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl bg-amber-50 px-3 text-left transition-colors hover:bg-amber-100"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
+              <Coins className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs text-amber-800/70">剩余积分</span>
+              <span className="block truncate font-bold tabular-nums text-amber-900">
+                1,280
+              </span>
+            </span>
+          </button>
+          <button
+            aria-label="打开设置"
+            onClick={() => notify('设置入口已保留')}
+            className="flex min-h-14 shrink-0 items-center gap-2 rounded-2xl border bg-white px-4 text-sm font-semibold transition-colors hover:bg-muted"
+          >
+            <Settings2 className="size-5 text-muted-foreground" />
+            设置
+          </button>
+        </div>
       </aside>
       <button
         aria-label="关闭侧栏"
