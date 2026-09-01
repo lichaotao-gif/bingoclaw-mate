@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeft,
   BarChart3,
+  Bell,
   Blocks,
   BookOpenCheck,
   Box,
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   CircleAlert,
+  CircleHelp,
   Clock3,
   Cpu,
   FileImage,
@@ -24,9 +26,13 @@ import {
   History,
   Image as ImageIcon,
   Languages,
+  Link2,
+  LockKeyhole,
+  LogOut,
   Menu,
   MessageSquarePlus,
   Mic,
+  MonitorSmartphone,
   Newspaper,
   PenLine,
   Plus,
@@ -34,10 +40,12 @@ import {
   Search,
   Send,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkle,
   Settings2,
   Sparkles,
   Star,
+  UserRound,
   Users,
   X,
   Zap,
@@ -56,7 +64,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
-type AppView = 'chat' | 'skills';
+type AppView = 'chat' | 'skills' | 'settings';
 type Skill = {
   id: string;
   name: string;
@@ -568,12 +576,18 @@ function Sidebar({
   onClose,
   onFeature,
   onHistory,
+  onSettings,
+  points,
+  onResetPoints,
   notify,
 }: {
   open: boolean;
   onClose: () => void;
   onFeature: (label: string) => void;
   onHistory: (title: string) => void;
+  onSettings: () => void;
+  points: number;
+  onResetPoints: () => void;
   notify: (message: string) => void;
 }) {
   return (
@@ -668,25 +682,34 @@ function Sidebar({
           </section>
         </div>
         <div className="flex items-center gap-3 border-t bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
-          <button
-            aria-label="查看积分明细，当前剩余1280积分"
-            onClick={() => notify('当前剩余 1,280 积分')}
-            className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-2xl bg-amber-50 px-3 text-left transition-colors hover:bg-amber-100"
-          >
-            <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white">
-              <Star className="size-5 fill-current" />
-              <Sparkle className="absolute -right-1 -top-1 size-4 fill-amber-100 text-amber-100 drop-shadow-sm" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xs text-amber-800/70">剩余积分</span>
-              <span className="block truncate font-bold tabular-nums text-amber-900">
-                1,280
+          <div className="flex min-h-16 min-w-0 flex-1 items-center rounded-2xl bg-amber-50 pr-2 transition-colors hover:bg-amber-100">
+            <button
+              aria-label={`查看积分明细，当前剩余${points}积分`}
+              onClick={() => notify(`当前剩余 ${points.toLocaleString()} 积分`)}
+              className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 text-left"
+            >
+              <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-orange-200 ring-2 ring-white">
+                <Star className="size-5 fill-current" />
+                <Sparkle className="absolute -right-1 -top-1 size-4 fill-amber-100 text-amber-100 drop-shadow-sm" />
               </span>
-            </span>
-          </button>
+              <span className="min-w-0">
+                <span className="block text-xs text-amber-800/70">剩余积分</span>
+                <span className="block truncate font-bold tabular-nums text-amber-900">
+                  {points.toLocaleString()}
+                </span>
+              </span>
+            </button>
+            <button
+              aria-label="重置积分"
+              onClick={onResetPoints}
+              className="min-h-11 shrink-0 rounded-xl border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
+            >
+              重置
+            </button>
+          </div>
           <button
             aria-label="打开设置"
-            onClick={() => notify('设置入口已保留')}
+            onClick={onSettings}
             className="flex min-h-16 min-w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <span className="grid size-11 place-items-center rounded-full border bg-white text-slate-600 shadow-sm">
@@ -702,6 +725,170 @@ function Sidebar({
         className="h-full flex-1"
       />
     </div>
+  );
+}
+
+function SettingsView({
+  onBack,
+  points,
+  notify,
+}: {
+  onBack: () => void;
+  points: number;
+  notify: (message: string) => void;
+}) {
+  const sections: {
+    title: string;
+    items: {
+      label: string;
+      description: string;
+      icon: LucideIcon;
+      color: string;
+    }[];
+  }[] = [
+    {
+      title: '学习设置',
+      items: [
+        {
+          label: '学生档案',
+          description: '林小满 · 八年级 · 数学人教版',
+          icon: UserRound,
+          color: 'bg-blue-50 text-blue-600',
+        },
+        {
+          label: '辅导偏好',
+          description: '默认先启发，再给完整解析',
+          icon: SlidersHorizontal,
+          color: 'bg-violet-50 text-violet-600',
+        },
+      ],
+    },
+    {
+      title: 'AI 与技能',
+      items: [
+        {
+          label: '模型管理',
+          description: '智能选择 · 按任务自动匹配',
+          icon: Cpu,
+          color: 'bg-cyan-50 text-cyan-700',
+        },
+        {
+          label: '技能管理',
+          description: '管理已安装技能与使用权限',
+          icon: Blocks,
+          color: 'bg-emerald-50 text-emerald-600',
+        },
+        {
+          label: 'AI 积分与明细',
+          description: `当前余额 ${points.toLocaleString()} · 查看消耗记录`,
+          icon: Star,
+          color: 'bg-amber-50 text-amber-700',
+        },
+      ],
+    },
+    {
+      title: '设备与提醒',
+      items: [
+        {
+          label: 'BingoMate 设备',
+          description: 'BM-20260830 · 在线',
+          icon: MonitorSmartphone,
+          color: 'bg-orange-50 text-orange-600',
+        },
+        {
+          label: '通知提醒',
+          description: '复习计划、定时试卷与低余额提醒',
+          icon: Bell,
+          color: 'bg-rose-50 text-rose-600',
+        },
+      ],
+    },
+    {
+      title: '账号与支持',
+      items: [
+        {
+          label: '账号与安全',
+          description: '密码、手机号与登录保护',
+          icon: LockKeyhole,
+          color: 'bg-slate-100 text-slate-700',
+        },
+        {
+          label: '第三方绑定',
+          description: '微信、QQ、飞书与钉钉',
+          icon: Link2,
+          color: 'bg-sky-50 text-sky-600',
+        },
+        {
+          label: '隐私设置',
+          description: '学习记录、设备与权限管理',
+          icon: ShieldCheck,
+          color: 'bg-teal-50 text-teal-700',
+        },
+        {
+          label: '帮助与反馈',
+          description: '常见问题与问题反馈',
+          icon: CircleHelp,
+          color: 'bg-indigo-50 text-indigo-600',
+        },
+      ],
+    },
+  ];
+
+  return (
+    <>
+      <Header
+        title="设置"
+        subtitle="学习偏好、设备与账号"
+        onBack={onBack}
+        backLabel="返回聊天"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
+          {sections.map((section) => (
+            <section key={section.title}>
+              <h2 className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
+                {section.title}
+              </h2>
+              <div className="overflow-hidden rounded-3xl border bg-white">
+                {section.items.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => notify(`${item.label}为 Demo 设置入口`)}
+                      className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
+                    >
+                      <span
+                        className={`grid size-11 shrink-0 place-items-center rounded-2xl ${item.color}`}
+                      >
+                        <Icon className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">
+                          {item.label}
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                          {item.description}
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+
+          <button
+            onClick={() => notify('退出登录需要二次确认')}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-white text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+          >
+            <LogOut className="size-5" />
+            退出登录
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -1161,6 +1348,7 @@ export function BingoApp() {
   );
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
+  const [points, setPoints] = useState(1280);
 
   const notify = (message: string) => {
     setToast(message);
@@ -1189,6 +1377,12 @@ export function BingoApp() {
     setConversationKey((key) => key + 1);
     notify(title === '新对话' ? '已开始新对话' : `已打开聊天记录：${title}`);
   };
+  const chooseSettings = () => {
+    setMenuOpen(false);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('settings');
+  };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
@@ -1203,6 +1397,12 @@ export function BingoApp() {
           onClose={() => setMenuOpen(false)}
           onFeature={chooseFeature}
           onHistory={chooseHistory}
+          onSettings={chooseSettings}
+          points={points}
+          onResetPoints={() => {
+            setPoints(1280);
+            notify('积分已重置为 1,280');
+          }}
           notify={notify}
         />
         <div className="min-w-0 flex-1">
@@ -1218,6 +1418,12 @@ export function BingoApp() {
               onBack={() => setView('chat')}
               onSelect={setSelectedSkill}
               installedSkills={installedSkills}
+            />
+          ) : view === 'settings' ? (
+            <SettingsView
+              onBack={() => setView('chat')}
+              points={points}
+              notify={notify}
             />
           ) : photoStep ? (
             <PhotoFlow
