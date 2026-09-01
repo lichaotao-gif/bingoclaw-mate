@@ -791,25 +791,44 @@ function ChatView({
               </p>
               <div className="mt-7 grid w-full max-w-[300px] grid-cols-1 gap-2.5 md:max-w-xl md:grid-cols-2">
                 {[
-                  { label: '拍题问思路', icon: Camera },
+                  {
+                    label: '拍题问思路',
+                    icon: Camera,
+                    iconStyle: 'bg-blue-50 text-blue-600',
+                    hoverStyle: 'hover:border-blue-200 hover:bg-blue-50/60',
+                  },
                   {
                     label: '检查作业',
                     icon: PenLine,
+                    iconStyle: 'bg-violet-50 text-violet-600',
+                    hoverStyle:
+                      'hover:border-violet-200 hover:bg-violet-50/60',
                   },
                   {
                     label: '复习错题',
                     icon: RotateCcw,
+                    iconStyle: 'bg-orange-50 text-orange-600',
+                    hoverStyle:
+                      'hover:border-orange-200 hover:bg-orange-50/60',
                   },
-                  { label: '生成练习', icon: Sparkles },
-                ].map(({ label, icon: Icon }) => (
+                  {
+                    label: '生成练习',
+                    icon: Sparkles,
+                    iconStyle: 'bg-emerald-50 text-emerald-600',
+                    hoverStyle:
+                      'hover:border-emerald-200 hover:bg-emerald-50/60',
+                  },
+                ].map(({ label, icon: Icon, iconStyle, hoverStyle }) => (
                   <button
                     key={label}
                     onClick={() =>
                       label === '拍题问思路' ? onCamera() : send(label)
                     }
-                    className="flex min-h-[52px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-medium shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/60 active:scale-[.98]"
+                    className={`flex min-h-[52px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 active:scale-[.98] ${hoverStyle}`}
                   >
-                    <span className="grid size-8 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                    <span
+                      className={`grid size-9 shrink-0 place-items-center rounded-xl ${iconStyle}`}
+                    >
                       <Icon className="size-4" />
                     </span>
                     {label}
