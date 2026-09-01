@@ -4,10 +4,11 @@ import { useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeft,
+  ArrowDownLeft,
+  ArrowUpRight,
   BarChart3,
   Bell,
   Blocks,
-  BookOpenCheck,
   Box,
   Bot,
   BrainCircuit,
@@ -17,15 +18,12 @@ import {
   ChevronRight,
   CircleAlert,
   CircleHelp,
-  Clock3,
   Cpu,
   FileImage,
-  FileText,
   Flame,
   Gauge,
   History,
   Image as ImageIcon,
-  Languages,
   Link2,
   LockKeyhole,
   LogOut,
@@ -33,7 +31,6 @@ import {
   MessageSquarePlus,
   Mic,
   MonitorSmartphone,
-  Newspaper,
   PenLine,
   Plus,
   RotateCcw,
@@ -64,7 +61,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
-type AppView = 'chat' | 'skills' | 'settings';
+type AppView = 'chat' | 'skills' | 'settings' | 'points';
+type PointTransaction = {
+  id: string;
+  title: string;
+  detail: string;
+  time: string;
+  amount: number;
+};
 type Skill = {
   id: string;
   name: string;
@@ -73,8 +77,7 @@ type Skill = {
   category: string;
   users: string;
   version: string;
-  icon: LucideIcon;
-  color: string;
+  image: string;
   capabilities: string[];
   example: string;
 };
@@ -147,8 +150,7 @@ const skills: Skill[] = [
     category: '数学辅导',
     users: '8.6k',
     version: '1.4.0',
-    icon: BrainCircuit,
-    color: 'bg-blue-50 text-blue-600',
+    image: '/skills/thinking-coach.png',
     capabilities: [
       '分步骤拆解题目',
       '识别卡点并给出提示',
@@ -164,8 +166,7 @@ const skills: Skill[] = [
     category: '英语学习',
     users: '6.3k',
     version: '1.2.1',
-    icon: Languages,
-    color: 'bg-violet-50 text-violet-600',
+    image: '/skills/english-partner.png',
     capabilities: [
       '课本主题情景对话',
       '逐句发音与语法建议',
@@ -181,8 +182,7 @@ const skills: Skill[] = [
     category: '学习效率',
     users: '5.1k',
     version: '2.0.0',
-    icon: Clock3,
-    color: 'bg-orange-50 text-orange-600',
+    image: '/skills/focus-timer.png',
     capabilities: ['25 分钟专注计时', '休息提醒', '生成专注记录'],
     example: '帮我安排 45 分钟完成数学作业。',
   },
@@ -194,8 +194,7 @@ const skills: Skill[] = [
     category: '复习规划',
     users: '4.8k',
     version: '1.3.2',
-    icon: BookOpenCheck,
-    color: 'bg-emerald-50 text-emerald-600',
+    image: '/skills/mistake-review.png',
     capabilities: ['按掌握度安排复习', '归纳高频错因', '追踪复习效果'],
     example: '从我的错题里挑 5 道今天最该复习的。',
   },
@@ -207,8 +206,7 @@ const skills: Skill[] = [
     category: '智能练习',
     users: '5.4k',
     version: '0.9.5',
-    icon: FileText,
-    color: 'bg-cyan-50 text-cyan-700',
+    image: '/skills/paper-maker.png',
     capabilities: ['选择章节与题型', '设置难度与题量', '生成答案和解析'],
     example: '出一份八年级一次函数小测，共 10 道题。',
   },
@@ -220,8 +218,7 @@ const skills: Skill[] = [
     category: '知识拓展',
     users: '3.2k',
     version: '1.1.0',
-    icon: Newspaper,
-    color: 'bg-rose-50 text-rose-600',
+    image: '/skills/daily-brief.png',
     capabilities: ['每日知识点精选', '关键词快速解释', '收藏后生成小测'],
     example: '给我一份今天的科技知识简报。',
   },
@@ -398,50 +395,50 @@ function SkillsView({
 
         <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
           {skills.map((skill) => {
-            const Icon = skill.icon;
             const installed = installedSkills.has(skill.id);
             return (
               <button
                 key={skill.id}
                 aria-label={`查看技能：${skill.name}`}
                 onClick={() => onSelect(skill)}
-                className="w-full rounded-[24px] border bg-white p-4 text-left shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/30 active:bg-blue-50"
+                className="group grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 rounded-[24px] border bg-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:translate-y-0 active:bg-blue-50 sm:grid-cols-[128px_minmax(0,1fr)]"
               >
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`grid size-12 shrink-0 place-items-center rounded-2xl ${skill.color}`}
-                  >
-                    <Icon className="size-6" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-bold">{skill.name}</h3>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {skill.author} · {skill.category}
-                        </p>
-                      </div>
-                      {installed ? (
-                        <Badge className="shrink-0 gap-1 bg-emerald-50 text-emerald-700">
-                          <Check className="size-3" />
-                          已安装
-                        </Badge>
-                      ) : (
-                        <ChevronRight className="mt-1 size-5 shrink-0 text-muted-foreground" />
-                      )}
+                <div className="aspect-square w-full self-center overflow-hidden rounded-[20px] bg-slate-100">
+                  <img
+                    src={skill.image}
+                    alt={`${skill.name}卡通插画`}
+                    width={512}
+                    height={512}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col py-0.5">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-bold">{skill.name}</h3>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {skill.author} · {skill.category}
+                      </p>
                     </div>
-                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-600">
-                      {skill.description}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-semibold text-foreground">
-                        免费
-                      </span>
-                      <span className="flex items-center gap-1 tabular-nums">
-                        <Flame className="size-3.5" />
-                        {skill.users} 人使用
-                      </span>
-                    </div>
+                    <ChevronRight className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                    {skill.description}
+                  </p>
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-2 text-xs text-muted-foreground">
+                    {installed ? (
+                      <Badge className="h-6 shrink-0 gap-1 bg-emerald-50 px-2 text-emerald-700">
+                        <Check className="size-3" />
+                        已安装
+                      </Badge>
+                    ) : (
+                      <span className="font-semibold text-foreground">免费</span>
+                    )}
+                    <span className="flex shrink-0 items-center gap-1 tabular-nums">
+                      <Flame className="size-3.5" />
+                      {skill.users}
+                    </span>
                   </div>
                 </div>
               </button>
@@ -464,7 +461,6 @@ function SkillDetailView({
   onBack: () => void;
   onInstall: (skill: Skill) => void;
 }) {
-  const Icon = skill.icon;
   return (
     <>
       <Header
@@ -478,11 +474,15 @@ function SkillDetailView({
           <div className="mx-auto w-full max-w-4xl">
           <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
             <div className="flex items-start gap-4">
-              <span
-                className={`grid size-16 shrink-0 place-items-center rounded-[22px] bg-white shadow-sm ${skill.color.split(' ')[1]}`}
-              >
-                <Icon className="size-8" />
-              </span>
+              <div className="size-24 shrink-0 overflow-hidden rounded-[24px] bg-white shadow-sm">
+                <img
+                  src={skill.image}
+                  alt={`${skill.name}卡通插画`}
+                  width={512}
+                  height={512}
+                  className="h-full w-full object-cover"
+                />
+              </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-xl font-bold leading-tight">
                   {skill.name}
@@ -643,6 +643,7 @@ function Sidebar({
   onFeature,
   onHistory,
   onSettings,
+  onPoints,
   points,
   onRecharge,
   notify,
@@ -652,6 +653,7 @@ function Sidebar({
   onFeature: (label: string) => void;
   onHistory: (title: string) => void;
   onSettings: () => void;
+  onPoints: () => void;
   points: number;
   onRecharge: () => void;
   notify: (message: string) => void;
@@ -760,7 +762,7 @@ function Sidebar({
           <div className="flex min-h-16 min-w-0 flex-1 items-center rounded-2xl bg-amber-50 pr-2 transition-colors hover:bg-amber-100">
             <button
               aria-label={`查看积分明细，当前剩余${points}积分`}
-              onClick={() => notify(`当前剩余 ${points.toLocaleString()} 积分`)}
+              onClick={onPoints}
               className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 text-left"
             >
               <PointsIcon />
@@ -799,10 +801,12 @@ function Sidebar({
 
 function SettingsView({
   onBack,
+  onPoints,
   points,
   notify,
 }: {
   onBack: () => void;
+  onPoints: () => void;
   points: number;
   notify: (message: string) => void;
 }) {
@@ -924,7 +928,11 @@ function SettingsView({
                   return (
                     <button
                       key={item.label}
-                      onClick={() => notify(`已打开${item.label}`)}
+                      onClick={() =>
+                        item.label === 'AI 积分与明细'
+                          ? onPoints()
+                          : notify(`已打开${item.label}`)
+                      }
                       className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
                     >
                       <span
@@ -955,6 +963,105 @@ function SettingsView({
             <LogOut className="size-5" />
             退出登录
           </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PointsView({
+  points,
+  transactions,
+  onBack,
+  onRecharge,
+}: {
+  points: number;
+  transactions: PointTransaction[];
+  onBack: () => void;
+  onRecharge: () => void;
+}) {
+  return (
+    <>
+      <Header
+        title="积分详情"
+        subtitle="余额与使用记录"
+        onBack={onBack}
+        backLabel="返回聊天"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-3xl">
+          <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 p-5 text-white shadow-lg shadow-amber-200/60 md:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/95 shadow-sm">
+                  <PointsIcon className="size-9" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white/80">剩余积分</p>
+                  <p className="mt-0.5 truncate text-3xl font-black tabular-nums tracking-tight">
+                    {points.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={onRecharge}
+                className="h-11 shrink-0 rounded-2xl bg-white px-5 font-bold text-amber-700 shadow-sm hover:bg-amber-50"
+              >
+                充值
+              </Button>
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-white/75">
+              积分可用于模型对话、拍题解析和学习技能。
+            </p>
+          </section>
+
+          <section className="mt-6">
+            <div className="mb-3 flex items-end justify-between px-1">
+              <div>
+                <h2 className="text-lg font-bold">积分使用明细</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  充值与扣除记录统一展示
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                共 {transactions.length} 条
+              </span>
+            </div>
+            <div className="overflow-hidden rounded-3xl border bg-white">
+              {transactions.map((transaction, index) => {
+                const isCredit = transaction.amount > 0;
+                const TransactionIcon = isCredit
+                  ? ArrowDownLeft
+                  : ArrowUpRight;
+                return (
+                  <div
+                    key={transaction.id}
+                    className={`flex min-h-[78px] items-center gap-3 px-4 py-3 ${index ? 'border-t' : ''}`}
+                  >
+                    <span
+                      className={`grid size-11 shrink-0 place-items-center rounded-2xl ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}
+                    >
+                      <TransactionIcon className="size-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        {transaction.title}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {transaction.time} · {transaction.detail}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 text-base font-bold tabular-nums ${isCredit ? 'text-emerald-600' : 'text-slate-900'}`}
+                    >
+                      {isCredit ? '+' : ''}
+                      {transaction.amount.toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         </div>
       </div>
     </>
@@ -1435,6 +1542,52 @@ export function BingoApp() {
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
   const [points, setPoints] = useState(1280);
+  const [pointTransactions, setPointTransactions] = useState<
+    PointTransaction[]
+  >([
+    {
+      id: 'usage-1',
+      title: '深度解析对话',
+      detail: 'DeepSeek-V4-Pro',
+      time: '今天 15:42',
+      amount: -18,
+    },
+    {
+      id: 'recharge-1',
+      title: '积分充值',
+      detail: '微信支付 ¥18',
+      time: '今天 09:30',
+      amount: 2000,
+    },
+    {
+      id: 'usage-2',
+      title: '拍题辅导',
+      detail: '二次函数题目解析',
+      time: '昨天 20:16',
+      amount: -25,
+    },
+    {
+      id: 'usage-3',
+      title: '英语口语陪练',
+      detail: '情景对话 12 分钟',
+      time: '昨天 18:05',
+      amount: -12,
+    },
+    {
+      id: 'recharge-2',
+      title: '新用户积分赠送',
+      detail: '首次登录奖励',
+      time: '8月30日 10:20',
+      amount: 300,
+    },
+    {
+      id: 'usage-4',
+      title: '试卷生成助手',
+      detail: '一次函数小测',
+      time: '8月30日 09:48',
+      amount: -30,
+    },
+  ]);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
 
@@ -1471,6 +1624,12 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('settings');
   };
+  const choosePoints = () => {
+    setMenuOpen(false);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('points');
+  };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
@@ -1486,6 +1645,7 @@ export function BingoApp() {
           onFeature={chooseFeature}
           onHistory={chooseHistory}
           onSettings={chooseSettings}
+          onPoints={choosePoints}
           points={points}
           onRecharge={() => setRechargeOpen(true)}
           notify={notify}
@@ -1507,8 +1667,16 @@ export function BingoApp() {
           ) : view === 'settings' ? (
             <SettingsView
               onBack={() => setView('chat')}
+              onPoints={choosePoints}
               points={points}
               notify={notify}
+            />
+          ) : view === 'points' ? (
+            <PointsView
+              points={points}
+              transactions={pointTransactions}
+              onBack={() => setView('chat')}
+              onRecharge={() => setRechargeOpen(true)}
             />
           ) : photoStep ? (
             <PhotoFlow
@@ -1596,6 +1764,16 @@ export function BingoApp() {
                 );
                 if (!plan) return;
                 setPoints((current) => current + plan.points);
+                setPointTransactions((current) => [
+                  {
+                    id: `recharge-${Date.now()}`,
+                    title: '积分充值',
+                    detail: `支付 ¥${plan.price}`,
+                    time: '刚刚',
+                    amount: plan.points,
+                  },
+                  ...current,
+                ]);
                 setRechargeOpen(false);
                 notify(
                   `充值成功，已到账 ${plan.points.toLocaleString()} 积分`,
