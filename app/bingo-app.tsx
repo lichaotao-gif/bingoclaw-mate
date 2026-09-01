@@ -42,7 +42,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkle,
-  Settings2,
+  Settings,
   Sparkles,
   Star,
   UserRound,
@@ -766,12 +766,9 @@ function Sidebar({
           <button
             aria-label="打开设置"
             onClick={onSettings}
-            className="flex min-h-16 min-w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="grid size-14 shrink-0 place-items-center rounded-full border bg-white text-slate-600 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <span className="grid size-11 place-items-center rounded-full border bg-white text-slate-600 shadow-sm">
-              <Settings2 className="size-5" />
-            </span>
-            <span>设置</span>
+            <Settings className="size-6" />
           </button>
         </div>
       </aside>
