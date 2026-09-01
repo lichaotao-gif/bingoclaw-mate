@@ -253,25 +253,27 @@ function Header({
   right?: ReactNode;
 }) {
   return (
-    <header className="sticky top-0 z-20 flex min-h-[72px] items-center gap-3 border-b bg-background/95 px-4 pt-[max(8px,env(safe-area-inset-top))] backdrop-blur">
-      <button
-        aria-label={onMenu ? '打开菜单' : backLabel}
-        onClick={onMenu ?? onBack}
-        className="grid size-11 shrink-0 place-items-center rounded-2xl border bg-card"
-      >
-        {onMenu ? (
-          <Menu className="size-5" />
-        ) : (
-          <ArrowLeft className="size-5" />
-        )}
-      </button>
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-bold">{title}</h1>
-        {subtitle && (
-          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-        )}
+    <header className="sticky top-0 z-20 min-h-[72px] border-b bg-background/95 px-4 pt-[max(8px,env(safe-area-inset-top))] backdrop-blur md:px-8">
+      <div className="mx-auto flex min-h-[63px] w-full max-w-6xl items-center gap-3">
+        <button
+          aria-label={onMenu ? '打开菜单' : backLabel}
+          onClick={onMenu ?? onBack}
+          className="grid size-11 shrink-0 place-items-center rounded-2xl border bg-card transition-colors hover:bg-muted"
+        >
+          {onMenu ? (
+            <Menu className="size-5" />
+          ) : (
+            <ArrowLeft className="size-5" />
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-base font-bold">{title}</h1>
+          {subtitle && (
+            <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+        {right}
       </div>
-      {right}
     </header>
   );
 }
@@ -293,7 +295,7 @@ function SkillsView({
         onBack={onBack}
         backLabel="返回聊天"
       />
-      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 sm:h-[calc(100dvh-112px)]">
+      <div className="mx-auto h-[calc(100dvh-72px)] w-full max-w-6xl overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
         <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
           <div className="flex items-center gap-3">
             <span className="grid size-12 place-items-center rounded-2xl bg-primary text-white shadow-sm shadow-blue-200">
@@ -320,7 +322,7 @@ function SkillsView({
           </Badge>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
           {skills.map((skill) => {
             const Icon = skill.icon;
             const installed = installedSkills.has(skill.id);
@@ -397,8 +399,9 @@ function SkillDetailView({
         onBack={onBack}
         backLabel="返回技能广场"
       />
-      <div className="flex h-[calc(100dvh-72px)] flex-col sm:h-[calc(100dvh-112px)]">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+      <div className="flex h-[calc(100dvh-72px)] flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6">
+          <div className="mx-auto w-full max-w-4xl">
           <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
             <div className="flex items-start gap-4">
               <span
@@ -528,10 +531,11 @@ function SkillDetailView({
               </section>
             </TabsContent>
           </Tabs>
+          </div>
         </div>
 
-        <div className="shrink-0 border-t bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
-          <div className="flex items-center gap-3">
+        <div className="shrink-0 border-t bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 md:px-8">
+          <div className="mx-auto flex w-full max-w-4xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="font-bold">免费</p>
               <p className="text-xs text-muted-foreground">安装后立即可用</p>
@@ -743,8 +747,9 @@ function ChatView({
           </button>
         }
       />
-      <div className="mx-auto flex h-[calc(100dvh-72px)] flex-col sm:h-[calc(100dvh-112px)]">
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+      <div className="flex h-[calc(100dvh-72px)] flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
+          <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col space-y-5">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -756,7 +761,7 @@ function ChatView({
                 </span>
               )}
               <div
-                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'rounded-tr-md bg-primary text-white' : 'rounded-tl-md border bg-card'}`}
+                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed md:max-w-[68%] ${message.role === 'user' ? 'rounded-tr-md bg-primary text-white' : 'rounded-tl-md border bg-card'}`}
               >
                 {message.text}
               </div>
@@ -784,7 +789,7 @@ function ChatView({
               <p className="mt-2 max-w-[300px] text-sm leading-relaxed text-muted-foreground">
                 问一道题、检查思路，或者把今天的复习交给我安排。
               </p>
-              <div className="mt-7 flex w-full max-w-[300px] flex-col items-stretch gap-2.5">
+              <div className="mt-7 grid w-full max-w-[300px] grid-cols-1 gap-2.5 md:max-w-xl md:grid-cols-2">
                 {[
                   { label: '拍题问思路', icon: Camera },
                   {
@@ -813,9 +818,10 @@ function ChatView({
               </div>
             </div>
           )}
+          </div>
         </div>
-        <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
-          <div className="rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-shadow focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)]">
+        <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-8 md:pb-5">
+          <div className="mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-shadow focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)]">
             <textarea
               aria-label="输入学习问题"
               value={input}
@@ -878,7 +884,7 @@ function ChatView({
         onOpenChange={setModelSheetOpen}
         showSwipeHandle
       >
-        <DrawerContent className="mx-auto max-w-[430px] rounded-t-[30px] [--drawer-height:min(58dvh,520px)]">
+        <DrawerContent className="mx-auto max-w-[430px] rounded-t-[30px] sm:max-w-[560px] [--drawer-height:min(58dvh,520px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="text-xl font-bold">选择模型</DrawerTitle>
             <DrawerDescription className="text-left">
@@ -1157,8 +1163,8 @@ export function BingoApp() {
   };
 
   return (
-    <main className="min-h-dvh bg-[#eef2f7] text-foreground sm:py-5">
-      <div className="relative mx-auto flex h-dvh w-full max-w-[430px] overflow-hidden bg-background shadow-[0_24px_80px_rgba(15,23,42,.14)] sm:h-[calc(100dvh-40px)] sm:rounded-[36px] sm:border">
+    <main className="min-h-dvh bg-background text-foreground">
+      <div className="relative flex h-dvh w-full overflow-hidden bg-background">
         <Sidebar
           open={menuOpen}
           onClose={() => setMenuOpen(false)}
