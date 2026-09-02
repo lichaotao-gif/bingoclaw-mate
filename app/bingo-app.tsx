@@ -68,6 +68,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
+type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
 type AppView =
   | 'chat'
   | 'skills'
@@ -130,6 +131,18 @@ type ModelOption = {
   icon: LucideIcon;
   color: string;
 };
+type ChatMode = {
+  id: ChatModeId;
+  name: string;
+  subtitle: string;
+  headline: string;
+  description: string;
+  placeholder: string;
+  icon: LucideIcon;
+  iconStyle: string;
+  suggestions: string[];
+  reply: string;
+};
 
 const features: {
   label: string;
@@ -142,30 +155,6 @@ const features: {
     hint: '发现并安装学习技能',
     icon: Blocks,
     iconColor: 'bg-violet-50 text-violet-600',
-  },
-  {
-    label: '拍题辅导',
-    hint: '拍照后分步讲解',
-    icon: Camera,
-    iconColor: 'bg-blue-50 text-blue-600',
-  },
-  {
-    label: '作业批阅',
-    hint: '识别整页与错因',
-    icon: PenLine,
-    iconColor: 'bg-orange-50 text-orange-600',
-  },
-  {
-    label: '错题本',
-    hint: '今天 6 道待复习',
-    icon: RotateCcw,
-    iconColor: 'bg-rose-50 text-rose-600',
-  },
-  {
-    label: '智能练习',
-    hint: '针对薄弱点出题',
-    icon: BrainCircuit,
-    iconColor: 'bg-emerald-50 text-emerald-600',
   },
   {
     label: '成长报告',
@@ -313,6 +302,69 @@ const models: ModelOption[] = [
     color: 'bg-slate-100 text-slate-700',
   },
 ];
+
+const chatModes: Record<ChatModeId, ChatMode> = {
+  default: {
+    id: 'default',
+    name: 'BingoMate 学伴',
+    subtitle: '在线 · 启发式辅导',
+    headline: '今天想学点什么？',
+    description: '问一道题、检查思路，或者把今天的复习交给我安排。',
+    placeholder: '发消息或创建学习任务…',
+    icon: Sparkles,
+    iconStyle: 'bg-blue-50 text-blue-600',
+    suggestions: [],
+    reply: '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
+  },
+  photo: {
+    id: 'photo',
+    name: '拍题辅导专家',
+    subtitle: '识别题目 · 分步启发',
+    headline: '拍下题目，我陪你拆解思路',
+    description: '先识别题目和你的解题过程，再从卡住的那一步开始提示。',
+    placeholder: '描述题目、说说你的思路，或上传题目照片…',
+    icon: Camera,
+    iconStyle: 'bg-blue-50 text-blue-600',
+    suggestions: ['拍照上传一道题', '我先说说自己的解题思路'],
+    reply: '我先帮你识别题目条件，再从关键突破口开始提示。你也可以把已经做到的步骤一起发给我。',
+  },
+  homework: {
+    id: 'homework',
+    name: '作业批改与学情分析专家',
+    subtitle: '智能批改 · 错因分析 · 薄弱点诊断',
+    headline: 'Hi，我是作业批改与学情分析专家',
+    description: '智能批改、错因分析和薄弱点诊断，帮助学生找到真正需要加强的环节。',
+    placeholder: '描述批改任务，或上传学生作业…',
+    icon: PenLine,
+    iconStyle: 'bg-violet-50 text-violet-600',
+    suggestions: ['请批改这份学生作业', '帮我分析这次作业的错题原因'],
+    reply: '可以。我会先检查答案和过程，再归纳错因、薄弱知识点以及下一步练习建议。请上传作业或题目。',
+  },
+  mistakes: {
+    id: 'mistakes',
+    name: '错题复习专家',
+    subtitle: '错因归纳 · 掌握度追踪',
+    headline: '把错题真正变成会做的题',
+    description: '按错因和掌握度安排复习，用相似题确认知识点是否已经掌握。',
+    placeholder: '上传错题，或告诉我今天想复习的科目…',
+    icon: RotateCcw,
+    iconStyle: 'bg-orange-50 text-orange-600',
+    suggestions: ['从错题本挑 5 道复习', '分析我最近反复出错的原因'],
+    reply: '我会先判断错因和掌握度，再安排复习顺序，并用一道相似题确认你是否真正掌握。',
+  },
+  practice: {
+    id: 'practice',
+    name: '智能练习专家',
+    subtitle: '按薄弱点出题 · 难度自适应',
+    headline: '为你生成刚刚好的练习',
+    description: '根据年级、章节和薄弱知识点生成练习，完成后自动调整下一组难度。',
+    placeholder: '告诉我科目、章节、题量和难度…',
+    icon: BrainCircuit,
+    iconStyle: 'bg-emerald-50 text-emerald-600',
+    suggestions: ['生成 10 道一次函数练习', '根据最近错题出一组巩固题'],
+    reply: '好的。告诉我年级、章节、题量和期望难度，我会生成练习并在完成后给出解析。',
+  },
+};
 
 const histories = [
   { group: '今天', items: ['二次函数顶点问题', '英语阅读理解怎么概括'] },
@@ -2052,6 +2104,15 @@ function ChatView({
   const [sending, setSending] = useState(false);
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelOption>(models[0]);
+  const [chatMode, setChatMode] = useState<ChatModeId>('default');
+  const mode = chatModes[chatMode];
+  const ModeIcon = mode.icon;
+
+  const selectMode = (nextMode: ChatModeId) => {
+    setChatMode(nextMode);
+    setMessages([]);
+    setInput('');
+  };
 
   const send = (preset?: string) => {
     const text = (preset ?? input).trim();
@@ -2072,7 +2133,7 @@ function ChatView({
           role: 'assistant',
           text: isSchedulingRequest
             ? '好的，定时任务已经创建。你可以在侧边栏的“定时任务”中查看、暂停或调整安排。'
-            : '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
+            : mode.reply,
         },
       ]);
       setSending(false);
@@ -2082,18 +2143,26 @@ function ChatView({
   return (
     <>
       <Header
-        title="BingoMate 学伴"
-        subtitle="在线 · 启发式辅导"
+        title={mode.name}
+        subtitle={mode.subtitle}
         onMenu={onMenu}
         brandMark={
-          <img
-            src="/brand/bingomate-owl.png"
-            alt=""
-            aria-hidden="true"
-            width={44}
-            height={44}
-            className="size-11 shrink-0 object-contain"
-          />
+          chatMode === 'default' ? (
+            <img
+              src="/brand/bingomate-owl.png"
+              alt=""
+              aria-hidden="true"
+              width={44}
+              height={44}
+              className="size-11 shrink-0 object-contain"
+            />
+          ) : (
+            <span
+              className={`grid size-11 shrink-0 place-items-center rounded-2xl ${mode.iconStyle}`}
+            >
+              <ModeIcon className="size-5" />
+            </span>
+          )
         }
         right={
           <button
@@ -2117,8 +2186,14 @@ function ChatView({
               className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
             >
               {message.role === 'assistant' && (
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-white">
-                  <Bot className="size-5" />
+                <span
+                  className={`grid size-9 shrink-0 place-items-center rounded-xl ${chatMode === 'default' ? 'bg-primary text-white' : mode.iconStyle}`}
+                >
+                  {chatMode === 'default' ? (
+                    <Bot className="size-5" />
+                  ) : (
+                    <ModeIcon className="size-5" />
+                  )}
                 </span>
               )}
               <div
@@ -2130,8 +2205,14 @@ function ChatView({
           ))}
           {sending && (
             <div className="flex items-center gap-3">
-              <span className="grid size-9 place-items-center rounded-xl bg-primary text-white">
-                <Bot className="size-5" />
+              <span
+                className={`grid size-9 place-items-center rounded-xl ${chatMode === 'default' ? 'bg-primary text-white' : mode.iconStyle}`}
+              >
+                {chatMode === 'default' ? (
+                  <Bot className="size-5" />
+                ) : (
+                  <ModeIcon className="size-5" />
+                )}
               </span>
               <span className="rounded-2xl rounded-tl-md border bg-card px-4 py-3 text-sm text-muted-foreground">
                 正在思考…
@@ -2140,68 +2221,94 @@ function ChatView({
           )}
           {messages.length === 0 && (
             <div className="flex min-h-full flex-col items-center justify-center pb-2 text-center">
-              <span className="relative grid size-[76px] place-items-center">
-                <img
-                  src="/brand/bingomate-owl.png"
-                  alt=""
-                  aria-hidden="true"
-                  width={72}
-                  height={72}
-                  className="size-[72px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.2)]"
-                />
-                <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
-              </span>
+              {chatMode === 'default' ? (
+                <span className="relative grid size-[76px] place-items-center">
+                  <img
+                    src="/brand/bingomate-owl.png"
+                    alt=""
+                    aria-hidden="true"
+                    width={72}
+                    height={72}
+                    className="size-[72px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.2)]"
+                  />
+                  <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
+                </span>
+              ) : (
+                <span
+                  className={`grid size-[76px] place-items-center rounded-[26px] shadow-sm ${mode.iconStyle}`}
+                >
+                  <ModeIcon className="size-9" />
+                </span>
+              )}
               <h2 className="mt-5 text-[28px] font-bold tracking-tight">
-                今天想学点什么？
+                {mode.headline}
               </h2>
-              <p className="mt-2 max-w-full whitespace-nowrap text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
-                问一道题、检查思路，或者把今天的复习交给我安排。
+              <p
+                className={`mt-2 max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-sm ${chatMode === 'default' ? 'whitespace-nowrap' : 'px-2'}`}
+              >
+                {mode.description}
               </p>
               <div className="mt-7 grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2">
-                {[
-                  {
-                    label: '拍题问思路',
-                    icon: Camera,
-                    iconStyle: 'bg-blue-50 text-blue-600',
-                    hoverStyle: 'hover:border-blue-200 hover:bg-blue-50/60',
-                  },
-                  {
-                    label: '检查作业',
-                    icon: PenLine,
-                    iconStyle: 'bg-violet-50 text-violet-600',
-                    hoverStyle:
-                      'hover:border-violet-200 hover:bg-violet-50/60',
-                  },
-                  {
-                    label: '复习错题',
-                    icon: RotateCcw,
-                    iconStyle: 'bg-orange-50 text-orange-600',
-                    hoverStyle:
-                      'hover:border-orange-200 hover:bg-orange-50/60',
-                  },
-                  {
-                    label: '生成练习',
-                    icon: Sparkles,
-                    iconStyle: 'bg-emerald-50 text-emerald-600',
-                    hoverStyle:
-                      'hover:border-emerald-200 hover:bg-emerald-50/60',
-                  },
-                ].map(({ label, icon: Icon, iconStyle, hoverStyle }) => (
-                  <button
-                    key={label}
-                    onClick={() =>
-                      label === '拍题问思路' ? onCamera() : send(label)
-                    }
-                    className={`flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 active:scale-[.98] ${hoverStyle}`}
-                  >
-                    <span
-                      className={`grid size-9 shrink-0 place-items-center rounded-xl ${iconStyle}`}
-                    >
-                      <Icon className="size-4" />
-                    </span>
-                    {label}
-                  </button>
-                ))}
+                {chatMode === 'default'
+                  ? [
+                      {
+                        label: '拍题辅导',
+                        target: 'photo' as ChatModeId,
+                        icon: Camera,
+                        style: 'bg-blue-50 text-blue-600',
+                      },
+                      {
+                        label: '作业批阅',
+                        target: 'homework' as ChatModeId,
+                        icon: PenLine,
+                        style: 'bg-violet-50 text-violet-600',
+                      },
+                      {
+                        label: '错题复习',
+                        target: 'mistakes' as ChatModeId,
+                        icon: RotateCcw,
+                        style: 'bg-orange-50 text-orange-600',
+                      },
+                      {
+                        label: '智能练习',
+                        target: 'practice' as ChatModeId,
+                        icon: BrainCircuit,
+                        style: 'bg-emerald-50 text-emerald-600',
+                      },
+                    ].map(({ label, target, icon: Icon, style }) => (
+                      <button
+                        key={target}
+                        onClick={() => selectMode(target)}
+                        className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                      >
+                        <span
+                          className={`grid size-9 shrink-0 place-items-center rounded-xl ${style}`}
+                        >
+                          <Icon className="size-4" />
+                        </span>
+                        {label}
+                        <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+                      </button>
+                    ))
+                  : mode.suggestions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        onClick={() =>
+                          chatMode === 'photo' && index === 0
+                            ? onCamera()
+                            : send(suggestion)
+                        }
+                        className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                      >
+                        <span
+                          className={`grid size-9 shrink-0 place-items-center rounded-xl ${mode.iconStyle}`}
+                        >
+                          <ModeIcon className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">{suggestion}</span>
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    ))}
               </div>
             </div>
           )}
@@ -2219,7 +2326,7 @@ function ChatView({
                   send();
                 }
               }}
-              placeholder="发消息或创建学习任务…"
+              placeholder={mode.placeholder}
               rows={2}
               className="w-full resize-none bg-transparent px-2 text-base outline-none placeholder:text-muted-foreground"
             />
@@ -2240,12 +2347,18 @@ function ChatView({
                 拍题
               </button>
               <button
-                aria-label="智能辅导模式"
-                onClick={() => notify('当前使用启发式智能辅导')}
-                className="flex min-h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-medium text-slate-700"
+                aria-label={`当前专家：${mode.name}`}
+                onClick={() =>
+                  chatMode === 'default'
+                    ? notify('当前使用通用智能辅导')
+                    : selectMode('default')
+                }
+                className={`flex min-h-10 max-w-36 items-center gap-1.5 rounded-full px-3 text-xs font-medium ${chatMode === 'default' ? 'bg-slate-100 text-slate-700' : mode.iconStyle}`}
               >
-                <Sparkles className="size-4 text-primary" />
-                智能辅导
+                <ModeIcon className="size-4 shrink-0" />
+                <span className="truncate">
+                  {chatMode === 'default' ? '智能辅导' : mode.name}
+                </span>
               </button>
               <span className="flex-1" />
               <button
@@ -2603,11 +2716,6 @@ export function BingoApp() {
       setPhotoStep(null);
       setSelectedSkill(null);
       setView('skills');
-      return;
-    }
-    if (label === '拍题辅导') {
-      setView('chat');
-      setPhotoStep('camera');
       return;
     }
     if (label === '定时任务') {
