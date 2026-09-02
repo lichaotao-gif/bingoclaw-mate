@@ -2794,7 +2794,7 @@ function ChatView({
                 拍题
               </button>
               <button
-                aria-label={`选择技能${selectedChatSkill ? `，当前为${selectedChatSkill.name}` : ''}`}
+                aria-label={`选择技能，当前为${selectedChatSkill?.name ?? 'BingoMate'}`}
                 aria-haspopup="dialog"
                 aria-expanded={skillSheetOpen}
                 onClick={() => setSkillSheetOpen(true)}
@@ -2810,10 +2810,17 @@ function ChatView({
                     className="size-5 shrink-0 rounded-md object-cover"
                   />
                 ) : (
-                  <Blocks className="size-4 shrink-0 text-violet-600" />
+                  <img
+                    src="/brand/bingomate-owl.png"
+                    alt=""
+                    aria-hidden="true"
+                    width={20}
+                    height={20}
+                    className="size-5 shrink-0 object-contain"
+                  />
                 )}
                 <span className="truncate">
-                  {selectedChatSkill?.name ?? '技能选择'}
+                  {selectedChatSkill?.name ?? 'BingoMate'}
                 </span>
                 <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
               </button>
@@ -2922,12 +2929,12 @@ function ChatView({
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
             <div className="space-y-2">
               <button
-                aria-label="自动选择技能"
+                aria-label="选择默认综合技能BingoMate"
                 aria-pressed={!selectedChatSkill}
                 onClick={() => {
                   setSelectedChatSkill(null);
                   setSkillSheetOpen(false);
-                  notify('已设为自动选择技能');
+                  notify('已切换到 BingoMate 综合技能');
                 }}
                 className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${!selectedChatSkill ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
               >
@@ -2940,9 +2947,9 @@ function ChatView({
                   className="size-11 shrink-0 object-contain"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-base font-bold">自动选择技能</span>
+                  <span className="block truncate text-base font-bold">BingoMate</span>
                   <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                    根据对话内容匹配合适的技能
+                    默认综合技能 · 适合日常学习问答
                   </span>
                 </span>
                 <span
