@@ -13,12 +13,14 @@ import {
   Bot,
   BrainCircuit,
   Camera,
+  CalendarClock,
   Check,
   ChevronDown,
   ChevronRight,
   ChevronsUpDown,
   CircleAlert,
   CircleHelp,
+  Clock3,
   Cpu,
   FileImage,
   Flame,
@@ -72,7 +74,8 @@ type AppView =
   | 'settings'
   | 'points'
   | 'devices'
-  | 'channels';
+  | 'channels'
+  | 'tasks';
 type BingoDevice = {
   id: string;
   name: string;
@@ -88,6 +91,17 @@ type RemoteChannel = {
   recommended?: boolean;
   icon: LucideIcon;
   color: string;
+};
+type ScheduledTask = {
+  id: string;
+  name: string;
+  instruction: string;
+  expert: string;
+  schedule: string;
+  channel: string;
+  active: boolean;
+  lastRun?: string;
+  source: 'app' | 'chat';
 };
 type PointTransaction = {
   id: string;
@@ -158,6 +172,12 @@ const features: {
     hint: '本周正确率 +12%',
     icon: BarChart3,
     iconColor: 'bg-indigo-50 text-indigo-600',
+  },
+  {
+    label: '定时任务',
+    hint: '学习提醒与家长报告',
+    icon: CalendarClock,
+    iconColor: 'bg-fuchsia-50 text-fuchsia-600',
   },
 ];
 
@@ -350,6 +370,42 @@ const initialRemoteChannels: RemoteChannel[] = [
     connected: true,
     icon: Send,
     color: 'bg-cyan-500 text-white',
+  },
+];
+
+const initialScheduledTasks: ScheduledTask[] = [
+  {
+    id: 'homework-reminder',
+    name: '晚间作业检查',
+    instruction: '提醒学生检查当天作业是否完成，并整理明天需要携带的课本。',
+    expert: '学习规划助手',
+    schedule: '每天 20:00',
+    channel: 'My BingoClaw',
+    active: true,
+    lastRun: '昨天 20:00 · 成功',
+    source: 'app',
+  },
+  {
+    id: 'word-review',
+    name: '英语单词晨间复习',
+    instruction: '从本周错词中选择 10 个单词，带学生快速复习和朗读。',
+    expert: '英语陪练助手',
+    schedule: '工作日 07:10',
+    channel: 'App 通知',
+    active: true,
+    lastRun: '今天 07:10 · 成功',
+    source: 'chat',
+  },
+  {
+    id: 'parent-report',
+    name: '每周学习报告',
+    instruction: '汇总本周学习时长、错题变化和下周建议，发送给家长。',
+    expert: '成长报告助手',
+    schedule: '每周日 20:30',
+    channel: '微信',
+    active: false,
+    lastRun: '8月30日 20:30 · 成功',
+    source: 'app',
   },
 ];
 
@@ -1294,6 +1350,277 @@ function DevicesView({
   );
 }
 
+function TasksView({
+  tasks,
+  onBack,
+  onCreate,
+  onToggle,
+}: {
+  tasks: ScheduledTask[];
+  onBack: () => void;
+  onCreate: (task: ScheduledTask) => void;
+  onToggle: (taskId: string) => void;
+}) {
+  const [tab, setTab] = useState<'list' | 'history'>('list');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [taskName, setTaskName] = useState('');
+  const [instruction, setInstruction] = useState('');
+  const [expert, setExpert] = useState('学习规划助手');
+  const [frequency, setFrequency] = useState('每天');
+  const [time, setTime] = useState('20:00');
+  const [channel, setChannel] = useState('My BingoClaw');
+  const canSave = Boolean(taskName.trim() && instruction.trim() && time);
+
+  const saveTask = () => {
+    if (!canSave) return;
+    const schedule =
+      frequency === '每周'
+        ? `每周日 ${time}`
+        : frequency === '单次'
+          ? `明天 ${time}`
+          : `${frequency} ${time}`;
+    onCreate({
+      id: `task-${Date.now()}`,
+      name: taskName.trim(),
+      instruction: instruction.trim(),
+      expert,
+      schedule,
+      channel,
+      active: true,
+      source: 'app',
+    });
+    setTaskName('');
+    setInstruction('');
+    setExpert('学习规划助手');
+    setFrequency('每天');
+    setTime('20:00');
+    setChannel('My BingoClaw');
+    setCreateOpen(false);
+  };
+
+  return (
+    <>
+      <Header
+        title="定时任务"
+        subtitle="学习提醒与自动报告"
+        onBack={onBack}
+        backLabel="返回聊天"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-4xl">
+          <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 rounded-2xl bg-muted p-1">
+              {[
+                ['list', '任务列表'],
+                ['history', '执行历史'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  aria-pressed={tab === value}
+                  onClick={() => setTab(value as 'list' | 'history')}
+                  className={`min-h-10 flex-1 rounded-xl px-3 text-sm font-semibold transition-colors ${tab === value ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="h-12 shrink-0 rounded-2xl px-4"
+            >
+              <Plus className="size-4" />
+              创建任务
+            </Button>
+          </div>
+
+          {tab === 'list' ? (
+            <div className="mt-4 space-y-3">
+              {tasks.map((task) => (
+                <article
+                  key={task.id}
+                  className="rounded-[24px] border bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`grid size-12 shrink-0 place-items-center rounded-2xl ${task.active ? 'bg-fuchsia-50 text-fuchsia-600' : 'bg-slate-100 text-slate-500'}`}
+                    >
+                      <CalendarClock className="size-6" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-bold">{task.name}</h2>
+                        {task.source === 'chat' && (
+                          <Badge className="bg-blue-50 text-blue-700">AI 创建</Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                        {task.instruction}
+                      </p>
+                    </div>
+                    <button
+                      role="switch"
+                      aria-checked={task.active}
+                      aria-label={`${task.active ? '暂停' : '启用'}任务：${task.name}`}
+                      onClick={() => onToggle(task.id)}
+                      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${task.active ? 'bg-blue-600' : 'bg-slate-300'}`}
+                    >
+                      <span
+                        className={`absolute top-1 size-5 rounded-full bg-white shadow-sm transition-transform ${task.active ? 'left-6' : 'left-1'}`}
+                      />
+                    </button>
+                  </div>
+                  <div className="mt-4 grid gap-2 border-t pt-3 text-xs text-muted-foreground sm:grid-cols-2">
+                    <span className="flex items-center gap-1.5">
+                      <Clock3 className="size-4" />
+                      {task.schedule}
+                    </span>
+                    <span className="flex items-center gap-1.5 sm:justify-end">
+                      <Send className="size-4" />
+                      {task.channel}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="size-4" />
+                      {task.expert}
+                    </span>
+                    <span className="truncate sm:text-right">
+                      {task.lastRun ?? '等待首次执行'}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <section className="mt-4 overflow-hidden rounded-3xl border bg-white">
+              {tasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  className={`flex min-h-[76px] items-center gap-3 px-4 py-3 ${index ? 'border-t' : ''}`}
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+                    <Check className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{task.name}</p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {task.lastRun ?? '暂无执行记录'}
+                    </p>
+                  </div>
+                  <Badge className="bg-emerald-50 text-emerald-700">成功</Badge>
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
+      </div>
+
+      <Drawer open={createOpen} onOpenChange={setCreateOpen} showSwipeHandle>
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[620px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(84dvh,700px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="grid size-10 place-items-center rounded-2xl bg-fuchsia-50 text-fuchsia-600">
+                <CalendarClock className="size-5" />
+              </span>
+              创建定时任务
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              设置学习提醒、复习安排或家长学习报告。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭创建任务"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">任务名称</span>
+                <input
+                  aria-label="任务名称"
+                  value={taskName}
+                  onChange={(event) => setTaskName(event.target.value)}
+                  placeholder="例如：晚间作业检查"
+                  autoComplete="off"
+                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">执行助手</span>
+                <select
+                  aria-label="执行助手"
+                  value={expert}
+                  onChange={(event) => setExpert(event.target.value)}
+                  className="h-12 w-full appearance-none rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option>学习规划助手</option>
+                  <option>作业辅导助手</option>
+                  <option>英语陪练助手</option>
+                  <option>成长报告助手</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">任务内容</span>
+                <textarea
+                  aria-label="任务内容"
+                  value={instruction}
+                  onChange={(event) => setInstruction(event.target.value)}
+                  placeholder="描述需要提醒或自动完成的事情"
+                  rows={3}
+                  className="w-full resize-none rounded-2xl border bg-white px-4 py-3 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              <div>
+                <span className="mb-2 block text-sm font-semibold">执行时间</span>
+                <div className="grid grid-cols-[1fr_120px] gap-2">
+                  <select
+                    aria-label="重复周期"
+                    value={frequency}
+                    onChange={(event) => setFrequency(event.target.value)}
+                    className="h-12 min-w-0 appearance-none rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option>每天</option>
+                    <option>工作日</option>
+                    <option>每周</option>
+                    <option>单次</option>
+                  </select>
+                  <input
+                    type="time"
+                    aria-label="执行时间"
+                    value={time}
+                    onChange={(event) => setTime(event.target.value)}
+                    className="h-12 min-w-0 rounded-2xl border bg-white px-3 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">提醒渠道</span>
+                <select
+                  aria-label="提醒渠道"
+                  value={channel}
+                  onChange={(event) => setChannel(event.target.value)}
+                  className="h-12 w-full appearance-none rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option>My BingoClaw</option>
+                  <option>App 通知</option>
+                  <option>微信</option>
+                </select>
+              </label>
+            </div>
+            <Button
+              disabled={!canSave}
+              onClick={saveTask}
+              className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              保存任务
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
 function ChannelsView({
   channels,
   onBack,
@@ -1712,10 +2039,12 @@ function PointsView({
 function ChatView({
   onMenu,
   onCamera,
+  onScheduleFromChat,
   notify,
 }: {
   onMenu: () => void;
   onCamera: () => void;
+  onScheduleFromChat: (text: string) => void;
   notify: (message: string) => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1727,6 +2056,8 @@ function ChatView({
   const send = (preset?: string) => {
     const text = (preset ?? input).trim();
     if (!text || sending) return;
+    const isSchedulingRequest = /提醒|定时|每天|每周|每晚|每早/.test(text);
+    if (isSchedulingRequest) onScheduleFromChat(text);
     setInput('');
     setMessages((current) => [
       ...current,
@@ -1739,7 +2070,9 @@ function ChatView({
         {
           id: Date.now() + 1,
           role: 'assistant',
-          text: '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
+          text: isSchedulingRequest
+            ? '好的，定时任务已经创建。你可以在侧边栏的“定时任务”中查看、暂停或调整安排。'
+            : '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
         },
       ]);
       setSending(false);
@@ -2207,6 +2540,9 @@ export function BingoApp() {
   const [remoteChannels, setRemoteChannels] = useState<RemoteChannel[]>(
     initialRemoteChannels,
   );
+  const [scheduledTasks, setScheduledTasks] = useState<ScheduledTask[]>(
+    initialScheduledTasks,
+  );
   const [pointTransactions, setPointTransactions] = useState<
     PointTransaction[]
   >([
@@ -2272,6 +2608,12 @@ export function BingoApp() {
     if (label === '拍题辅导') {
       setView('chat');
       setPhotoStep('camera');
+      return;
+    }
+    if (label === '定时任务') {
+      setPhotoStep(null);
+      setSelectedSkill(null);
+      setView('tasks');
       return;
     }
     notify(`已进入${label}`);
@@ -2369,6 +2711,48 @@ export function BingoApp() {
     );
     notify(`${channel.name}通道已断开`);
   };
+  const createScheduledTask = (task: ScheduledTask) => {
+    setScheduledTasks((current) => [task, ...current]);
+    notify('定时任务已创建');
+  };
+  const toggleScheduledTask = (taskId: string) => {
+    setScheduledTasks((current) =>
+      current.map((task) =>
+        task.id === taskId ? { ...task, active: !task.active } : task,
+      ),
+    );
+  };
+  const createTaskFromChat = (text: string) => {
+    const matchedTime = text.match(/([01]?\d|2[0-3])[:：](\d{2})/);
+    const time = matchedTime
+      ? `${matchedTime[1].padStart(2, '0')}:${matchedTime[2]}`
+      : '20:00';
+    const name = text.includes('作业')
+      ? '作业完成提醒'
+      : text.includes('单词') || text.includes('英语')
+        ? '英语复习提醒'
+        : text.includes('报告')
+          ? '家长学习报告'
+          : 'AI 学习提醒';
+    const schedule = text.includes('每周')
+      ? `每周日 ${time}`
+      : text.includes('工作日')
+        ? `工作日 ${time}`
+        : `每天 ${time}`;
+    setScheduledTasks((current) => [
+      {
+        id: `chat-task-${Date.now()}`,
+        name,
+        instruction: text,
+        expert: text.includes('报告') ? '成长报告助手' : '学习规划助手',
+        schedule,
+        channel: 'My BingoClaw',
+        active: true,
+        source: 'chat',
+      },
+      ...current,
+    ]);
+  };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
@@ -2443,6 +2827,13 @@ export function BingoApp() {
               onConnect={connectChannel}
               onDisconnect={disconnectChannel}
             />
+          ) : view === 'tasks' ? (
+            <TasksView
+              tasks={scheduledTasks}
+              onBack={() => setView('chat')}
+              onCreate={createScheduledTask}
+              onToggle={toggleScheduledTask}
+            />
           ) : photoStep ? (
             <PhotoFlow
               step={photoStep}
@@ -2457,6 +2848,7 @@ export function BingoApp() {
                 setView('chat');
                 setPhotoStep('camera');
               }}
+              onScheduleFromChat={createTaskFromChat}
               notify={notify}
             />
           )}
