@@ -2203,7 +2203,45 @@ function ChannelsView({
 function GrowthReportView({ onBack }: { onBack: () => void }) {
   const [period, setPeriod] = useState<GrowthPeriod>('weekly');
   const [selectedReport, setSelectedReport] = useState<GrowthReport | null>(null);
+  const [indexHelpOpen, setIndexHelpOpen] = useState(false);
   const current = growthReports[period];
+  const indexDimensions = [
+    {
+      label: '知识掌握',
+      score: 88,
+      weight: 30,
+      detail: '正确率、订正后掌握度和同类题迁移表现',
+      color: 'bg-blue-500',
+    },
+    {
+      label: '学习投入',
+      score: 90,
+      weight: 25,
+      detail: '有效学习时长、任务完成率和连续学习情况',
+      color: 'bg-indigo-500',
+    },
+    {
+      label: '主动思考',
+      score: 84,
+      weight: 20,
+      detail: '独立作答、主动追问和用自己的语言复述思路',
+      color: 'bg-violet-500',
+    },
+    {
+      label: '复习执行',
+      score: 82,
+      weight: 15,
+      detail: '错题回顾完成率和间隔复习后的掌握变化',
+      color: 'bg-emerald-500',
+    },
+    {
+      label: '成长稳定',
+      score: 80,
+      weight: 10,
+      detail: '近 30 天学习节奏与能力表现的稳定程度',
+      color: 'bg-amber-500',
+    },
+  ];
 
   return (
     <>
@@ -2218,7 +2256,17 @@ function GrowthReportView({ onBack }: { onBack: () => void }) {
           <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-5 text-white shadow-[0_16px_40px_rgba(67,56,202,.22)] md:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-blue-100">综合成长指数</p>
+                <div className="flex flex-wrap items-center gap-x-2">
+                  <p className="text-sm font-medium text-blue-100">综合成长指数</p>
+                  <button
+                    aria-label="了解什么是成长指数"
+                    onClick={() => setIndexHelpOpen(true)}
+                    className="flex min-h-11 items-center gap-1 rounded-xl px-1 text-xs font-medium text-white/90 underline decoration-white/40 underline-offset-4 transition-colors hover:text-white"
+                  >
+                    <CircleHelp className="size-3.5" />
+                    什么是成长指数？
+                  </button>
+                </div>
                 <div className="mt-1 flex items-end gap-2">
                   <strong className="text-5xl font-bold leading-none tabular-nums">86</strong>
                   <span className="mb-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
@@ -2419,6 +2467,95 @@ function GrowthReportView({ onBack }: { onBack: () => void }) {
               </div>
             </>
           )}
+        </DrawerContent>
+      </Drawer>
+      <Drawer
+        open={indexHelpOpen}
+        onOpenChange={setIndexHelpOpen}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[640px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(86dvh,760px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="pr-12 text-xl font-bold">什么是成长指数？</DrawerTitle>
+            <DrawerDescription className="text-left">
+              用一个 0—100 的数字，观察学习方式和能力是否持续向好。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭成长指数说明"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(22px,env(safe-area-inset-bottom))]">
+            <section className="rounded-3xl bg-blue-50 p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                  <BarChart3 className="size-5" />
+                </span>
+                <div>
+                  <h3 className="font-bold text-blue-950">它关注的是“成长”，不只是分数</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    成长指数综合近 30 天的学习记录，比较的是学生当前状态与自己的过去表现，帮助学生和家长看到努力有没有形成有效进步。
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-3xl border bg-white p-5">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <h3 className="font-bold">当前指数怎么算</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">每个维度先换算为 0—100 分，再按权重相加</p>
+                </div>
+                <strong className="text-3xl text-blue-700 tabular-nums">86</strong>
+              </div>
+              <div className="mt-5 space-y-5">
+                {indexDimensions.map((dimension) => (
+                  <div key={dimension.label}>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold">{dimension.label}</span>
+                      <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
+                        权重 {dimension.weight}%
+                      </span>
+                      <span className="ml-auto font-bold tabular-nums">{dimension.score}</span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={`h-full rounded-full ${dimension.color}`}
+                        style={{ width: `${dimension.score}%` }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{dimension.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-3xl border border-indigo-100 bg-indigo-50/70 p-5">
+              <h3 className="font-bold text-indigo-950">小满本期的计算过程</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700">
+                88 × 30% ＋ 90 × 25% ＋ 84 × 20% ＋ 82 × 15% ＋ 80 × 10%
+              </p>
+              <div className="mt-3 flex items-center justify-between border-t border-indigo-100 pt-3">
+                <span className="text-sm font-medium text-slate-600">加权结果</span>
+                <span className="text-lg font-bold text-indigo-700 tabular-nums">86.0 → 86</span>
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-3xl border bg-white p-5">
+              <h3 className="font-bold">指数如何更新</h3>
+              <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">
+                <p>每天根据新增的对话、练习、错题复习和学习任务记录更新一次。</p>
+                <p>采用近 30 天滚动数据，近期表现影响更大，单次失误不会让指数大幅波动。</p>
+                <p>记录较少时会降低评价置信度，不会因为使用次数少就直接判断学习能力较弱。</p>
+              </div>
+            </section>
+
+            <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">
+              成长指数用于观察学习趋势，不等同于考试成绩、年级排名或智力评价。重要学习判断应结合老师反馈、实际作业和阶段测评一起查看。
+            </p>
+          </div>
         </DrawerContent>
       </Drawer>
     </>
