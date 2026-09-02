@@ -140,6 +140,7 @@ type ChatMode = {
   description: string;
   placeholder: string;
   icon: LucideIcon;
+  image: string;
   iconStyle: string;
   suggestions: string[];
   reply: string;
@@ -325,6 +326,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '问一道题、检查思路，或者把今天的复习交给我安排。',
     placeholder: '发消息或创建学习任务…',
     icon: Sparkles,
+    image: '/brand/bingomate-owl.png',
     iconStyle: 'bg-blue-50 text-blue-600',
     suggestions: [],
     reply: '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
@@ -337,6 +339,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '先识别题目和你的解题过程，再从卡住的那一步开始提示。',
     placeholder: '描述题目、说说你的思路，或上传题目照片…',
     icon: Camera,
+    image: '/features/photo-tutor-3d.png',
     iconStyle: 'bg-blue-50 text-blue-600',
     suggestions: [
       '帮我分析下这道题',
@@ -354,6 +357,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '智能批改、错因分析和薄弱点诊断，帮助学生找到真正需要加强的环节。',
     placeholder: '描述批改任务，或上传学生作业…',
     icon: PenLine,
+    image: '/features/homework-review-3d.png',
     iconStyle: 'bg-violet-50 text-violet-600',
     suggestions: [
       '请批改这份学生作业',
@@ -371,6 +375,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '按错因和掌握度安排复习，用相似题确认知识点是否已经掌握。',
     placeholder: '上传错题，或告诉我今天想复习的科目…',
     icon: RotateCcw,
+    image: '/features/mistake-review-3d.png',
     iconStyle: 'bg-orange-50 text-orange-600',
     suggestions: [
       '从错题本挑 5 道复习',
@@ -388,6 +393,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '根据年级、章节和薄弱知识点生成练习，完成后自动调整下一组难度。',
     placeholder: '告诉我科目、章节、题量和难度…',
     icon: BrainCircuit,
+    image: '/features/smart-practice-3d.png',
     iconStyle: 'bg-emerald-50 text-emerald-600',
     suggestions: [
       '生成 10 道一次函数练习',
@@ -2598,11 +2604,14 @@ function ChatView({
               className="size-11 shrink-0 object-contain"
             />
           ) : (
-            <span
-              className={`grid size-11 shrink-0 place-items-center rounded-2xl ${mode.iconStyle}`}
-            >
-              <ModeIcon className="size-5" />
-            </span>
+            <img
+              src={mode.image}
+              alt=""
+              aria-hidden="true"
+              width={44}
+              height={44}
+              className="size-11 shrink-0 object-contain drop-shadow-sm"
+            />
           )
         }
         right={
@@ -2627,15 +2636,14 @@ function ChatView({
               className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
             >
               {message.role === 'assistant' && (
-                <span
-                  className={`grid size-9 shrink-0 place-items-center rounded-xl ${chatMode === 'default' ? 'bg-primary text-white' : mode.iconStyle}`}
-                >
-                  {chatMode === 'default' ? (
-                    <Bot className="size-5" />
-                  ) : (
-                    <ModeIcon className="size-5" />
-                  )}
-                </span>
+                <img
+                  src={mode.image}
+                  alt=""
+                  aria-hidden="true"
+                  width={36}
+                  height={36}
+                  className="size-9 shrink-0 object-contain"
+                />
               )}
               <div
                 className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed md:max-w-[68%] ${message.role === 'user' ? 'rounded-tr-md bg-primary text-white' : 'rounded-tl-md border bg-card'}`}
@@ -2646,15 +2654,14 @@ function ChatView({
           ))}
           {sending && (
             <div className="flex items-center gap-3">
-              <span
-                className={`grid size-9 place-items-center rounded-xl ${chatMode === 'default' ? 'bg-primary text-white' : mode.iconStyle}`}
-              >
-                {chatMode === 'default' ? (
-                  <Bot className="size-5" />
-                ) : (
-                  <ModeIcon className="size-5" />
-                )}
-              </span>
+              <img
+                src={mode.image}
+                alt=""
+                aria-hidden="true"
+                width={36}
+                height={36}
+                className="size-9 object-contain"
+              />
               <span className="rounded-2xl rounded-tl-md border bg-card px-4 py-3 text-sm text-muted-foreground">
                 正在思考…
               </span>
@@ -2675,11 +2682,14 @@ function ChatView({
                   <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
                 </span>
               ) : (
-                <span
-                  className={`grid size-[76px] place-items-center rounded-[26px] shadow-sm ${mode.iconStyle}`}
-                >
-                  <ModeIcon className="size-9" />
-                </span>
+                <img
+                  src={mode.image}
+                  alt=""
+                  aria-hidden="true"
+                  width={88}
+                  height={88}
+                  className="size-[88px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.18)]"
+                />
               )}
               <h2 className="mt-5 text-[28px] font-bold tracking-tight">
                 {mode.headline}
@@ -2695,38 +2705,37 @@ function ChatView({
                       {
                         label: '拍题辅导',
                         target: 'photo' as ChatModeId,
-                        icon: Camera,
-                        style: 'bg-blue-50 text-blue-600',
+                        image: chatModes.photo.image,
                       },
                       {
                         label: '作业批阅',
                         target: 'homework' as ChatModeId,
-                        icon: PenLine,
-                        style: 'bg-violet-50 text-violet-600',
+                        image: chatModes.homework.image,
                       },
                       {
                         label: '错题复习',
                         target: 'mistakes' as ChatModeId,
-                        icon: RotateCcw,
-                        style: 'bg-orange-50 text-orange-600',
+                        image: chatModes.mistakes.image,
                       },
                       {
                         label: '智能练习',
                         target: 'practice' as ChatModeId,
-                        icon: BrainCircuit,
-                        style: 'bg-emerald-50 text-emerald-600',
+                        image: chatModes.practice.image,
                       },
-                    ].map(({ label, target, icon: Icon, style }) => (
+                    ].map(({ label, target, image }) => (
                       <button
                         key={target}
                         onClick={() => selectMode(target)}
-                        className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                        className="flex min-h-[64px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-semibold shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
                       >
-                        <span
-                          className={`grid size-9 shrink-0 place-items-center rounded-xl ${style}`}
-                        >
-                          <Icon className="size-4" />
-                        </span>
+                        <img
+                          src={image}
+                          alt=""
+                          aria-hidden="true"
+                          width={48}
+                          height={48}
+                          className="size-12 shrink-0 object-contain drop-shadow-sm"
+                        />
                         {label}
                         <ChevronRight className="ml-auto size-4 text-muted-foreground" />
                       </button>
