@@ -72,6 +72,7 @@ type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
 type AppView =
   | 'chat'
   | 'skills'
+  | 'growth'
   | 'settings'
   | 'points'
   | 'devices'
@@ -142,6 +143,18 @@ type ChatMode = {
   iconStyle: string;
   suggestions: string[];
   reply: string;
+};
+type GrowthPeriod = 'daily' | 'weekly' | 'monthly';
+type GrowthReport = {
+  id: string;
+  title: string;
+  date: string;
+  summary: string;
+  score: number;
+  change: string;
+  focus: string;
+  highlight: string;
+  nextStep: string;
 };
 
 const features: {
@@ -423,6 +436,141 @@ const histories = [
     ],
   },
 ];
+
+const growthReports: Record<
+  GrowthPeriod,
+  {
+    label: string;
+    range: string;
+    insight: string;
+    trend: number[];
+    reports: GrowthReport[];
+  }
+> = {
+  daily: {
+    label: '每日',
+    range: '今天 · 9月2日',
+    insight: '今天完成了 3 次专注学习，二次函数的解题步骤比昨天更完整。',
+    trend: [42, 58, 50, 66, 62, 76, 84],
+    reports: [
+      {
+        id: 'daily-0902',
+        title: '今日学习小结',
+        date: '9月2日 21:10',
+        summary: '完成数学拍题辅导与英语错词复习，主动订正了 4 道题。',
+        score: 88,
+        change: '+6',
+        focus: '二次函数 · 英语词汇',
+        highlight: '遇到难题时开始主动写出已知条件，解题耐心明显提升。',
+        nextStep: '明天用 10 分钟复习二次函数顶点公式，再完成 2 道同类题。',
+      },
+      {
+        id: 'daily-0901',
+        title: '昨日学习小结',
+        date: '9月1日 20:45',
+        summary: '完成 45 分钟专注学习，英语阅读概括题正确率达到 80%。',
+        score: 82,
+        change: '+3',
+        focus: '阅读理解 · 几何证明',
+        highlight: '能够先圈出段落关键词，再组织概括答案。',
+        nextStep: '继续练习一篇阅读理解，并尝试把答案压缩到 30 字以内。',
+      },
+      {
+        id: 'daily-0831',
+        title: '周末学习小结',
+        date: '8月31日 19:30',
+        summary: '复习本周错题 8 道，其中 6 道已经能够独立完成。',
+        score: 79,
+        change: '+4',
+        focus: '错题复习 · 计算检查',
+        highlight: '订正后会主动说明原来的错误原因。',
+        nextStep: '保留仍未掌握的 2 道题，三天后再次复习。',
+      },
+    ],
+  },
+  weekly: {
+    label: '每周',
+    range: '本周 · 8月31日—9月6日',
+    insight: '本周学习稳定性提升，数学正确率提高 12%，连续学习已保持 18 天。',
+    trend: [48, 55, 61, 58, 70, 76, 86],
+    reports: [
+      {
+        id: 'weekly-36',
+        title: '第 36 周成长报告',
+        date: '本周 · 更新至今天',
+        summary: '学习节奏更稳定，数学推理和错题复盘是本周最明显的进步。',
+        score: 86,
+        change: '+12%',
+        focus: '数学推理 · 自主订正',
+        highlight: '本周主动向 AI 追问 9 次，能够用自己的语言复述解题过程。',
+        nextStep: '保持每日一次错题回顾，周末完成一组函数综合练习。',
+      },
+      {
+        id: 'weekly-35',
+        title: '第 35 周成长报告',
+        date: '8月24日—8月30日',
+        summary: '完成 7 项学习任务，开始形成“先思考、再求助”的学习习惯。',
+        score: 78,
+        change: '+7%',
+        focus: '学习习惯 · 英语阅读',
+        highlight: '连续 7 天按计划完成晚间复习，拖延次数减少。',
+        nextStep: '阅读概括题继续练习关键词提取，注意答案表达的完整性。',
+      },
+      {
+        id: 'weekly-34',
+        title: '第 34 周成长报告',
+        date: '8月17日—8月23日',
+        summary: '错题复习开始规律化，基础计算准确率稳步回升。',
+        score: 72,
+        change: '+5%',
+        focus: '错题整理 · 基础计算',
+        highlight: '能够区分“不会做”和“粗心错”，复习目标更明确。',
+        nextStep: '每天保留 15 分钟无提示独立作答，记录检查过程。',
+      },
+    ],
+  },
+  monthly: {
+    label: '每月',
+    range: '本月 · 2026年9月',
+    insight: '近 30 天累计学习 124 小时，薄弱知识点减少 6 个，成长趋势持续向上。',
+    trend: [38, 47, 52, 63, 72, 86],
+    reports: [
+      {
+        id: 'monthly-09',
+        title: '9月成长月报',
+        date: '9月 · 持续更新',
+        summary: '自主学习意愿增强，函数与阅读理解已成为优势增长项。',
+        score: 86,
+        change: '+9.2%',
+        focus: '自主学习 · 综合应用',
+        highlight: '本月已完成 38 次有效对话，主动复盘比例达到 76%。',
+        nextStep: '在保持稳定学习时长的同时，增加综合题和限时训练。',
+      },
+      {
+        id: 'monthly-08',
+        title: '8月成长月报',
+        date: '8月1日—8月31日',
+        summary: '建立稳定的晚间学习节奏，累计掌握 12 个重点知识点。',
+        score: 77,
+        change: '+11%',
+        focus: '习惯养成 · 基础巩固',
+        highlight: '连续学习天数从 5 天提升到 17 天，任务完成率达到 89%。',
+        nextStep: '把错题复习从“看懂”升级到“隔天能独立做对”。',
+      },
+      {
+        id: 'monthly-07',
+        title: '7月成长月报',
+        date: '7月1日—7月31日',
+        summary: '开始使用 BingoMate 制订计划，逐步找到适合自己的学习节奏。',
+        score: 66,
+        change: '+8%',
+        focus: '目标规划 · 作业管理',
+        highlight: '能够把较大的学习任务拆成多个可完成的小目标。',
+        nextStep: '固定每天开始学习的时间，减少临时安排带来的拖延。',
+      },
+    ],
+  },
+};
 
 const initialRemoteChannels: RemoteChannel[] = [
   {
@@ -2046,6 +2194,231 @@ function ChannelsView({
   );
 }
 
+function GrowthReportView({ onBack }: { onBack: () => void }) {
+  const [period, setPeriod] = useState<GrowthPeriod>('weekly');
+  const [selectedReport, setSelectedReport] = useState<GrowthReport | null>(null);
+  const current = growthReports[period];
+
+  return (
+    <>
+      <Header
+        title="成长报告"
+        subtitle="林小满 · 每一次努力都有记录"
+        onBack={onBack}
+        backLabel="返回聊天"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(28px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-5xl">
+          <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-5 text-white shadow-[0_16px_40px_rgba(67,56,202,.22)] md:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-blue-100">综合成长指数</p>
+                <div className="mt-1 flex items-end gap-2">
+                  <strong className="text-5xl font-bold leading-none tabular-nums">86</strong>
+                  <span className="mb-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
+                    本月 +9.2%
+                  </span>
+                </div>
+              </div>
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15">
+                <BarChart3 className="size-6" />
+              </span>
+            </div>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-blue-50">
+              小满正在形成稳定的自主学习习惯，数学推理和错题复盘进步最明显。
+            </p>
+            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-white/15 pt-4">
+              {[
+                ['18天', '连续学习'],
+                ['124h', '累计学习'],
+                ['78%', '知识掌握'],
+              ].map(([value, label]) => (
+                <div key={label} className="min-w-0">
+                  <p className="text-lg font-bold tabular-nums md:text-xl">{value}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-blue-100 md:text-xs">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div
+            role="tablist"
+            aria-label="成长报告周期"
+            className="mt-5 grid grid-cols-3 rounded-2xl bg-slate-100 p-1"
+          >
+            {(Object.keys(growthReports) as GrowthPeriod[]).map((item) => (
+              <button
+                key={item}
+                role="tab"
+                aria-selected={period === item}
+                onClick={() => setPeriod(item)}
+                className={`min-h-11 rounded-xl text-sm font-semibold transition-all ${period === item ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                {growthReports[item].label}
+              </button>
+            ))}
+          </div>
+
+          <section className="mt-4 rounded-3xl border border-blue-100 bg-blue-50/70 p-4 md:p-5">
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                <Sparkles className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-blue-700">{current.range}</p>
+                <h2 className="mt-1 font-bold">这段时间的成长</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{current.insight}</p>
+              </div>
+            </div>
+            <div
+              className="mt-5 flex h-20 items-end gap-2"
+              role="img"
+              aria-label={`${current.label}成长趋势持续上升，当前成长指数为86`}
+            >
+              {current.trend.map((value, index) => (
+                <span
+                  key={`${period}-${index}`}
+                  className="min-w-0 flex-1 rounded-t-lg bg-blue-200 last:bg-blue-600"
+                  style={{ height: `${value}%` }}
+                />
+              ))}
+            </div>
+            <div className="mt-2 flex justify-between text-[11px] text-slate-500">
+              <span>{period === 'daily' ? '7天前' : period === 'weekly' ? '6周前' : '6个月前'}</span>
+              <span>持续提升</span>
+              <span>现在</span>
+            </div>
+          </section>
+
+          <section className="mt-6">
+            <div className="flex items-end justify-between gap-3 px-1">
+              <div>
+                <h2 className="text-lg font-bold">{current.label}成长记录</h2>
+                <p className="mt-1 text-xs text-muted-foreground">按周期自动沉淀学习表现与进步</p>
+              </div>
+              <span className="text-xs text-muted-foreground">共 {current.reports.length} 份</span>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {current.reports.map((report) => (
+                <button
+                  key={report.id}
+                  aria-label={`查看${report.title}`}
+                  onClick={() => setSelectedReport(report)}
+                  className="flex min-h-[164px] w-full flex-col rounded-3xl border bg-white p-4 text-left shadow-sm transition-[border-color,box-shadow] hover:border-blue-200 hover:shadow-md active:bg-blue-50/40"
+                >
+                  <div className="flex w-full items-start gap-3">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-indigo-600">
+                      <BarChart3 className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold">{report.title}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{report.date}</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-xl font-bold text-blue-700 tabular-nums">{report.score}</span>
+                      <span className="block text-[11px] font-medium text-emerald-700">{report.change}</span>
+                    </span>
+                  </div>
+                  <span className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-600">{report.summary}</span>
+                  <span className="mt-auto flex w-full items-center gap-2 pt-3 text-xs text-slate-500">
+                    <Sparkles className="size-3.5 shrink-0 text-amber-500" />
+                    <span className="truncate">{report.focus}</span>
+                    <ChevronRight className="ml-auto size-4 shrink-0" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-3xl border bg-white p-5">
+            <div className="flex items-center gap-3">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-orange-50 text-orange-600">
+                <UserRound className="size-6" />
+              </span>
+              <div>
+                <h2 className="font-bold">小满的学习画像</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">根据近期学习行为持续更新</p>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {['坚持型学习者', '数学推理进步快', '善于主动追问', '晚间效率最高'].map((tag) => (
+                <span key={tag} className="rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 space-y-4">
+              {[
+                ['自主学习', 86, 'bg-blue-500'],
+                ['错题复盘', 78, 'bg-violet-500'],
+                ['专注稳定', 74, 'bg-emerald-500'],
+              ].map(([label, value, color]) => (
+                <div key={label as string}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{label}</span>
+                    <span className="font-semibold tabular-nums">{value}%</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full ${color}`} style={{ width: `${value}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 rounded-2xl bg-amber-50 p-3 text-sm leading-relaxed text-amber-900">
+              给家长的观察：小满对具体、及时的鼓励反应很好。建议多肯定她坚持思考的过程，不只关注最终分数。
+            </p>
+          </section>
+        </div>
+      </div>
+
+      <Drawer
+        open={Boolean(selectedReport)}
+        onOpenChange={(open) => !open && setSelectedReport(null)}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[620px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(72dvh,640px)]">
+          {selectedReport && (
+            <>
+              <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+                <DrawerTitle className="pr-12 text-xl font-bold">{selectedReport.title}</DrawerTitle>
+                <DrawerDescription className="text-left">{selectedReport.date}</DrawerDescription>
+                <DrawerClose
+                  aria-label="关闭成长报告"
+                  className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+                >
+                  <X className="size-5" />
+                </DrawerClose>
+              </DrawerHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(20px,env(safe-area-inset-bottom))]">
+                <section className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 p-5 text-white">
+                  <p className="text-sm text-blue-100">本期成长指数</p>
+                  <div className="mt-1 flex items-end gap-2">
+                    <strong className="text-4xl tabular-nums">{selectedReport.score}</strong>
+                    <span className="mb-1 text-sm font-semibold text-emerald-200">{selectedReport.change}</span>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-blue-50">{selectedReport.summary}</p>
+                </section>
+                <section className="mt-4 rounded-3xl border bg-white p-5">
+                  <h3 className="font-bold">本期亮点</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{selectedReport.highlight}</p>
+                  <div className="mt-4 flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-3 text-sm text-amber-900">
+                    <Sparkles className="size-4 shrink-0" />
+                    {selectedReport.focus}
+                  </div>
+                </section>
+                <section className="mt-4 rounded-3xl border bg-white p-5">
+                  <h3 className="font-bold">下一步建议</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{selectedReport.nextStep}</p>
+                </section>
+              </div>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
 function PointsView({
   points,
   transactions,
@@ -2888,6 +3261,12 @@ export function BingoApp() {
       setView('tasks');
       return;
     }
+    if (label === '成长报告') {
+      setPhotoStep(null);
+      setSelectedSkill(null);
+      setView('growth');
+      return;
+    }
     notify(`已进入${label}`);
   };
   const chooseHistory = (title: string) => {
@@ -3077,6 +3456,8 @@ export function BingoApp() {
               points={points}
               notify={notify}
             />
+          ) : view === 'growth' ? (
+            <GrowthReportView onBack={() => setView('chat')} />
           ) : view === 'points' ? (
             <PointsView
               points={points}
