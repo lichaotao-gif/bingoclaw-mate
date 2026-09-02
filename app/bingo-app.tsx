@@ -802,9 +802,9 @@ function Sidebar({
           <button
             aria-label="打开设置"
             onClick={onSettings}
-            className="grid size-14 shrink-0 place-items-center rounded-full border bg-white text-slate-600 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-white shadow-md shadow-blue-200 transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <Settings className="size-6" />
+            <Settings className="size-5" />
           </button>
         </div>
       </aside>
