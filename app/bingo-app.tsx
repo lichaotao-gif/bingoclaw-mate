@@ -277,7 +277,7 @@ const skills: Skill[] = [
 const models: ModelOption[] = [
   {
     id: 'auto',
-    name: '自动',
+    name: 'Auto',
     description: '根据问题智能选择合适模型',
     multiplier: 'x1.0 积分',
     icon: Box,
