@@ -134,6 +134,7 @@ type ModelOption = {
 };
 type ChatMode = {
   id: ChatModeId;
+  label: string;
   name: string;
   subtitle: string;
   headline: string;
@@ -320,6 +321,7 @@ const models: ModelOption[] = [
 const chatModes: Record<ChatModeId, ChatMode> = {
   default: {
     id: 'default',
+    label: 'BingoMate',
     name: 'BingoMate 学伴',
     subtitle: '在线 · 启发式辅导',
     headline: '今天想学点什么？',
@@ -333,6 +335,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
   },
   photo: {
     id: 'photo',
+    label: '拍题辅导',
     name: '拍题辅导专家',
     subtitle: '识别题目 · 分步启发',
     headline: '拍下题目，我陪你拆解思路',
@@ -351,6 +354,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
   },
   homework: {
     id: 'homework',
+    label: '作业批阅',
     name: '作业批改与学情分析专家',
     subtitle: '智能批改 · 错因分析 · 薄弱点诊断',
     headline: 'Hi，我是作业批改与学情分析专家',
@@ -369,6 +373,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
   },
   mistakes: {
     id: 'mistakes',
+    label: '错题复习',
     name: '错题复习专家',
     subtitle: '错因归纳 · 掌握度追踪',
     headline: '把错题真正变成会做的题',
@@ -387,6 +392,7 @@ const chatModes: Record<ChatModeId, ChatMode> = {
   },
   practice: {
     id: 'practice',
+    label: '智能练习',
     name: '智能练习专家',
     subtitle: '按薄弱点出题 · 难度自适应',
     headline: '为你生成刚刚好的练习',
@@ -2686,9 +2692,22 @@ function ChatView({
   const mode = chatModes[chatMode];
   const ModeIcon = mode.icon;
   const availableSkills = skills.filter((skill) => installedSkills.has(skill.id));
+  const recommendedModes = (
+    ['photo', 'homework', 'mistakes', 'practice'] as ChatModeId[]
+  ).map((modeId) => chatModes[modeId]);
+  const currentSkillName = selectedChatSkill?.name ?? mode.label;
+  const currentSkillImage = selectedChatSkill?.image ?? mode.image;
 
   const selectMode = (nextMode: ChatModeId) => {
     setChatMode(nextMode);
+    setSelectedChatSkill(null);
+    setMessages([]);
+    setInput('');
+  };
+
+  const selectInstalledSkill = (skill: Skill) => {
+    setChatMode('default');
+    setSelectedChatSkill(skill);
     setMessages([]);
     setInput('');
   };
@@ -2774,7 +2793,7 @@ function ChatView({
             >
               {message.role === 'assistant' && (
                 <img
-                  src={mode.image}
+                  src={currentSkillImage}
                   alt=""
                   aria-hidden="true"
                   width={36}
@@ -2792,7 +2811,7 @@ function ChatView({
           {sending && (
             <div className="flex items-center gap-3">
               <img
-                src={mode.image}
+                src={currentSkillImage}
                 alt=""
                 aria-hidden="true"
                 width={36}
@@ -2836,7 +2855,12 @@ function ChatView({
               >
                 {mode.description}
               </p>
-              <div className="mt-7 grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2">
+              {chatMode === 'default' && !selectedChatSkill && (
+                <p className="mt-7 w-full max-w-[360px] text-left text-xs font-semibold text-muted-foreground md:max-w-2xl">
+                  推荐技能
+                </p>
+              )}
+              <div className={`grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2 ${chatMode === 'default' && !selectedChatSkill ? 'mt-2' : 'mt-7'}`}>
                 {chatMode === 'default'
                   ? [
                       {
@@ -2931,34 +2955,21 @@ function ChatView({
                 拍题
               </button>
               <button
-                aria-label={`选择技能，当前为${selectedChatSkill?.name ?? 'BingoMate'}`}
+                aria-label={`选择技能，当前为${currentSkillName}`}
                 aria-haspopup="dialog"
                 aria-expanded={skillSheetOpen}
                 onClick={() => setSkillSheetOpen(true)}
                 className="flex min-h-10 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
               >
-                {selectedChatSkill ? (
-                  <img
-                    src={selectedChatSkill.image}
-                    alt=""
-                    aria-hidden="true"
-                    width={20}
-                    height={20}
-                    className="size-5 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <img
-                    src="/brand/bingomate-owl.png"
-                    alt=""
-                    aria-hidden="true"
-                    width={20}
-                    height={20}
-                    className="size-5 shrink-0 object-contain"
-                  />
-                )}
-                <span className="truncate">
-                  {selectedChatSkill?.name ?? 'BingoMate'}
-                </span>
+                <img
+                  src={currentSkillImage}
+                  alt=""
+                  aria-hidden="true"
+                  width={20}
+                  height={20}
+                  className="size-5 shrink-0 rounded-md object-contain"
+                />
+                <span className="truncate">{currentSkillName}</span>
                 <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
               </button>
               <span className="flex-1" />
@@ -3054,7 +3065,7 @@ function ChatView({
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="text-xl font-bold">选择技能</DrawerTitle>
             <DrawerDescription className="text-left">
-              从已安装技能中选择，本次对话将优先使用该能力。
+              切换推荐技能或已安装技能，当前对话将使用对应能力。
             </DrawerDescription>
             <DrawerClose
               aria-label="关闭技能选择"
@@ -3067,13 +3078,13 @@ function ChatView({
             <div className="space-y-2">
               <button
                 aria-label="选择默认综合技能BingoMate"
-                aria-pressed={!selectedChatSkill}
+                aria-pressed={!selectedChatSkill && chatMode === 'default'}
                 onClick={() => {
-                  setSelectedChatSkill(null);
+                  selectMode('default');
                   setSkillSheetOpen(false);
                   notify('已切换到 BingoMate 综合技能');
                 }}
-                className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${!selectedChatSkill ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
+                className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${!selectedChatSkill && chatMode === 'default' ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
               >
                 <img
                   src="/brand/bingomate-owl.png"
@@ -3090,11 +3101,54 @@ function ChatView({
                   </span>
                 </span>
                 <span
-                  className={`grid size-7 shrink-0 place-items-center rounded-full ${!selectedChatSkill ? 'bg-primary text-white' : 'border bg-white text-transparent'}`}
+                  className={`grid size-7 shrink-0 place-items-center rounded-full ${!selectedChatSkill && chatMode === 'default' ? 'bg-primary text-white' : 'border bg-white text-transparent'}`}
                 >
                   <Check className="size-4" />
                 </span>
               </button>
+              <p className="px-1 pb-1 pt-3 text-xs font-semibold text-muted-foreground">推荐技能</p>
+              {recommendedModes.map((recommendedMode) => {
+                const selected =
+                  !selectedChatSkill && chatMode === recommendedMode.id;
+                return (
+                  <button
+                    key={recommendedMode.id}
+                    aria-label={`选择推荐技能${recommendedMode.label}`}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      selectMode(recommendedMode.id);
+                      setSkillSheetOpen(false);
+                      notify(`已切换到 ${recommendedMode.label}`);
+                    }}
+                    className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${selected ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
+                  >
+                    <img
+                      src={recommendedMode.image}
+                      alt=""
+                      aria-hidden="true"
+                      width={44}
+                      height={44}
+                      className="size-11 shrink-0 object-contain"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-base font-bold">
+                        {recommendedMode.label}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                        {recommendedMode.subtitle}
+                      </span>
+                    </span>
+                    <span
+                      className={`grid size-7 shrink-0 place-items-center rounded-full ${selected ? 'bg-primary text-white' : 'border bg-white text-transparent'}`}
+                    >
+                      <Check className="size-4" />
+                    </span>
+                  </button>
+                );
+              })}
+              {availableSkills.length > 0 && (
+                <p className="px-1 pb-1 pt-3 text-xs font-semibold text-muted-foreground">已安装技能</p>
+              )}
               {availableSkills.map((skill) => {
                 const selected = selectedChatSkill?.id === skill.id;
                 return (
@@ -3103,7 +3157,7 @@ function ChatView({
                     aria-label={`选择技能${skill.name}`}
                     aria-pressed={selected}
                     onClick={() => {
-                      setSelectedChatSkill(skill);
+                      selectInstalledSkill(skill);
                       setSkillSheetOpen(false);
                       notify(`已选择技能：${skill.name}`);
                     }}
