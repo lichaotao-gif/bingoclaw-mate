@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeft,
@@ -325,7 +325,12 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     placeholder: '描述题目、说说你的思路，或上传题目照片…',
     icon: Camera,
     iconStyle: 'bg-blue-50 text-blue-600',
-    suggestions: ['拍照上传一道题', '我先说说自己的解题思路'],
+    suggestions: [
+      '帮我分析下这道题',
+      '检查一下我的解题思路',
+      '只提示我下一步怎么做',
+      '帮我讲清楚这道题的知识点',
+    ],
     reply: '我先帮你识别题目条件，再从关键突破口开始提示。你也可以把已经做到的步骤一起发给我。',
   },
   homework: {
@@ -337,7 +342,12 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     placeholder: '描述批改任务，或上传学生作业…',
     icon: PenLine,
     iconStyle: 'bg-violet-50 text-violet-600',
-    suggestions: ['请批改这份学生作业', '帮我分析这次作业的错题原因'],
+    suggestions: [
+      '请批改这份学生作业',
+      '帮我分析这次作业的错题原因',
+      '总结这份作业的薄弱知识点',
+      '给这位学生一些改进建议',
+    ],
     reply: '可以。我会先检查答案和过程，再归纳错因、薄弱知识点以及下一步练习建议。请上传作业或题目。',
   },
   mistakes: {
@@ -349,7 +359,12 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     placeholder: '上传错题，或告诉我今天想复习的科目…',
     icon: RotateCcw,
     iconStyle: 'bg-orange-50 text-orange-600',
-    suggestions: ['从错题本挑 5 道复习', '分析我最近反复出错的原因'],
+    suggestions: [
+      '从错题本挑 5 道复习',
+      '分析我最近反复出错的原因',
+      '帮我整理今天上传的错题',
+      '根据这道错题出一道同类题',
+    ],
     reply: '我会先判断错因和掌握度，再安排复习顺序，并用一道相似题确认你是否真正掌握。',
   },
   practice: {
@@ -361,7 +376,12 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     placeholder: '告诉我科目、章节、题量和难度…',
     icon: BrainCircuit,
     iconStyle: 'bg-emerald-50 text-emerald-600',
-    suggestions: ['生成 10 道一次函数练习', '根据最近错题出一组巩固题'],
+    suggestions: [
+      '生成 10 道一次函数练习',
+      '根据最近错题出一组巩固题',
+      '给我一组难度适中的数学题',
+      '出 5 道英语语法选择题',
+    ],
     reply: '好的。告诉我年级、章节、题量和期望难度，我会生成练习并在完成后给出解析。',
   },
 };
@@ -2146,6 +2166,7 @@ function ChatView({
   const [selectedModel, setSelectedModel] = useState<ModelOption>(models[0]);
   const [selectedChatSkill, setSelectedChatSkill] = useState<Skill | null>(null);
   const [chatMode, setChatMode] = useState<ChatModeId>('default');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const mode = chatModes[chatMode];
   const ModeIcon = mode.icon;
   const availableSkills = skills.filter((skill) => installedSkills.has(skill.id));
@@ -2156,8 +2177,13 @@ function ChatView({
     setInput('');
   };
 
-  const send = (preset?: string) => {
-    const text = (preset ?? input).trim();
+  const applySuggestion = (suggestion: string) => {
+    setInput(suggestion);
+    inputRef.current?.focus();
+  };
+
+  const send = () => {
+    const text = input.trim();
     if (!text || sending) return;
     const isSchedulingRequest = /提醒|定时|每天|每周|每晚|每早/.test(text);
     if (isSchedulingRequest) onScheduleFromChat(text);
@@ -2332,14 +2358,10 @@ function ChatView({
                         <ChevronRight className="ml-auto size-4 text-muted-foreground" />
                       </button>
                     ))
-                  : mode.suggestions.map((suggestion, index) => (
+                  : mode.suggestions.map((suggestion) => (
                       <button
                         key={suggestion}
-                        onClick={() =>
-                          chatMode === 'photo' && index === 0
-                            ? onCamera()
-                            : send(suggestion)
-                        }
+                        onClick={() => applySuggestion(suggestion)}
                         className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
                       >
                         <span
@@ -2359,6 +2381,7 @@ function ChatView({
         <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-8 md:pb-5">
           <div className="mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-shadow focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)]">
             <textarea
+              ref={inputRef}
               aria-label="输入学习问题"
               value={input}
               onChange={(event) => setInput(event.target.value)}
