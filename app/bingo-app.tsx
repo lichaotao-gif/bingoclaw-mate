@@ -334,16 +334,6 @@ const initialRemoteChannels: RemoteChannel[] = [
     color: 'bg-sky-500 text-white',
   },
   {
-    id: 'yuanbao',
-    name: '元宝',
-    description: '在元宝中与好友一起学习，便捷分享知识与练习。',
-    account: '暂未配置 Agent',
-    connected: false,
-    recommended: true,
-    icon: MessageCircle,
-    color: 'bg-teal-500 text-white',
-  },
-  {
     id: 'feishu',
     name: '飞书',
     description: '接入飞书机器人，在群聊或私聊中完成学习任务。',
@@ -455,21 +445,7 @@ function SkillsView({
         backLabel="返回聊天"
       />
       <div className="mx-auto h-[calc(100dvh-72px)] w-full max-w-6xl overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
-        <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-          <div className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-2xl bg-primary text-white shadow-sm shadow-blue-200">
-              <Sparkles className="size-6" />
-            </span>
-            <div>
-              <p className="font-bold">让学伴更懂你的学习方式</p>
-              <p className="mt-1 text-sm text-slate-600">
-                安装后，可直接在聊天中调用技能。
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div className="mb-3 mt-6 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold">热门技能</h2>
             <p className="text-xs text-muted-foreground">
@@ -1131,21 +1107,7 @@ function DevicesView({
       />
       <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
         <div className="mx-auto w-full max-w-3xl">
-          <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="flex items-center gap-3">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
-                <MonitorSmartphone className="size-6" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 className="font-bold">我的 BingoMate 设备</h2>
-                <p className="mt-1 text-xs text-slate-600">
-                  一个账号可以绑定并管理多台设备
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <div className="mb-3 mt-6 flex items-end justify-between px-1">
+          <div className="mb-3 flex items-end justify-between px-1">
             <div>
               <h2 className="text-lg font-bold">设备列表</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1345,6 +1307,27 @@ function ChannelsView({
 }) {
   const [actionChannel, setActionChannel] = useState<RemoteChannel | null>(null);
   const [configChannel, setConfigChannel] = useState<RemoteChannel | null>(null);
+  const [setupChannel, setSetupChannel] = useState<RemoteChannel | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState('小满学习助手');
+  const [appId, setAppId] = useState('');
+  const [appSecret, setAppSecret] = useState('');
+  const canConnect = Boolean(
+    setupChannel && selectedAgent && appId.trim() && appSecret.trim(),
+  );
+  const SetupIcon = setupChannel?.icon ?? MessageCircle;
+
+  const openSetup = (channel: RemoteChannel) => {
+    setSetupChannel(channel);
+    setSelectedAgent('小满学习助手');
+    setAppId('');
+    setAppSecret('');
+  };
+
+  const connectSetupChannel = () => {
+    if (!setupChannel || !canConnect) return;
+    onConnect(setupChannel);
+    setSetupChannel(null);
+  };
 
   return (
     <>
@@ -1356,21 +1339,7 @@ function ChannelsView({
       />
       <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
         <div className="mx-auto w-full max-w-5xl">
-          <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="flex items-start gap-3">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
-                <MessageCircle className="size-6" />
-              </span>
-              <div>
-                <h2 className="font-bold">接入远控通道</h2>
-                <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                  绑定后可直接在聊天工具中与 BingoMate 对话，并通过 AppID、Secret 信息管理账号连接。
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <div className="mb-3 mt-6 flex items-end justify-between px-1">
+          <div className="mb-3 flex items-end justify-between px-1">
             <div>
               <h2 className="text-lg font-bold">通道列表</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1412,7 +1381,7 @@ function ChannelsView({
                       </Badge>
                     ) : (
                       <Button
-                        onClick={() => onConnect(channel)}
+                        onClick={() => openSetup(channel)}
                         variant="outline"
                         className="h-9 shrink-0 rounded-xl px-4"
                       >
@@ -1445,6 +1414,106 @@ function ChannelsView({
           </div>
         </div>
       </div>
+
+      <Drawer
+        open={Boolean(setupChannel)}
+        onOpenChange={(open) => {
+          if (!open) setSetupChannel(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[620px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(72dvh,590px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <div className="flex items-center gap-3 pr-12">
+              {setupChannel && (
+                <span
+                  className={`grid size-12 shrink-0 place-items-center rounded-2xl shadow-sm ${setupChannel.color}`}
+                >
+                  <SetupIcon className="size-6" />
+                </span>
+              )}
+              <div className="min-w-0">
+                <DrawerTitle className="truncate text-xl font-bold">
+                  添加{setupChannel?.name}通道
+                </DrawerTitle>
+                <DrawerDescription className="mt-1 truncate text-left">
+                  {setupChannel?.description}
+                </DrawerDescription>
+              </div>
+            </div>
+            <DrawerClose
+              aria-label="关闭添加通道"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">
+                  选择连接 Agent <span className="text-red-500">*</span>
+                </span>
+                <select
+                  aria-label="选择连接 Agent"
+                  value={selectedAgent}
+                  onChange={(event) => setSelectedAgent(event.target.value)}
+                  className="h-12 w-full appearance-none rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="小满学习助手">小满学习助手</option>
+                  <option value="作业辅导 Agent">作业辅导 Agent</option>
+                  <option value="英语陪练 Agent">英语陪练 Agent</option>
+                </select>
+              </label>
+
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="font-bold">连接配置</h3>
+                  <button className="min-h-9 rounded-xl border px-3 text-xs font-semibold text-muted-foreground">
+                    查看配置指南 ↗
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold">
+                      {setupChannel?.name} App ID <span className="text-red-500">*</span>
+                    </span>
+                    <input
+                      aria-label={`${setupChannel?.name ?? ''} App ID`}
+                      value={appId}
+                      onChange={(event) => setAppId(event.target.value)}
+                      placeholder={`请输入${setupChannel?.name ?? ''}开放平台 App ID`}
+                      autoComplete="off"
+                      className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold">
+                      {setupChannel?.name} App Secret <span className="text-red-500">*</span>
+                    </span>
+                    <input
+                      type="password"
+                      aria-label={`${setupChannel?.name ?? ''} App Secret`}
+                      value={appSecret}
+                      onChange={(event) => setAppSecret(event.target.value)}
+                      placeholder={`请输入${setupChannel?.name ?? ''}开放平台 App Secret`}
+                      autoComplete="new-password"
+                      className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <Button
+              disabled={!canConnect}
+              onClick={connectSetupChannel}
+              className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              连接{setupChannel?.name}
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer
         open={Boolean(actionChannel)}
