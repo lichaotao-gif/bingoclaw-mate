@@ -367,10 +367,40 @@ const chatModes: Record<ChatModeId, ChatMode> = {
 };
 
 const histories = [
-  { group: '今天', items: ['二次函数顶点问题', '英语阅读理解怎么概括'] },
+  {
+    group: '今天',
+    items: [
+      {
+        title: '二次函数顶点问题',
+        tag: '拍题辅导',
+        tagStyle: 'bg-blue-50 text-blue-700',
+      },
+      {
+        title: '英语阅读理解怎么概括',
+        tag: '智能辅导',
+        tagStyle: 'bg-emerald-50 text-emerald-700',
+      },
+    ],
+  },
   {
     group: '过去 7 天',
-    items: ['几何证明辅助线', 'Unit 3 错词复习', '数学周测错题讲解'],
+    items: [
+      {
+        title: '几何证明辅助线',
+        tag: '拍题辅导',
+        tagStyle: 'bg-blue-50 text-blue-700',
+      },
+      {
+        title: 'Unit 3 错词复习',
+        tag: '错题复习',
+        tagStyle: 'bg-orange-50 text-orange-700',
+      },
+      {
+        title: '数学周测错题讲解',
+        tag: '作业批阅',
+        tagStyle: 'bg-violet-50 text-violet-700',
+      },
+    ],
   },
 ];
 
@@ -925,14 +955,21 @@ function Sidebar({
                 <p className="mb-1 px-2 text-[11px] text-muted-foreground">
                   {group.group}
                 </p>
-                {group.items.map((title) => (
+                {group.items.map((item) => (
                   <button
-                    key={title}
-                    onClick={() => onHistory(title)}
-                    className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm hover:bg-muted"
+                    key={item.title}
+                    onClick={() => onHistory(item.title)}
+                    className="flex min-h-[58px] w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm hover:bg-muted"
                   >
                     <History className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{title}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{item.title}</span>
+                      <span
+                        className={`mt-1 inline-flex w-fit rounded-md px-1.5 py-0.5 text-[10px] font-medium ${item.tagStyle}`}
+                      >
+                        {item.tag}
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>
