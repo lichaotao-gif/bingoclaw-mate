@@ -30,8 +30,10 @@ import {
   LogOut,
   Menu,
   MessageSquarePlus,
+  MessageCircle,
   Mic,
   MonitorSmartphone,
+  MoreHorizontal,
   Pencil,
   PenLine,
   Plus,
@@ -64,12 +66,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
-type AppView = 'chat' | 'skills' | 'settings' | 'points' | 'devices';
+type AppView =
+  | 'chat'
+  | 'skills'
+  | 'settings'
+  | 'points'
+  | 'devices'
+  | 'channels';
 type BingoDevice = {
   id: string;
   name: string;
   code: string;
   online: boolean;
+};
+type RemoteChannel = {
+  id: string;
+  name: string;
+  description: string;
+  account: string;
+  connected: boolean;
+  recommended?: boolean;
+  icon: LucideIcon;
+  color: string;
 };
 type PointTransaction = {
   id: string;
@@ -281,6 +299,67 @@ const histories = [
   {
     group: '过去 7 天',
     items: ['几何证明辅助线', 'Unit 3 错词复习', '数学周测错题讲解'],
+  },
+];
+
+const initialRemoteChannels: RemoteChannel[] = [
+  {
+    id: 'wechat',
+    name: '微信',
+    description: '关联微信联系人，在微信中直接与 BingoMate 对话。',
+    account: '林小满的微信',
+    connected: true,
+    recommended: true,
+    icon: MessageCircle,
+    color: 'bg-emerald-500 text-white',
+  },
+  {
+    id: 'wecom',
+    name: '企业微信',
+    description: '接入企微群聊或私聊，适合班级与学习小组协作。',
+    account: '暂未配置 Agent',
+    connected: false,
+    recommended: true,
+    icon: Users,
+    color: 'bg-blue-500 text-white',
+  },
+  {
+    id: 'qq',
+    name: 'QQ',
+    description: '将 BingoMate 接入 QQ，随时在群聊或私聊中互动。',
+    account: 'BingoMate 学习助手',
+    connected: true,
+    recommended: true,
+    icon: MessageCircle,
+    color: 'bg-sky-500 text-white',
+  },
+  {
+    id: 'yuanbao',
+    name: '元宝',
+    description: '在元宝中与好友一起学习，便捷分享知识与练习。',
+    account: '暂未配置 Agent',
+    connected: false,
+    recommended: true,
+    icon: MessageCircle,
+    color: 'bg-teal-500 text-white',
+  },
+  {
+    id: 'feishu',
+    name: '飞书',
+    description: '接入飞书机器人，在群聊或私聊中完成学习任务。',
+    account: '暂未配置 Agent',
+    connected: false,
+    icon: Send,
+    color: 'bg-indigo-500 text-white',
+  },
+  {
+    id: 'dingtalk',
+    name: '钉钉',
+    description: '接入钉钉机器人，支持班级群和学习团队协作。',
+    account: 'BingoMate 班级助手',
+    connected: true,
+    icon: Send,
+    color: 'bg-cyan-500 text-white',
   },
 ];
 
@@ -821,6 +900,7 @@ function SettingsView({
   onBack,
   onPoints,
   onDevices,
+  onChannels,
   currentDeviceName,
   points,
   notify,
@@ -828,6 +908,7 @@ function SettingsView({
   onBack: () => void;
   onPoints: () => void;
   onDevices: () => void;
+  onChannels: () => void;
   currentDeviceName: string;
   points: number;
   notify: (message: string) => void;
@@ -909,7 +990,7 @@ function SettingsView({
         },
         {
           label: '第三方绑定',
-          description: '微信、QQ、飞书与钉钉',
+          description: '微信、企业微信、QQ、飞书、钉钉等远控通道',
           icon: Link2,
           color: 'bg-sky-50 text-sky-600',
         },
@@ -955,6 +1036,8 @@ function SettingsView({
                           ? onPoints()
                           : item.label === 'BingoMate 设备'
                             ? onDevices()
+                            : item.label === '第三方绑定'
+                              ? onChannels()
                           : notify(`已打开${item.label}`)
                       }
                       className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
@@ -1242,6 +1325,215 @@ function DevicesView({
             >
               保存名称
             </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
+function ChannelsView({
+  channels,
+  onBack,
+  onConnect,
+  onDisconnect,
+}: {
+  channels: RemoteChannel[];
+  onBack: () => void;
+  onConnect: (channel: RemoteChannel) => void;
+  onDisconnect: (channel: RemoteChannel) => void;
+}) {
+  const [actionChannel, setActionChannel] = useState<RemoteChannel | null>(null);
+  const [configChannel, setConfigChannel] = useState<RemoteChannel | null>(null);
+
+  return (
+    <>
+      <Header
+        title="远控通道"
+        subtitle="在常用聊天工具中使用 BingoMate"
+        onBack={onBack}
+        backLabel="返回设置"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-5xl">
+          <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+            <div className="flex items-start gap-3">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                <MessageCircle className="size-6" />
+              </span>
+              <div>
+                <h2 className="font-bold">接入远控通道</h2>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  绑定后可直接在聊天工具中与 BingoMate 对话，并通过 AppID、Secret 信息管理账号连接。
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div className="mb-3 mt-6 flex items-end justify-between px-1">
+            <div>
+              <h2 className="text-lg font-bold">通道列表</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                已连接 {channels.filter((channel) => channel.connected).length} 个通道
+              </p>
+            </div>
+            <Badge variant="secondary" className="h-7 px-3">
+              {channels.length} 个平台
+            </Badge>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
+            {channels.map((channel) => {
+              const Icon = channel.icon;
+              return (
+                <article
+                  key={channel.id}
+                  className="flex min-h-[210px] flex-col rounded-[24px] border bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`grid size-12 shrink-0 place-items-center rounded-2xl shadow-sm ${channel.color}`}
+                    >
+                      <Icon className="size-6" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold">{channel.name}</h3>
+                        {channel.recommended && (
+                          <Badge className="bg-emerald-50 text-emerald-700">
+                            推荐
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {channel.connected ? (
+                      <Badge variant="outline" className="h-8 shrink-0 bg-slate-50 px-3">
+                        已连接
+                      </Badge>
+                    ) : (
+                      <Button
+                        onClick={() => onConnect(channel)}
+                        variant="outline"
+                        className="h-9 shrink-0 rounded-xl px-4"
+                      >
+                        添加
+                      </Button>
+                    )}
+                  </div>
+                  <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                    {channel.description}
+                  </p>
+                  <div className="mt-auto flex items-center gap-3 border-t pt-3">
+                    <span
+                      aria-hidden="true"
+                      className={`size-2.5 shrink-0 rounded-full ${channel.connected ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                      {channel.account}
+                    </span>
+                    <button
+                      aria-label={`${channel.name}更多操作`}
+                      onClick={() => setActionChannel(channel)}
+                      className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <MoreHorizontal className="size-5" />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <Drawer
+        open={Boolean(actionChannel)}
+        onOpenChange={(open) => {
+          if (!open) setActionChannel(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(38dvh,310px)]">
+          <DrawerHeader className="relative px-5 pb-3 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">
+              {actionChannel?.name}
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              选择要执行的通道操作
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭通道操作"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="space-y-2 px-4 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <button
+              onClick={() => {
+                if (!actionChannel) return;
+                setConfigChannel(actionChannel);
+                setActionChannel(null);
+              }}
+              className="flex min-h-12 w-full items-center gap-3 rounded-2xl bg-muted px-4 text-left text-sm font-semibold"
+            >
+              <Settings className="size-5 text-blue-600" />
+              查看配置
+              <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+            </button>
+            <button
+              disabled={!actionChannel?.connected}
+              onClick={() => {
+                if (!actionChannel) return;
+                onDisconnect(actionChannel);
+                setActionChannel(null);
+              }}
+              className="flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50"
+            >
+              <LogOut className="size-5" />
+              {actionChannel?.connected ? '断开连接' : '当前未连接'}
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        open={Boolean(configChannel)}
+        onOpenChange={(open) => {
+          if (!open) setConfigChannel(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(52dvh,430px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">通道配置</DrawerTitle>
+            <DrawerDescription className="text-left">
+              {configChannel?.name} 的连接信息
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭通道配置"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <dl className="overflow-hidden rounded-3xl border bg-white text-sm">
+              {[
+                ['连接状态', configChannel?.connected ? '已连接' : '未连接'],
+                ['绑定账号', configChannel?.account ?? '—'],
+                ['AppID', configChannel?.connected ? 'BM_APP_••••9286' : '未配置'],
+                ['Secret', configChannel?.connected ? '••••••••••••••••' : '未配置'],
+              ].map(([label, value], index) => (
+                <div
+                  key={label}
+                  className={`flex min-h-14 items-center gap-4 px-4 ${index ? 'border-t' : ''}`}
+                >
+                  <dt className="shrink-0 text-muted-foreground">{label}</dt>
+                  <dd className="ml-auto truncate text-right font-semibold">{value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </DrawerContent>
       </Drawer>
@@ -1843,6 +2135,9 @@ export function BingoApp() {
     },
   ]);
   const [currentDeviceId, setCurrentDeviceId] = useState('my-bingoclaw');
+  const [remoteChannels, setRemoteChannels] = useState<RemoteChannel[]>(
+    initialRemoteChannels,
+  );
   const [pointTransactions, setPointTransactions] = useState<
     PointTransaction[]
   >([
@@ -1938,6 +2233,12 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('devices');
   };
+  const chooseChannels = () => {
+    setMenuOpen(false);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('channels');
+  };
   const bindDevice = (
     deviceCode: string,
     _activationCode: string,
@@ -1974,6 +2275,30 @@ export function BingoApp() {
     );
     setDeviceSwitcherOpen(false);
     notify(`已切换至 ${device.name}`);
+  };
+  const connectChannel = (channel: RemoteChannel) => {
+    setRemoteChannels((current) =>
+      current.map((item) =>
+        item.id === channel.id
+          ? {
+              ...item,
+              connected: true,
+              account: `${channel.name} BingoMate 助手`,
+            }
+          : item,
+      ),
+    );
+    notify(`${channel.name}通道已连接`);
+  };
+  const disconnectChannel = (channel: RemoteChannel) => {
+    setRemoteChannels((current) =>
+      current.map((item) =>
+        item.id === channel.id
+          ? { ...item, connected: false, account: '暂未配置 Agent' }
+          : item,
+      ),
+    );
+    notify(`${channel.name}通道已断开`);
   };
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
@@ -2019,6 +2344,7 @@ export function BingoApp() {
               onBack={() => setView('chat')}
               onPoints={choosePoints}
               onDevices={chooseDevices}
+              onChannels={chooseChannels}
               currentDeviceName={
                 devices.find((device) => device.id === currentDeviceId)?.name ??
                 '未连接设备'
@@ -2040,6 +2366,13 @@ export function BingoApp() {
               onBack={() => setView('settings')}
               onBind={bindDevice}
               onRename={renameDevice}
+            />
+          ) : view === 'channels' ? (
+            <ChannelsView
+              channels={remoteChannels}
+              onBack={() => setView('settings')}
+              onConnect={connectChannel}
+              onDisconnect={disconnectChannel}
             />
           ) : photoStep ? (
             <PhotoFlow
