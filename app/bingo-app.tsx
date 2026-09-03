@@ -1237,11 +1237,9 @@ function SettingsView({
   onProfile,
   onPreferences,
   onSecurity,
-  onPoints,
   onDevices,
   onChannels,
   currentDeviceName,
-  points,
   profileCompleted,
   preferences,
   notify,
@@ -1250,11 +1248,9 @@ function SettingsView({
   onProfile: () => void;
   onPreferences: () => void;
   onSecurity: () => void;
-  onPoints: () => void;
   onDevices: () => void;
   onChannels: () => void;
   currentDeviceName: string;
-  points: number;
   profileCompleted: boolean;
   preferences: TutoringPreferences;
   notify: (message: string) => void;
@@ -1286,29 +1282,6 @@ function SettingsView({
           description: `${preferences.guidanceMode} · ${preferences.detailLevel}讲解 · ${preferences.tone}`,
           icon: SlidersHorizontal,
           color: 'bg-violet-50 text-violet-600',
-        },
-      ],
-    },
-    {
-      title: 'AI 与技能',
-      items: [
-        {
-          label: '模型管理',
-          description: '智能选择 · 按任务自动匹配',
-          icon: Cpu,
-          color: 'bg-cyan-50 text-cyan-700',
-        },
-        {
-          label: '技能管理',
-          description: '管理已安装技能与使用权限',
-          icon: Blocks,
-          color: 'bg-emerald-50 text-emerald-600',
-        },
-        {
-          label: 'AI 积分与明细',
-          description: `当前余额 ${points.toLocaleString()} · 查看消耗记录`,
-          icon: Star,
-          color: 'bg-amber-50 text-amber-700',
         },
       ],
     },
@@ -1388,8 +1361,6 @@ function SettingsView({
                             ? onPreferences()
                           : item.label === '账号与安全'
                             ? onSecurity()
-                          : item.label === 'AI 积分与明细'
-                          ? onPoints()
                           : item.label === 'BingoMate 设备'
                             ? onDevices()
                             : item.label === '第三方绑定'
@@ -4895,14 +4866,12 @@ export function BingoApp() {
               onProfile={chooseProfile}
               onPreferences={choosePreferences}
               onSecurity={chooseSecurity}
-              onPoints={choosePoints}
               onDevices={chooseDevices}
               onChannels={chooseChannels}
               currentDeviceName={
                 devices.find((device) => device.id === currentDeviceId)?.name ??
                 '未连接设备'
               }
-              points={points}
               profileCompleted={profileCompleted}
               preferences={tutoringPreferences}
               notify={notify}
