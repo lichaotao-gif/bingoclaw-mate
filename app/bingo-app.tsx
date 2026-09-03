@@ -4332,6 +4332,7 @@ function PhotoFlow({
   notify: (message: string) => void;
 }) {
   const [answer, setAnswer] = useState('');
+  const [captureMode, setCaptureMode] = useState<'single' | 'page'>('single');
   if (step === 'camera')
     return (
       <>
@@ -4340,38 +4341,98 @@ function PhotoFlow({
           subtitle="把题目放进框内"
           onBack={() => setStep(null)}
         />
-        <div className="px-5 py-5">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-[28px] bg-[#172033] text-white">
-            <div className="absolute inset-10 rounded-2xl border-2 border-dashed border-white/70" />
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center">
-              <Camera className="mx-auto size-12 text-white/70" />
-              <p className="mt-3 text-sm text-white/80">将题目完整放入框内</p>
+        <div className="flex h-[calc(100dvh-72px)] flex-col overflow-hidden bg-slate-950">
+          <div className="relative min-h-0 flex-1 overflow-hidden bg-[radial-gradient(circle_at_50%_28%,#334155_0%,#172033_48%,#080d18_100%)] text-white md:mx-auto md:my-4 md:w-[min(760px,calc(100%-32px))] md:rounded-[32px]">
+            <div className="absolute -left-16 top-20 size-56 rounded-full bg-blue-500/10 blur-3xl" />
+            <div className="absolute -right-20 bottom-10 size-64 rounded-full bg-violet-500/10 blur-3xl" />
+
+            <div className="absolute inset-x-0 top-4 z-10 flex justify-center px-4">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/45 px-4 py-2 text-xs font-medium text-white/90 backdrop-blur-md">
+                <ScanLine className="size-4 text-blue-300" />
+                {captureMode === 'single' ? '单题模式' : '整页模式'} · 请保持画面清晰
+              </div>
             </div>
-            <div className="absolute inset-x-0 bottom-6 flex justify-center">
-              <button
-                aria-label="拍照"
-                onClick={() => setStep('ocr')}
-                className="grid size-20 place-items-center rounded-full border-4 border-white bg-white/20"
-              >
-                <span className="size-14 rounded-full bg-white" />
-              </button>
+
+            <div
+              className={`absolute inset-x-6 top-[15%] bottom-[9%] transition-[inset,border-radius] duration-300 md:inset-x-16 ${captureMode === 'single' ? 'rounded-[28px]' : 'inset-x-9 rounded-2xl md:inset-x-24'}`}
+            >
+              <div className="absolute inset-0 rounded-[inherit] border border-white/20 bg-white/[0.025]" />
+              <span className="absolute left-0 top-0 size-9 rounded-tl-[inherit] border-l-[3px] border-t-[3px] border-blue-400" />
+              <span className="absolute right-0 top-0 size-9 rounded-tr-[inherit] border-r-[3px] border-t-[3px] border-blue-400" />
+              <span className="absolute bottom-0 left-0 size-9 rounded-bl-[inherit] border-b-[3px] border-l-[3px] border-blue-400" />
+              <span className="absolute bottom-0 right-0 size-9 rounded-br-[inherit] border-b-[3px] border-r-[3px] border-blue-400" />
+              <span className="absolute left-4 right-4 top-1/2 h-px bg-gradient-to-r from-transparent via-blue-300/70 to-transparent shadow-[0_0_16px_rgba(147,197,253,.7)]" />
+            </div>
+
+            <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 text-center">
+              <span className="mx-auto grid size-16 place-items-center rounded-3xl border border-white/10 bg-white/10 backdrop-blur-sm">
+                {captureMode === 'single' ? (
+                  <Camera className="size-8 text-blue-200" />
+                ) : (
+                  <FileImage className="size-8 text-violet-200" />
+                )}
+              </span>
+              <p className="mt-4 text-base font-semibold text-white">
+                {captureMode === 'single'
+                  ? '将一道题完整放入取景框'
+                  : '将整张试卷或作业放入取景框'}
+              </p>
+              <p className="mt-1 text-xs text-white/55">
+                避免阴影、反光和边缘缺失
+              </p>
+            </div>
+
+            <div className="absolute inset-x-0 bottom-4 flex justify-center">
+              <span className="rounded-full bg-black/25 px-3 py-1.5 text-[11px] text-white/65 backdrop-blur-sm">
+                AI 会自动校正角度并增强文字
+              </span>
             </div>
           </div>
-          <div className="mt-4 flex justify-center gap-8">
-            <button
-              onClick={() => notify('请选择清晰的题目图片')}
-              className="flex min-h-11 items-center gap-2 text-sm"
-            >
-              <ImageIcon className="size-5" />
-              相册
-            </button>
-            <button
-              onClick={() => notify('已切换到整页模式')}
-              className="flex min-h-11 items-center gap-2 text-sm"
-            >
-              <FileImage className="size-5" />
-              拍整页
-            </button>
+
+          <div className="shrink-0 rounded-t-[30px] bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_30px_rgba(15,23,42,.16)] md:rounded-none">
+            <div className="mx-auto grid w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <button
+                aria-label="从相册选择题目图片"
+                onClick={() => notify('请选择清晰的题目图片')}
+                className="flex min-h-[68px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-50 to-rose-50 px-3 text-sm font-bold text-rose-700 ring-1 ring-rose-100 transition-transform active:scale-[.97]"
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-sm shadow-rose-200">
+                  <ImageIcon className="size-4.5" />
+                </span>
+                <span className="hidden min-[350px]:inline">相册</span>
+              </button>
+
+              <button
+                aria-label={captureMode === 'single' ? '拍摄题目' : '拍摄整页'}
+                onClick={() => setStep('ocr')}
+                className="grid size-[76px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-lg shadow-blue-200 ring-4 ring-blue-50 transition-transform active:scale-95"
+              >
+                <span className="grid size-full place-items-center rounded-full border-2 border-white/90 bg-white/15">
+                  <Camera className="size-7 text-white" />
+                </span>
+              </button>
+
+              <button
+                aria-label={captureMode === 'single' ? '切换到整页模式' : '切换到单题模式'}
+                aria-pressed={captureMode === 'page'}
+                onClick={() => {
+                  const nextMode = captureMode === 'single' ? 'page' : 'single';
+                  setCaptureMode(nextMode);
+                  notify(nextMode === 'page' ? '已切换到整页模式' : '已切换到单题模式');
+                }}
+                className={`flex min-h-[68px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold ring-1 transition-[background-color,color,transform] active:scale-[.97] ${captureMode === 'page' ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white ring-violet-400' : 'bg-gradient-to-br from-violet-50 to-blue-50 text-indigo-700 ring-indigo-100'}`}
+              >
+                <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${captureMode === 'page' ? 'bg-white/15 text-white' : 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm shadow-indigo-200'}`}>
+                  <FileImage className="size-4.5" />
+                </span>
+                <span className="hidden min-[350px]:inline">
+                  {captureMode === 'page' ? '拍单题' : '拍整页'}
+                </span>
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[11px] text-slate-500">
+              点击中间按钮拍摄 · 支持手写题与印刷题
+            </p>
           </div>
         </div>
       </>
