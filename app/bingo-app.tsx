@@ -96,6 +96,16 @@ type StudentProfile = {
   learningGoal: string;
   guidanceStyle: string;
 };
+type TutoringPreferences = {
+  guidanceMode: string;
+  detailLevel: string;
+  difficulty: string;
+  hintPace: string;
+  tone: string;
+  askBeforeAnswer: boolean;
+  autoSaveMistakes: boolean;
+  lessonSummary: boolean;
+};
 type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
 type AppView =
   | 'chat'
@@ -104,6 +114,7 @@ type AppView =
   | 'settings'
   | 'security'
   | 'profile'
+  | 'preferences'
   | 'points'
   | 'devices'
   | 'channels'
@@ -1224,6 +1235,7 @@ function Sidebar({
 function SettingsView({
   onBack,
   onProfile,
+  onPreferences,
   onSecurity,
   onPoints,
   onDevices,
@@ -1231,10 +1243,12 @@ function SettingsView({
   currentDeviceName,
   points,
   profileCompleted,
+  preferences,
   notify,
 }: {
   onBack: () => void;
   onProfile: () => void;
+  onPreferences: () => void;
   onSecurity: () => void;
   onPoints: () => void;
   onDevices: () => void;
@@ -1242,6 +1256,7 @@ function SettingsView({
   currentDeviceName: string;
   points: number;
   profileCompleted: boolean;
+  preferences: TutoringPreferences;
   notify: (message: string) => void;
 }) {
   const sections: {
@@ -1268,7 +1283,7 @@ function SettingsView({
         },
         {
           label: '辅导偏好',
-          description: '默认先启发，再给完整解析',
+          description: `${preferences.guidanceMode} · ${preferences.detailLevel}讲解 · ${preferences.tone}`,
           icon: SlidersHorizontal,
           color: 'bg-violet-50 text-violet-600',
         },
@@ -1369,6 +1384,8 @@ function SettingsView({
                       onClick={() =>
                         item.label === '学生档案'
                           ? onProfile()
+                          : item.label === '辅导偏好'
+                            ? onPreferences()
                           : item.label === '账号与安全'
                             ? onSecurity()
                           : item.label === 'AI 积分与明细'
@@ -1724,6 +1741,277 @@ function StudentProfileView({
                   完善档案并领取 100 积分
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TutoringPreferencesView({
+  preferences,
+  onBack,
+  onSave,
+}: {
+  preferences: TutoringPreferences;
+  onBack: () => void;
+  onSave: (preferences: TutoringPreferences) => void;
+}) {
+  const [draft, setDraft] = useState(preferences);
+
+  const updatePreference = <K extends keyof TutoringPreferences>(
+    field: K,
+    value: TutoringPreferences[K],
+  ) => {
+    setDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const choiceGroups: {
+    label: string;
+    description: string;
+    field: keyof Pick<
+      TutoringPreferences,
+      'detailLevel' | 'difficulty' | 'hintPace' | 'tone'
+    >;
+    options: string[];
+  }[] = [
+    {
+      label: '讲解详细度',
+      description: '控制每次回答包含多少步骤和说明',
+      field: 'detailLevel',
+      options: ['精简', '标准', '详细'],
+    },
+    {
+      label: '练习难度',
+      description: 'AI 会根据选择调整例题与追问难度',
+      field: 'difficulty',
+      options: ['巩固基础', '跟随进度', '适当挑战'],
+    },
+    {
+      label: '提示节奏',
+      description: '遇到困难时，AI 应该一次提示多少内容',
+      field: 'hintPace',
+      options: ['一次一点', '关键步骤', '完整思路'],
+    },
+    {
+      label: '回答语气',
+      description: '选择更适合当前学生的沟通方式',
+      field: 'tone',
+      options: ['耐心鼓励', '简洁直接', '考试导向'],
+    },
+  ];
+
+  const behaviorSettings: {
+    label: string;
+    description: string;
+    field: keyof Pick<
+      TutoringPreferences,
+      'askBeforeAnswer' | 'autoSaveMistakes' | 'lessonSummary'
+    >;
+  }[] = [
+    {
+      label: '先让学生尝试作答',
+      description: '在给出答案前，先邀请学生说出自己的思路',
+      field: 'askBeforeAnswer',
+    },
+    {
+      label: '自动加入错题记录',
+      description: '发现稳定错因后，自动沉淀到错题复习',
+      field: 'autoSaveMistakes',
+    },
+    {
+      label: '对话结束生成小结',
+      description: '总结知识点、掌握情况和下一步建议',
+      field: 'lessonSummary',
+    },
+  ];
+
+  return (
+    <>
+      <Header
+        title="辅导偏好"
+        subtitle="设置适合自己的 AI 学习方式"
+        onBack={onBack}
+        backLabel="返回设置"
+      />
+      <div className="flex h-[calc(100dvh-72px)] flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6">
+          <div className="mx-auto w-full max-w-3xl space-y-4">
+            <section className="rounded-[28px] bg-gradient-to-br from-violet-600 to-blue-600 p-5 text-white shadow-lg shadow-violet-100">
+              <div className="flex items-start gap-4">
+                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+                  <BrainCircuit className="size-7" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold">让辅导更适合你</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-violet-50">
+                    这些设置会应用到 BingoMate 和已安装的学习技能，之后可以随时修改。
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border bg-white p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-600">
+                  <SlidersHorizontal className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold">辅导方式</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    决定 AI 如何带领学生理解和解决问题
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2">
+                {[
+                  {
+                    value: '启发式引导',
+                    description: '先提问和提示，引导学生自己找到答案',
+                  },
+                  {
+                    value: '分步讲解',
+                    description: '把问题拆成小步骤，一步一步完成',
+                  },
+                  {
+                    value: '直接纠错',
+                    description: '快速指出问题，并给出正确方法',
+                  },
+                ].map((option) => {
+                  const selected = draft.guidanceMode === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      aria-pressed={selected}
+                      onClick={() =>
+                        updatePreference('guidanceMode', option.value)
+                      }
+                      className={`flex min-h-[68px] items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${selected ? 'border-violet-300 bg-violet-50' : 'bg-slate-50 hover:bg-slate-100'}`}
+                    >
+                      <span
+                        className={`grid size-7 shrink-0 place-items-center rounded-full ${selected ? 'bg-violet-600 text-white' : 'border bg-white text-transparent'}`}
+                      >
+                        <Check className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">
+                          {option.value}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-3xl border bg-white p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                  <Gauge className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold">内容与节奏</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    控制答案长度、练习挑战和互动节奏
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-5">
+                {choiceGroups.map((group) => (
+                  <div key={group.field}>
+                    <div className="flex items-end justify-between gap-3">
+                      <h3 className="text-sm font-semibold">{group.label}</h3>
+                      <p className="text-right text-[11px] text-muted-foreground">
+                        {group.description}
+                      </p>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 rounded-2xl bg-slate-100 p-1.5">
+                      {group.options.map((option) => {
+                        const selected = draft[group.field] === option;
+                        return (
+                          <button
+                            key={option}
+                            aria-pressed={selected}
+                            onClick={() =>
+                              updatePreference(group.field, option)
+                            }
+                            className={`min-h-11 rounded-xl px-2 text-xs font-semibold transition-[background-color,color,box-shadow] ${selected ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-white/60'}`}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
+                学习记录与反馈
+              </h2>
+              <div className="overflow-hidden rounded-3xl border bg-white">
+                {behaviorSettings.map((setting, index) => {
+                  const checked = draft[setting.field];
+                  return (
+                    <button
+                      key={setting.field}
+                      type="button"
+                      role="switch"
+                      aria-checked={checked}
+                      onClick={() =>
+                        updatePreference(setting.field, !checked)
+                      }
+                      className={`flex min-h-[76px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-muted ${index ? 'border-t' : ''}`}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">
+                          {setting.label}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                          {setting.description}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors ${checked ? 'justify-end bg-blue-600' : 'justify-start bg-slate-300'}`}
+                      >
+                        <span className="size-6 rounded-full bg-white shadow-sm" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="mt-0.5 size-5 shrink-0 text-blue-600" />
+                <div>
+                  <h2 className="text-sm font-bold text-blue-950">
+                    当前辅导效果预览
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-blue-800">
+                    AI 将采用{draft.guidanceMode}，提供{draft.detailLevel}讲解，练习以
+                    {draft.difficulty}为主，并使用{draft.tone}的方式与你交流。
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div className="shrink-0 border-t bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:px-8">
+          <div className="mx-auto w-full max-w-3xl">
+            <Button
+              onClick={() => onSave(draft)}
+              className="h-12 w-full rounded-2xl text-base font-bold"
+            >
+              保存辅导偏好
             </Button>
           </div>
         </div>
@@ -4256,6 +4544,17 @@ export function BingoApp() {
     guidanceStyle: '先启发思考，再给完整解析',
   });
   const [profileCompleted, setProfileCompleted] = useState(false);
+  const [tutoringPreferences, setTutoringPreferences] =
+    useState<TutoringPreferences>({
+      guidanceMode: '启发式引导',
+      detailLevel: '标准',
+      difficulty: '跟随进度',
+      hintPace: '一次一点',
+      tone: '耐心鼓励',
+      askBeforeAnswer: true,
+      autoSaveMistakes: true,
+      lessonSummary: true,
+    });
   const [accountPhone, setAccountPhone] = useState('13812345206');
   const [passwordUpdatedAt, setPasswordUpdatedAt] = useState(
     '上次修改：2026年8月16日',
@@ -4382,6 +4681,11 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('profile');
   };
+  const choosePreferences = () => {
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('preferences');
+  };
   const chooseSecurity = () => {
     setSelectedSkill(null);
     setPhotoStep(null);
@@ -4424,6 +4728,15 @@ export function BingoApp() {
     } else {
       notify('学生档案已更新');
     }
+    setView('settings');
+  };
+  const saveTutoringPreferences = (preferences: TutoringPreferences) => {
+    setTutoringPreferences(preferences);
+    setStudentProfile((current) => ({
+      ...current,
+      guidanceStyle: preferences.guidanceMode,
+    }));
+    notify('辅导偏好已保存');
     setView('settings');
   };
   const changeAccountPhone = (phone: string) => {
@@ -4580,6 +4893,7 @@ export function BingoApp() {
             <SettingsView
               onBack={() => setView('chat')}
               onProfile={chooseProfile}
+              onPreferences={choosePreferences}
               onSecurity={chooseSecurity}
               onPoints={choosePoints}
               onDevices={chooseDevices}
@@ -4590,6 +4904,7 @@ export function BingoApp() {
               }
               points={points}
               profileCompleted={profileCompleted}
+              preferences={tutoringPreferences}
               notify={notify}
             />
           ) : view === 'profile' ? (
@@ -4598,6 +4913,12 @@ export function BingoApp() {
               completed={profileCompleted}
               onBack={() => setView('settings')}
               onSave={saveStudentProfile}
+            />
+          ) : view === 'preferences' ? (
+            <TutoringPreferencesView
+              preferences={tutoringPreferences}
+              onBack={() => setView('settings')}
+              onSave={saveTutoringPreferences}
             />
           ) : view === 'security' ? (
             <AccountSecurityView
