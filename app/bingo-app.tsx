@@ -23,6 +23,8 @@ import {
   CircleHelp,
   Clock3,
   Cpu,
+  Eye,
+  EyeOff,
   FileImage,
   FileText,
   Flame,
@@ -32,6 +34,7 @@ import {
   History,
   Image as ImageIcon,
   Link2,
+  KeyRound,
   LockKeyhole,
   LogOut,
   MapPin,
@@ -55,6 +58,7 @@ import {
   Settings,
   Sparkles,
   Star,
+  Smartphone,
   Target,
   UserRound,
   Users,
@@ -98,6 +102,7 @@ type AppView =
   | 'skills'
   | 'growth'
   | 'settings'
+  | 'security'
   | 'profile'
   | 'points'
   | 'devices'
@@ -1219,6 +1224,7 @@ function Sidebar({
 function SettingsView({
   onBack,
   onProfile,
+  onSecurity,
   onPoints,
   onDevices,
   onChannels,
@@ -1229,6 +1235,7 @@ function SettingsView({
 }: {
   onBack: () => void;
   onProfile: () => void;
+  onSecurity: () => void;
   onPoints: () => void;
   onDevices: () => void;
   onChannels: () => void;
@@ -1362,6 +1369,8 @@ function SettingsView({
                       onClick={() =>
                         item.label === '学生档案'
                           ? onProfile()
+                          : item.label === '账号与安全'
+                            ? onSecurity()
                           : item.label === 'AI 积分与明细'
                           ? onPoints()
                           : item.label === 'BingoMate 设备'
@@ -1719,6 +1728,356 @@ function StudentProfileView({
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+function AccountSecurityView({
+  phone,
+  passwordUpdatedAt,
+  onBack,
+  onPhoneChange,
+  onPasswordChange,
+}: {
+  phone: string;
+  passwordUpdatedAt: string;
+  onBack: () => void;
+  onPhoneChange: (phone: string) => void;
+  onPasswordChange: () => void;
+}) {
+  const [phoneSheetOpen, setPhoneSheetOpen] = useState(false);
+  const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const maskedPhone = phone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1 **** $2');
+
+  const resetPhoneForm = () => {
+    setNewPhone('');
+    setVerificationCode('');
+    setCodeSent(false);
+    setPhoneError('');
+  };
+
+  const sendVerificationCode = () => {
+    if (!/^1[3-9]\d{9}$/.test(newPhone)) {
+      setPhoneError('请输入正确的 11 位中国大陆手机号。');
+      return;
+    }
+    if (newPhone === phone) {
+      setPhoneError('新手机号不能与当前手机号相同。');
+      return;
+    }
+    setPhoneError('');
+    setCodeSent(true);
+  };
+
+  const savePhone = () => {
+    if (!codeSent) {
+      setPhoneError('请先获取验证码。');
+      return;
+    }
+    if (!/^\d{4,6}$/.test(verificationCode)) {
+      setPhoneError('请输入收到的 4—6 位验证码。');
+      return;
+    }
+    onPhoneChange(newPhone);
+    setPhoneSheetOpen(false);
+    resetPhoneForm();
+  };
+
+  const resetPasswordForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowPasswords(false);
+    setPasswordError('');
+  };
+
+  const savePassword = () => {
+    if (!currentPassword) {
+      setPasswordError('请输入当前密码。');
+      return;
+    }
+    if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPasswordError('新密码至少 8 位，并同时包含字母和数字。');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('两次输入的新密码不一致。');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('新密码不能与当前密码相同。');
+      return;
+    }
+    onPasswordChange();
+    setPasswordSheetOpen(false);
+    resetPasswordForm();
+  };
+
+  const inputClassName =
+    'h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100';
+
+  return (
+    <>
+      <Header
+        title="账号与安全"
+        subtitle="手机号、密码与登录保护"
+        onBack={onBack}
+        backLabel="返回设置"
+      />
+      <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+        <div className="mx-auto w-full max-w-3xl space-y-4">
+          <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-lg shadow-emerald-100">
+            <div className="flex items-start gap-4">
+              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+                <ShieldCheck className="size-7" />
+              </span>
+              <div>
+                <h2 className="text-lg font-bold">账号安全状态良好</h2>
+                <p className="mt-1 text-sm leading-relaxed text-emerald-50">
+                  手机号与登录密码均已设置，修改后会立即更新账号保护信息。
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
+              登录信息
+            </h2>
+            <div className="overflow-hidden rounded-3xl border bg-white">
+              <div className="flex min-h-[88px] items-center gap-3 px-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+                  <Smartphone className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">账号手机号</p>
+                  <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+                    {maskedPhone}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setPhoneSheetOpen(true)}
+                  className="min-h-11 shrink-0 rounded-xl bg-blue-50 px-4 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                >
+                  修改
+                </button>
+              </div>
+              <div className="flex min-h-[88px] items-center gap-3 border-t px-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+                  <KeyRound className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">登录密码</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {passwordUpdatedAt}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setPasswordSheetOpen(true)}
+                  className="min-h-11 shrink-0 rounded-xl bg-violet-50 px-4 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100"
+                >
+                  修改
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <CircleAlert className="mt-0.5 size-5 shrink-0 text-blue-600" />
+              <div>
+                <h2 className="text-sm font-bold text-blue-950">安全提醒</h2>
+                <p className="mt-1 text-xs leading-relaxed text-blue-800">
+                  不要向他人提供短信验证码或密码。修改成功后，请使用新信息登录。
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <Drawer
+        open={phoneSheetOpen}
+        onOpenChange={(open) => {
+          setPhoneSheetOpen(open);
+          if (!open) resetPhoneForm();
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(62dvh,500px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">更换手机号</DrawerTitle>
+            <DrawerDescription className="text-left">
+              当前绑定 {maskedPhone}，验证新手机号后即可更换。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭更换手机号"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="space-y-4">
+              <label htmlFor="security-phone" className="block text-sm font-semibold">
+                新手机号
+                <input
+                  id="security-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={newPhone}
+                  onChange={(event) => {
+                    setNewPhone(event.target.value.replace(/\D/g, '').slice(0, 11));
+                    setPhoneError('');
+                    setCodeSent(false);
+                  }}
+                  placeholder="请输入 11 位手机号"
+                  className={`mt-2 ${inputClassName}`}
+                />
+              </label>
+              <label htmlFor="security-code" className="block text-sm font-semibold">
+                短信验证码
+                <span className="mt-2 flex gap-2">
+                  <input
+                    id="security-code"
+                    inputMode="numeric"
+                    value={verificationCode}
+                    onChange={(event) => {
+                      setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6));
+                      setPhoneError('');
+                    }}
+                    placeholder="请输入验证码"
+                    className={inputClassName}
+                  />
+                  <button
+                    type="button"
+                    onClick={sendVerificationCode}
+                    className="min-h-12 min-w-[112px] shrink-0 rounded-2xl border bg-slate-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+                  >
+                    {codeSent ? '已发送' : '获取验证码'}
+                  </button>
+                </span>
+              </label>
+            </div>
+            {codeSent && (
+              <p className="mt-3 flex items-center gap-1.5 text-sm text-emerald-700">
+                <Check className="size-4" />
+                验证码已发送至新手机号
+              </p>
+            )}
+            {phoneError && (
+              <p role="alert" className="mt-3 text-sm font-medium text-rose-600">
+                {phoneError}
+              </p>
+            )}
+            <Button
+              onClick={savePhone}
+              className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              确认更换
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        open={passwordSheetOpen}
+        onOpenChange={(open) => {
+          setPasswordSheetOpen(open);
+          if (!open) resetPasswordForm();
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(74dvh,610px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">修改登录密码</DrawerTitle>
+            <DrawerDescription className="text-left">
+              新密码至少 8 位，并同时包含字母和数字。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭修改密码"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+            <div className="space-y-4">
+              {[
+                {
+                  id: 'current-password',
+                  label: '当前密码',
+                  value: currentPassword,
+                  setValue: setCurrentPassword,
+                  placeholder: '请输入当前登录密码',
+                },
+                {
+                  id: 'new-password',
+                  label: '新密码',
+                  value: newPassword,
+                  setValue: setNewPassword,
+                  placeholder: '至少 8 位，包含字母和数字',
+                },
+                {
+                  id: 'confirm-password',
+                  label: '确认新密码',
+                  value: confirmPassword,
+                  setValue: setConfirmPassword,
+                  placeholder: '请再次输入新密码',
+                },
+              ].map((field) => (
+                <label key={field.id} htmlFor={field.id} className="block text-sm font-semibold">
+                  {field.label}
+                  <span className="relative mt-2 block">
+                    <input
+                      id={field.id}
+                      type={showPasswords ? 'text' : 'password'}
+                      autoComplete={field.id === 'current-password' ? 'current-password' : 'new-password'}
+                      value={field.value}
+                      onChange={(event) => {
+                        field.setValue(event.target.value);
+                        setPasswordError('');
+                      }}
+                      placeholder={field.placeholder}
+                      className={`${inputClassName} pr-12`}
+                    />
+                  </span>
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-pressed={showPasswords}
+              onClick={() => setShowPasswords((current) => !current)}
+              className="mt-3 flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-medium text-slate-600 transition-colors hover:bg-muted"
+            >
+              {showPasswords ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {showPasswords ? '隐藏密码' : '显示密码'}
+            </button>
+            {passwordError && (
+              <p role="alert" className="mt-2 text-sm font-medium text-rose-600">
+                {passwordError}
+              </p>
+            )}
+            <Button
+              onClick={savePassword}
+              className="mt-5 h-12 w-full rounded-2xl text-base font-bold"
+            >
+              保存新密码
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
@@ -3897,6 +4256,10 @@ export function BingoApp() {
     guidanceStyle: '先启发思考，再给完整解析',
   });
   const [profileCompleted, setProfileCompleted] = useState(false);
+  const [accountPhone, setAccountPhone] = useState('13812345206');
+  const [passwordUpdatedAt, setPasswordUpdatedAt] = useState(
+    '上次修改：2026年8月16日',
+  );
   const [devices, setDevices] = useState<BingoDevice[]>([
     {
       id: 'my-bingoclaw',
@@ -4019,6 +4382,11 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('profile');
   };
+  const chooseSecurity = () => {
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('security');
+  };
   const choosePoints = () => {
     setMenuOpen(false);
     setSelectedSkill(null);
@@ -4057,6 +4425,14 @@ export function BingoApp() {
       notify('学生档案已更新');
     }
     setView('settings');
+  };
+  const changeAccountPhone = (phone: string) => {
+    setAccountPhone(phone);
+    notify('账号手机号已更新');
+  };
+  const changeAccountPassword = () => {
+    setPasswordUpdatedAt('刚刚修改');
+    notify('登录密码已修改');
   };
   const bindDevice = (
     deviceCode: string,
@@ -4204,6 +4580,7 @@ export function BingoApp() {
             <SettingsView
               onBack={() => setView('chat')}
               onProfile={chooseProfile}
+              onSecurity={chooseSecurity}
               onPoints={choosePoints}
               onDevices={chooseDevices}
               onChannels={chooseChannels}
@@ -4221,6 +4598,14 @@ export function BingoApp() {
               completed={profileCompleted}
               onBack={() => setView('settings')}
               onSave={saveStudentProfile}
+            />
+          ) : view === 'security' ? (
+            <AccountSecurityView
+              phone={accountPhone}
+              passwordUpdatedAt={passwordUpdatedAt}
+              onBack={() => setView('settings')}
+              onPhoneChange={changeAccountPhone}
+              onPasswordChange={changeAccountPassword}
             />
           ) : view === 'growth' ? (
             <GrowthReportView onBack={() => setView('chat')} />
