@@ -78,7 +78,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
-type Message = { id: number; role: 'assistant' | 'user'; text: string };
+type Message = {
+  id: number;
+  role: 'assistant' | 'user';
+  text: string;
+  attachment?: 'captured-photo';
+};
+type PhotoConversation = {
+  id: number;
+  request: string;
+};
 type ChatAttachment = {
   id: string;
   name: string;
@@ -3641,15 +3650,36 @@ function ChatView({
   onCamera,
   onScheduleFromChat,
   installedSkills,
+  photoConversation,
   notify,
 }: {
   onMenu: () => void;
-  onCamera: () => void;
+  onCamera: (request: string) => void;
   onScheduleFromChat: (text: string) => void;
   installedSkills: Set<string>;
+  photoConversation: PhotoConversation | null;
   notify: (message: string) => void;
 }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const hasPhotoRequest = Boolean(photoConversation?.request.trim());
+  const [messages, setMessages] = useState<Message[]>(() =>
+    photoConversation
+      ? [
+          {
+            id: photoConversation.id,
+            role: 'user',
+            text: photoConversation.request.trim() || '已上传题目照片',
+            attachment: 'captured-photo',
+          },
+          {
+            id: photoConversation.id + 1,
+            role: 'assistant',
+            text: hasPhotoRequest
+              ? '我已经看到题目和你的需求了。我会先梳理题目条件，再从关键一步开始陪你分析。'
+              : '我已经看到你拍的题目了。你希望我怎么帮你？可以从下面选择一种辅导方式，也可以直接说出你的问题。',
+          },
+        ]
+      : [],
+  );
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
@@ -3658,7 +3688,12 @@ function ChatView({
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [selectedModel, setSelectedModel] = useState<ModelOption>(models[0]);
   const [selectedChatSkill, setSelectedChatSkill] = useState<Skill | null>(null);
-  const [chatMode, setChatMode] = useState<ChatModeId>('default');
+  const [chatMode, setChatMode] = useState<ChatModeId>(
+    photoConversation ? 'photo' : 'default',
+  );
+  const [showPhotoGuidance, setShowPhotoGuidance] = useState(
+    Boolean(photoConversation && !hasPhotoRequest),
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -3676,6 +3711,7 @@ function ChatView({
     setSelectedChatSkill(null);
     setMessages([]);
     setInput('');
+    setShowPhotoGuidance(false);
   };
 
   const selectInstalledSkill = (skill: Skill) => {
@@ -3683,6 +3719,7 @@ function ChatView({
     setSelectedChatSkill(skill);
     setMessages([]);
     setInput('');
+    setShowPhotoGuidance(false);
   };
 
   const applySuggestion = (suggestion: string) => {
@@ -3735,6 +3772,7 @@ function ChatView({
     const messageText = [text, attachmentSummary].filter(Boolean).join('\n');
     setInput('');
     setAttachments([]);
+    setShowPhotoGuidance(false);
     setMessages((current) => [
       ...current,
       { id: Date.now(), role: 'user', text: messageText },
@@ -3816,10 +3854,44 @@ function ChatView({
               <div
                 className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed md:max-w-[68%] ${message.role === 'user' ? 'rounded-tr-md bg-primary text-white' : 'rounded-tl-md border bg-card'}`}
               >
+                {message.attachment === 'captured-photo' && (
+                  <span className="mb-2 flex min-h-[92px] w-[180px] max-w-full items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-gradient-to-br from-slate-700 via-slate-600 to-blue-700 text-white shadow-inner">
+                    <span className="text-center">
+                      <Camera className="mx-auto size-7 text-blue-100" />
+                      <span className="mt-1 block text-[11px] font-medium text-blue-50">
+                        题目照片
+                      </span>
+                    </span>
+                  </span>
+                )}
                 {message.text}
               </div>
             </div>
           ))}
+          {showPhotoGuidance && (
+            <div className="ml-12 grid w-[min(82%,420px)] grid-cols-1 gap-2 sm:grid-cols-2">
+              {[
+                '帮我分析这道题的解题思路',
+                '先提示我下一步怎么做',
+                '讲讲这道题考查的知识点',
+                '检查一下我写的解题过程',
+              ].map((question) => (
+                <button
+                  key={question}
+                  onClick={() => {
+                    setInput(question);
+                    setShowPhotoGuidance(false);
+                    inputRef.current?.focus();
+                  }}
+                  className="flex min-h-12 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-800 transition-[background-color,transform] hover:bg-blue-100 active:scale-[.98]"
+                >
+                  <Sparkles className="size-4 shrink-0 text-blue-500" />
+                  <span className="flex-1">{question}</span>
+                  <ChevronRight className="size-3.5 shrink-0 text-blue-400" />
+                </button>
+              ))}
+            </div>
+          )}
           {sending && (
             <div className="flex items-center gap-3">
               <img
@@ -4002,7 +4074,7 @@ function ChatView({
               </button>
               <button
                 aria-label="拍题辅导"
-                onClick={onCamera}
+                onClick={() => onCamera(input)}
                 className="flex min-h-10 items-center gap-1.5 rounded-full bg-blue-50 px-3 text-xs font-medium text-blue-700"
               >
                 <Camera className="size-4" />
@@ -4325,10 +4397,12 @@ function ChatView({
 function PhotoFlow({
   step,
   setStep,
+  onCapture,
   notify,
 }: {
   step: Exclude<PhotoStep, null>;
   setStep: (step: PhotoStep) => void;
+  onCapture: () => void;
   notify: (message: string) => void;
 }) {
   const [answer, setAnswer] = useState('');
@@ -4384,7 +4458,7 @@ function PhotoFlow({
 
             <div className="absolute inset-x-0 bottom-4 flex justify-center">
               <span className="rounded-full bg-black/25 px-3 py-1.5 text-[11px] text-white/65 backdrop-blur-sm">
-                AI 会自动校正角度并增强文字
+                拍摄后直接进入辅导对话
               </span>
             </div>
           </div>
@@ -4393,7 +4467,7 @@ function PhotoFlow({
             <div className="mx-auto grid w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-4">
               <button
                 aria-label="从相册选择题目图片"
-                onClick={() => notify('请选择清晰的题目图片')}
+                onClick={onCapture}
                 className="flex min-h-[68px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-50 to-rose-50 px-3 text-sm font-bold text-rose-700 ring-1 ring-rose-100 transition-transform active:scale-[.97]"
               >
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-sm shadow-rose-200">
@@ -4404,7 +4478,7 @@ function PhotoFlow({
 
               <button
                 aria-label={captureMode === 'single' ? '拍摄题目' : '拍摄整页'}
-                onClick={() => setStep('ocr')}
+                onClick={onCapture}
                 className="grid size-[76px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-lg shadow-blue-200 ring-4 ring-blue-50 transition-transform active:scale-95"
               >
                 <span className="grid size-full place-items-center rounded-full border-2 border-white/90 bg-white/15">
@@ -4556,6 +4630,9 @@ function PhotoFlow({
 export function BingoApp() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [photoStep, setPhotoStep] = useState<PhotoStep>(null);
+  const [pendingPhotoRequest, setPendingPhotoRequest] = useState('');
+  const [photoConversation, setPhotoConversation] =
+    useState<PhotoConversation | null>(null);
   const [view, setView] = useState<AppView>('chat');
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [installedSkills, setInstalledSkills] = useState<Set<string>>(
@@ -4699,6 +4776,8 @@ export function BingoApp() {
     setView('chat');
     setSelectedSkill(null);
     setPhotoStep(null);
+    setPhotoConversation(null);
+    setPendingPhotoRequest('');
     setConversationKey((key) => key + 1);
     notify(title === '新对话' ? '已开始新对话' : `已打开聊天记录：${title}`);
   };
@@ -4993,18 +5072,28 @@ export function BingoApp() {
             <PhotoFlow
               step={photoStep}
               setStep={setPhotoStep}
+              onCapture={() => {
+                setPhotoConversation({
+                  id: Date.now(),
+                  request: pendingPhotoRequest,
+                });
+                setPhotoStep(null);
+                setConversationKey((key) => key + 1);
+              }}
               notify={notify}
             />
           ) : (
             <ChatView
               key={conversationKey}
               onMenu={() => setMenuOpen(true)}
-              onCamera={() => {
+              onCamera={(request) => {
                 setView('chat');
+                setPendingPhotoRequest(request);
                 setPhotoStep('camera');
               }}
               onScheduleFromChat={createTaskFromChat}
               installedSkills={installedSkills}
+              photoConversation={photoConversation}
               notify={notify}
             />
           )}
