@@ -23,6 +23,7 @@ import {
   Clock3,
   Cpu,
   FileImage,
+  FileText,
   Flame,
   Gauge,
   History,
@@ -68,6 +69,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
 type Message = { id: number; role: 'assistant' | 'user'; text: string };
+type ChatAttachment = {
+  id: string;
+  name: string;
+  kind: 'image' | 'file';
+  size: string;
+};
 type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
 type AppView =
   | 'chat'
@@ -2685,10 +2692,14 @@ function ChatView({
   const [sending, setSending] = useState(false);
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [skillSheetOpen, setSkillSheetOpen] = useState(false);
+  const [attachmentSheetOpen, setAttachmentSheetOpen] = useState(false);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [selectedModel, setSelectedModel] = useState<ModelOption>(models[0]);
   const [selectedChatSkill, setSelectedChatSkill] = useState<Skill | null>(null);
   const [chatMode, setChatMode] = useState<ChatModeId>('default');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const mode = chatModes[chatMode];
   const ModeIcon = mode.icon;
   const availableSkills = skills.filter((skill) => installedSkills.has(skill.id));
@@ -2717,15 +2728,54 @@ function ChatView({
     inputRef.current?.focus();
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const addAttachments = (
+    files: FileList | null,
+    kind: ChatAttachment['kind'],
+  ) => {
+    if (!files?.length) return;
+    const availableSlots = Math.max(0, 5 - attachments.length);
+    const nextAttachments = Array.from(files)
+      .slice(0, availableSlots)
+      .map((file) => ({
+        id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        name: file.name,
+        kind,
+        size: formatFileSize(file.size),
+      }));
+
+    if (nextAttachments.length === 0) {
+      notify('最多可以添加 5 个附件');
+      return;
+    }
+
+    setAttachments((current) => [...current, ...nextAttachments]);
+    setAttachmentSheetOpen(false);
+    notify(
+      `已添加 ${nextAttachments.length} 个${kind === 'image' ? '图片' : '文件'}`,
+    );
+  };
+
   const send = () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if ((!text && attachments.length === 0) || sending) return;
     const isSchedulingRequest = /提醒|定时|每天|每周|每晚|每早/.test(text);
     if (isSchedulingRequest) onScheduleFromChat(text);
+    const attachmentSummary = attachments.length
+      ? `附件：${attachments.map((attachment) => attachment.name).join('、')}`
+      : '';
+    const messageText = [text, attachmentSummary].filter(Boolean).join('\n');
     setInput('');
+    setAttachments([]);
     setMessages((current) => [
       ...current,
-      { id: Date.now(), role: 'user', text },
+      { id: Date.now(), role: 'user', text: messageText },
     ]);
     setSending(true);
     window.setTimeout(() => {
@@ -2923,6 +2973,46 @@ function ChatView({
         </div>
         <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-8 md:pb-5">
           <div className="mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-shadow focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)]">
+            {attachments.length > 0 && (
+              <div
+                aria-label="已添加的附件"
+                className="mb-2 flex gap-2 overflow-x-auto px-1 pb-1"
+              >
+                {attachments.map((attachment) => {
+                  const AttachmentIcon =
+                    attachment.kind === 'image' ? ImageIcon : FileText;
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex min-w-[190px] max-w-[240px] items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-2"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue-600 shadow-sm">
+                        <AttachmentIcon className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1 text-left">
+                        <span className="block truncate text-xs font-semibold text-slate-800">
+                          {attachment.name}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-slate-500">
+                          {attachment.size}
+                        </span>
+                      </span>
+                      <button
+                        aria-label={`移除附件${attachment.name}`}
+                        onClick={() =>
+                          setAttachments((current) =>
+                            current.filter((item) => item.id !== attachment.id),
+                          )
+                        }
+                        className="grid size-9 shrink-0 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <textarea
               ref={inputRef}
               aria-label="输入学习问题"
@@ -2941,8 +3031,10 @@ function ChatView({
             <div className="mt-2 flex items-center gap-1.5">
               <button
                 aria-label="添加资料"
-                onClick={() => notify('支持添加图片、PDF 和文档')}
-                className="grid size-10 place-items-center rounded-full hover:bg-muted"
+                aria-haspopup="dialog"
+                aria-expanded={attachmentSheetOpen}
+                onClick={() => setAttachmentSheetOpen(true)}
+                className="grid size-11 place-items-center rounded-full transition-colors hover:bg-muted"
               >
                 <Plus className="size-5" />
               </button>
@@ -2974,14 +3066,16 @@ function ChatView({
               </button>
               <span className="flex-1" />
               <button
-                aria-label={input.trim() ? '发送' : '语音输入'}
+                aria-label={input.trim() || attachments.length ? '发送' : '语音输入'}
                 disabled={sending}
                 onClick={() =>
-                  input.trim() ? send() : notify('请开始说话')
+                  input.trim() || attachments.length
+                    ? send()
+                    : notify('请开始说话')
                 }
-                className={`grid size-11 place-items-center rounded-full transition-colors disabled:opacity-40 ${input.trim() ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'}`}
+                className={`grid size-11 place-items-center rounded-full transition-colors disabled:opacity-40 ${input.trim() || attachments.length ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'}`}
               >
-                {input.trim() ? (
+                {input.trim() || attachments.length ? (
                   <Send className="size-5" />
                 ) : (
                   <Mic className="size-5" />
@@ -2991,6 +3085,80 @@ function ChatView({
           </div>
         </div>
       </div>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        aria-label="选择本地图片"
+        className="hidden"
+        onChange={(event) => {
+          addAttachments(event.target.files, 'image');
+          event.target.value = '';
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+        multiple
+        aria-label="选择本地文件"
+        className="hidden"
+        onChange={(event) => {
+          addAttachments(event.target.files, 'file');
+          event.target.value = '';
+        }}
+      />
+      <Drawer
+        open={attachmentSheetOpen}
+        onOpenChange={setAttachmentSheetOpen}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(42dvh,360px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">添加资料</DrawerTitle>
+            <DrawerDescription className="text-left">
+              从本地选择图片或学习文件，最多可添加 5 个。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭附件选择"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="grid grid-cols-2 gap-3 px-4 pb-[max(20px,env(safe-area-inset-bottom))]">
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              className="flex min-h-[132px] flex-col items-start justify-between rounded-[22px] border border-blue-100 bg-blue-50 p-4 text-left transition-[background-color,transform] hover:bg-blue-100 active:scale-[.98]"
+            >
+              <span className="grid size-12 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                <ImageIcon className="size-6" />
+              </span>
+              <span>
+                <span className="block text-base font-bold">选择图片</span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                  支持 JPG、PNG、HEIC 等
+                </span>
+              </span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex min-h-[132px] flex-col items-start justify-between rounded-[22px] border border-amber-100 bg-amber-50 p-4 text-left transition-[background-color,transform] hover:bg-amber-100 active:scale-[.98]"
+            >
+              <span className="grid size-12 place-items-center rounded-2xl bg-white text-amber-600 shadow-sm">
+                <FileText className="size-6" />
+              </span>
+              <span>
+                <span className="block text-base font-bold">选择文件</span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                  支持 PDF、Word、PPT 等
+                </span>
+              </span>
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
       <Drawer
         open={modelSheetOpen}
         onOpenChange={setModelSheetOpen}
