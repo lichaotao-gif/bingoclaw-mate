@@ -2102,21 +2102,7 @@ function AccountSecurityView({
         backLabel="返回设置"
       />
       <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
-        <div className="mx-auto w-full max-w-3xl space-y-4">
-          <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-lg shadow-emerald-100">
-            <div className="flex items-start gap-4">
-              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-                <ShieldCheck className="size-7" />
-              </span>
-              <div>
-                <h2 className="text-lg font-bold">账号安全状态良好</h2>
-                <p className="mt-1 text-sm leading-relaxed text-emerald-50">
-                  手机号与登录密码均已设置，修改后会立即更新账号保护信息。
-                </p>
-              </div>
-            </div>
-          </section>
-
+        <div className="mx-auto w-full max-w-3xl">
           <section>
             <h2 className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
               登录信息
@@ -2155,18 +2141,6 @@ function AccountSecurityView({
                 >
                   修改
                 </button>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-            <div className="flex items-start gap-3">
-              <CircleAlert className="mt-0.5 size-5 shrink-0 text-blue-600" />
-              <div>
-                <h2 className="text-sm font-bold text-blue-950">安全提醒</h2>
-                <p className="mt-1 text-xs leading-relaxed text-blue-800">
-                  不要向他人提供短信验证码或密码。修改成功后，请使用新信息登录。
-                </p>
               </div>
             </div>
           </section>
