@@ -40,7 +40,6 @@ import {
   MapPin,
   Menu,
   MessageSquarePlus,
-  MessageCircle,
   Mic,
   MonitorSmartphone,
   MoreHorizontal,
@@ -1818,20 +1817,6 @@ function TutoringPreferencesView({
       <div className="flex h-[calc(100dvh-72px)] flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6">
           <div className="mx-auto w-full max-w-3xl space-y-4">
-            <section className="rounded-[28px] bg-gradient-to-br from-violet-600 to-blue-600 p-5 text-white shadow-lg shadow-violet-100">
-              <div className="flex items-start gap-4">
-                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-                  <BrainCircuit className="size-7" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-bold">让辅导更适合你</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-violet-50">
-                    这些设置会应用到 BingoMate 和已安装的学习技能，之后可以随时修改。
-                  </p>
-                </div>
-              </div>
-            </section>
-
             <section className="rounded-3xl border bg-white p-4 md:p-5">
               <div className="flex items-start gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-600">
@@ -1969,20 +1954,6 @@ function TutoringPreferencesView({
               </div>
             </section>
 
-            <section className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-              <div className="flex items-start gap-3">
-                <MessageCircle className="mt-0.5 size-5 shrink-0 text-blue-600" />
-                <div>
-                  <h2 className="text-sm font-bold text-blue-950">
-                    当前辅导效果预览
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-blue-800">
-                    AI 将采用{draft.guidanceMode}，提供{draft.detailLevel}讲解，练习以
-                    {draft.difficulty}为主，并使用{draft.tone}的方式与你交流。
-                  </p>
-                </div>
-              </div>
-            </section>
           </div>
         </div>
         <div className="shrink-0 border-t bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:px-8">
