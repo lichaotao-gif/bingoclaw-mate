@@ -11,6 +11,7 @@ import {
   Blocks,
   Box,
   Bot,
+  BookOpen,
   BrainCircuit,
   Camera,
   CalendarClock,
@@ -26,11 +27,14 @@ import {
   FileText,
   Flame,
   Gauge,
+  Gift,
+  GraduationCap,
   History,
   Image as ImageIcon,
   Link2,
   LockKeyhole,
   LogOut,
+  MapPin,
   Menu,
   MessageSquarePlus,
   MessageCircle,
@@ -44,12 +48,14 @@ import {
   ScanLine,
   Search,
   Send,
+  School,
   ShieldCheck,
   SlidersHorizontal,
   Sparkle,
   Settings,
   Sparkles,
   Star,
+  Target,
   UserRound,
   Users,
   X,
@@ -75,12 +81,24 @@ type ChatAttachment = {
   kind: 'image' | 'file';
   size: string;
 };
+type StudentProfile = {
+  nickname: string;
+  region: string;
+  grade: string;
+  school: string;
+  textbook: string;
+  focusSubject: string;
+  weakTopics: string;
+  learningGoal: string;
+  guidanceStyle: string;
+};
 type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
 type AppView =
   | 'chat'
   | 'skills'
   | 'growth'
   | 'settings'
+  | 'profile'
   | 'points'
   | 'devices'
   | 'channels'
@@ -1206,19 +1224,23 @@ function Sidebar({
 
 function SettingsView({
   onBack,
+  onProfile,
   onPoints,
   onDevices,
   onChannels,
   currentDeviceName,
   points,
+  profileCompleted,
   notify,
 }: {
   onBack: () => void;
+  onProfile: () => void;
   onPoints: () => void;
   onDevices: () => void;
   onChannels: () => void;
   currentDeviceName: string;
   points: number;
+  profileCompleted: boolean;
   notify: (message: string) => void;
 }) {
   const sections: {
@@ -1228,6 +1250,7 @@ function SettingsView({
       description: string;
       icon: LucideIcon;
       color: string;
+      reward?: string;
     }[];
   }[] = [
     {
@@ -1235,9 +1258,12 @@ function SettingsView({
       items: [
         {
           label: '学生档案',
-          description: '林小满 · 八年级 · 数学人教版',
+          description: profileCompleted
+            ? '资料已完善 · AI 将结合学情提供辅导'
+            : '待补充地区、学校和教材信息',
           icon: UserRound,
           color: 'bg-blue-50 text-blue-600',
+          reward: profileCompleted ? undefined : '完善送 100 积分',
         },
         {
           label: '辅导偏好',
@@ -1340,7 +1366,9 @@ function SettingsView({
                     <button
                       key={item.label}
                       onClick={() =>
-                        item.label === 'AI 积分与明细'
+                        item.label === '学生档案'
+                          ? onProfile()
+                          : item.label === 'AI 积分与明细'
                           ? onPoints()
                           : item.label === 'BingoMate 设备'
                             ? onDevices()
@@ -1356,8 +1384,16 @@ function SettingsView({
                         <Icon className="size-5" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold">
-                          {item.label}
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold">
+                            {item.label}
+                          </span>
+                          {item.reward && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[11px] font-bold text-amber-800">
+                              <Gift className="size-3" />
+                              {item.reward}
+                            </span>
+                          )}
                         </span>
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {item.description}
@@ -1378,6 +1414,315 @@ function SettingsView({
             <LogOut className="size-5" />
             退出登录
           </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function StudentProfileView({
+  profile,
+  completed,
+  onBack,
+  onSave,
+}: {
+  profile: StudentProfile;
+  completed: boolean;
+  onBack: () => void;
+  onSave: (profile: StudentProfile) => void;
+}) {
+  const [draft, setDraft] = useState(profile);
+  const [error, setError] = useState('');
+  const requiredFields: (keyof StudentProfile)[] = [
+    'nickname',
+    'region',
+    'grade',
+    'school',
+    'textbook',
+    'focusSubject',
+    'learningGoal',
+  ];
+  const completedCount = requiredFields.filter(
+    (field) => draft[field].trim().length > 0,
+  ).length;
+  const completion = Math.round(
+    (completedCount / requiredFields.length) * 100,
+  );
+
+  const updateProfile = (field: keyof StudentProfile, value: string) => {
+    setDraft((current) => ({ ...current, [field]: value }));
+    if (error) setError('');
+  };
+
+  const saveProfile = () => {
+    if (completedCount < requiredFields.length) {
+      setError('请先完成带“必填”标识的信息，再领取积分奖励。');
+      return;
+    }
+    onSave(draft);
+  };
+
+  const inputClassName =
+    'mt-2 min-h-12 w-full rounded-2xl border bg-slate-50 px-4 text-base text-slate-900 outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100';
+
+  return (
+    <>
+      <Header
+        title="学生档案"
+        subtitle="让 AI 更懂你的学习情况"
+        onBack={onBack}
+        backLabel="返回设置"
+      />
+      <div className="flex h-[calc(100dvh-72px)] flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6">
+          <div className="mx-auto w-full max-w-3xl space-y-4">
+            <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-600 p-5 text-white shadow-lg shadow-blue-100">
+              <div className="flex items-start gap-4">
+                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+                  <GraduationCap className="size-7" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-bold">档案完整度</h2>
+                    <span className="text-lg font-bold tabular-nums">
+                      {completion}%
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
+                    <div
+                      className="h-full rounded-full bg-white transition-[width] duration-300"
+                      style={{ width: `${completion}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-blue-50">
+                    {completed
+                      ? '档案已完善，后续修改会自动更新 AI 的辅导参考。'
+                      : '补全关键学习信息，AI 的讲解和练习会更贴合你。'}
+                  </p>
+                </div>
+              </div>
+              {!completed && (
+                <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2.5 text-sm font-semibold ring-1 ring-white/20">
+                  <Gift className="size-5" />
+                  首次完善档案，赠送 100 积分
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border bg-white p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                  <UserRound className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold">基本学习信息</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    帮助 AI 判断所在地区的课程范围、年级难度和学校进度。
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <label htmlFor="profile-nickname" className="text-sm font-semibold">
+                  学生昵称 <span className="text-rose-500">必填</span>
+                  <input
+                    id="profile-nickname"
+                    value={draft.nickname}
+                    onChange={(event) =>
+                      updateProfile('nickname', event.target.value)
+                    }
+                    placeholder="例如：林小满"
+                    className={inputClassName}
+                  />
+                </label>
+                <label htmlFor="profile-grade" className="text-sm font-semibold">
+                  当前年级 <span className="text-rose-500">必填</span>
+                  <select
+                    id="profile-grade"
+                    value={draft.grade}
+                    onChange={(event) =>
+                      updateProfile('grade', event.target.value)
+                    }
+                    className={inputClassName}
+                  >
+                    <option value="">请选择年级</option>
+                    {[
+                      '一年级',
+                      '二年级',
+                      '三年级',
+                      '四年级',
+                      '五年级',
+                      '六年级',
+                      '七年级',
+                      '八年级',
+                      '九年级',
+                      '高一',
+                      '高二',
+                      '高三',
+                    ].map((grade) => (
+                      <option key={grade}>{grade}</option>
+                    ))}
+                  </select>
+                </label>
+                <label htmlFor="profile-region" className="text-sm font-semibold">
+                  所在地区 <span className="text-rose-500">必填</span>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-4 top-1/2 mt-1 size-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="profile-region"
+                      value={draft.region}
+                      onChange={(event) =>
+                        updateProfile('region', event.target.value)
+                      }
+                      placeholder="例如：广东省深圳市"
+                      className={`${inputClassName} pl-11`}
+                    />
+                  </div>
+                </label>
+                <label htmlFor="profile-school" className="text-sm font-semibold">
+                  学校 <span className="text-rose-500">必填</span>
+                  <div className="relative">
+                    <School className="pointer-events-none absolute left-4 top-1/2 mt-1 size-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="profile-school"
+                      value={draft.school}
+                      onChange={(event) =>
+                        updateProfile('school', event.target.value)
+                      }
+                      placeholder="可填写学校简称"
+                      className={`${inputClassName} pl-11`}
+                    />
+                  </div>
+                  <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
+                    仅用于匹配本地教学进度
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border bg-white p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
+                  <BookOpen className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold">课程与学习目标</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    教材、薄弱点和目标会用于生成更合适的例题与复习计划。
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <label htmlFor="profile-subject" className="text-sm font-semibold">
+                  重点科目 <span className="text-rose-500">必填</span>
+                  <select
+                    id="profile-subject"
+                    value={draft.focusSubject}
+                    onChange={(event) =>
+                      updateProfile('focusSubject', event.target.value)
+                    }
+                    className={inputClassName}
+                  >
+                    <option value="">请选择重点科目</option>
+                    {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
+                      (subject) => (
+                        <option key={subject}>{subject}</option>
+                      ),
+                    )}
+                  </select>
+                </label>
+                <label htmlFor="profile-textbook" className="text-sm font-semibold">
+                  教材版本 <span className="text-rose-500">必填</span>
+                  <select
+                    id="profile-textbook"
+                    value={draft.textbook}
+                    onChange={(event) =>
+                      updateProfile('textbook', event.target.value)
+                    }
+                    className={inputClassName}
+                  >
+                    <option value="">请选择教材版本</option>
+                    {['人教版', '北师大版', '苏教版', '沪教版', '浙教版', '鲁教版', '其他版本'].map(
+                      (textbook) => (
+                        <option key={textbook}>{textbook}</option>
+                      ),
+                    )}
+                  </select>
+                </label>
+              </div>
+              <label htmlFor="profile-weak-topics" className="mt-4 block text-sm font-semibold">
+                当前薄弱点 <span className="font-normal text-muted-foreground">选填</span>
+                <textarea
+                  id="profile-weak-topics"
+                  value={draft.weakTopics}
+                  onChange={(event) =>
+                    updateProfile('weakTopics', event.target.value)
+                  }
+                  placeholder="例如：二次函数、几何证明容易丢分"
+                  rows={3}
+                  className={`${inputClassName} resize-none py-3 leading-relaxed`}
+                />
+              </label>
+              <label htmlFor="profile-goal" className="mt-4 block text-sm font-semibold">
+                阶段目标 <span className="text-rose-500">必填</span>
+                <div className="relative">
+                  <Target className="pointer-events-none absolute left-4 top-6 size-4 text-slate-400" />
+                  <textarea
+                    id="profile-goal"
+                    value={draft.learningGoal}
+                    onChange={(event) =>
+                      updateProfile('learningGoal', event.target.value)
+                    }
+                    placeholder="例如：期末数学稳定在 90 分以上"
+                    rows={3}
+                    className={`${inputClassName} resize-none py-3 pl-11 leading-relaxed`}
+                  />
+                </div>
+              </label>
+            </section>
+
+            <section className="rounded-3xl border bg-white p-4 md:p-5">
+              <label htmlFor="profile-guidance" className="text-sm font-semibold">
+                AI 辅导方式
+                <select
+                  id="profile-guidance"
+                  value={draft.guidanceStyle}
+                  onChange={(event) =>
+                    updateProfile('guidanceStyle', event.target.value)
+                  }
+                  className={inputClassName}
+                >
+                  <option>先启发思考，再给完整解析</option>
+                  <option>先讲知识点，再带我做题</option>
+                  <option>直接指出错误，并给出改进建议</option>
+                </select>
+              </label>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                这些资料只用于个性化学习辅助，可随时回来修改。
+              </p>
+            </section>
+          </div>
+        </div>
+        <div className="shrink-0 border-t bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:px-8">
+          <div className="mx-auto w-full max-w-3xl">
+            {error && (
+              <p role="alert" className="mb-2 text-sm font-medium text-rose-600">
+                {error}
+              </p>
+            )}
+            <Button
+              onClick={saveProfile}
+              className="h-12 w-full rounded-2xl text-base font-bold"
+            >
+              {completed ? (
+                '保存档案'
+              ) : (
+                <>
+                  <Gift className="size-5" />
+                  完善档案并领取 100 积分
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </>
@@ -3541,6 +3886,18 @@ export function BingoApp() {
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
   const [points, setPoints] = useState(1280);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>({
+    nickname: '林小满',
+    region: '',
+    grade: '八年级',
+    school: '',
+    textbook: '',
+    focusSubject: '数学',
+    weakTopics: '',
+    learningGoal: '',
+    guidanceStyle: '先启发思考，再给完整解析',
+  });
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const [devices, setDevices] = useState<BingoDevice[]>([
     {
       id: 'my-bingoclaw',
@@ -3658,6 +4015,11 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('settings');
   };
+  const chooseProfile = () => {
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setView('profile');
+  };
   const choosePoints = () => {
     setMenuOpen(false);
     setSelectedSkill(null);
@@ -3675,6 +4037,27 @@ export function BingoApp() {
     setSelectedSkill(null);
     setPhotoStep(null);
     setView('channels');
+  };
+  const saveStudentProfile = (profile: StudentProfile) => {
+    setStudentProfile(profile);
+    if (!profileCompleted) {
+      setProfileCompleted(true);
+      setPoints((current) => current + 100);
+      setPointTransactions((current) => [
+        {
+          id: `profile-reward-${Date.now()}`,
+          title: '学生档案完善奖励',
+          detail: '首次完善学生学习档案',
+          time: '刚刚',
+          amount: 100,
+        },
+        ...current,
+      ]);
+      notify('学生档案已完善，100 积分已到账');
+    } else {
+      notify('学生档案已更新');
+    }
+    setView('settings');
   };
   const bindDevice = (
     deviceCode: string,
@@ -3821,6 +4204,7 @@ export function BingoApp() {
           ) : view === 'settings' ? (
             <SettingsView
               onBack={() => setView('chat')}
+              onProfile={chooseProfile}
               onPoints={choosePoints}
               onDevices={chooseDevices}
               onChannels={chooseChannels}
@@ -3829,7 +4213,15 @@ export function BingoApp() {
                 '未连接设备'
               }
               points={points}
+              profileCompleted={profileCompleted}
               notify={notify}
+            />
+          ) : view === 'profile' ? (
+            <StudentProfileView
+              profile={studentProfile}
+              completed={profileCompleted}
+              onBack={() => setView('settings')}
+              onSave={saveStudentProfile}
             />
           ) : view === 'growth' ? (
             <GrowthReportView onBack={() => setView('chat')} />
