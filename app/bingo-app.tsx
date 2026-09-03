@@ -3796,13 +3796,13 @@ function ChatView({
                 />
               )}
               <div
-                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed md:max-w-[68%] ${message.role === 'user' ? 'rounded-tr-md bg-primary text-white' : 'rounded-tl-md border bg-card'}`}
+                className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed md:max-w-[68%] ${message.role === 'user' ? 'rounded-tr-md border border-blue-100 bg-blue-50 text-slate-800 shadow-sm' : 'rounded-tl-md border bg-card'}`}
               >
                 {message.attachment === 'captured-photo' && (
-                  <span className="mb-2 flex min-h-[92px] w-[180px] max-w-full items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-gradient-to-br from-slate-700 via-slate-600 to-blue-700 text-white shadow-inner">
+                  <span className="mb-2 flex min-h-[92px] w-[180px] max-w-full items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-100 via-indigo-50 to-cyan-100 text-blue-700">
                     <span className="text-center">
-                      <Camera className="mx-auto size-7 text-blue-100" />
-                      <span className="mt-1 block text-[11px] font-medium text-blue-50">
+                      <Camera className="mx-auto size-7 text-blue-600" />
+                      <span className="mt-1 block text-[11px] font-medium text-blue-700">
                         题目照片
                       </span>
                     </span>
