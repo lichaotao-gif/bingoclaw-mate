@@ -116,8 +116,7 @@ type RemoteChannel = {
   account: string;
   connected: boolean;
   recommended?: boolean;
-  icon: LucideIcon;
-  color: string;
+  logo: string;
 };
 type ScheduledTask = {
   id: string;
@@ -617,8 +616,7 @@ const initialRemoteChannels: RemoteChannel[] = [
     account: '林小满的微信',
     connected: true,
     recommended: true,
-    icon: MessageCircle,
-    color: 'bg-emerald-500 text-white',
+    logo: '/channels/wechat.svg',
   },
   {
     id: 'wecom',
@@ -627,8 +625,7 @@ const initialRemoteChannels: RemoteChannel[] = [
     account: '暂未配置 Agent',
     connected: false,
     recommended: true,
-    icon: Users,
-    color: 'bg-blue-500 text-white',
+    logo: '/channels/wecom.svg',
   },
   {
     id: 'qq',
@@ -637,8 +634,7 @@ const initialRemoteChannels: RemoteChannel[] = [
     account: 'BingoMate 学习助手',
     connected: true,
     recommended: true,
-    icon: MessageCircle,
-    color: 'bg-sky-500 text-white',
+    logo: '/channels/qq.svg',
   },
   {
     id: 'feishu',
@@ -646,8 +642,7 @@ const initialRemoteChannels: RemoteChannel[] = [
     description: '接入飞书机器人，在群聊或私聊中完成学习任务。',
     account: '暂未配置 Agent',
     connected: false,
-    icon: Send,
-    color: 'bg-indigo-500 text-white',
+    logo: '/channels/feishu.svg',
   },
   {
     id: 'dingtalk',
@@ -655,8 +650,7 @@ const initialRemoteChannels: RemoteChannel[] = [
     description: '接入钉钉机器人，支持班级群和学习团队协作。',
     account: 'BingoMate 班级助手',
     connected: true,
-    icon: Send,
-    color: 'bg-cyan-500 text-white',
+    logo: '/channels/dingtalk.svg',
   },
 ];
 
@@ -2262,8 +2256,6 @@ function ChannelsView({
   const canConnect = Boolean(
     setupChannel && selectedAgent && appId.trim() && appSecret.trim(),
   );
-  const SetupIcon = setupChannel?.icon ?? MessageCircle;
-
   const openSetup = (channel: RemoteChannel) => {
     setSetupChannel(channel);
     setSelectedAgent('小满学习助手');
@@ -2301,17 +2293,20 @@ function ChannelsView({
 
           <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
             {channels.map((channel) => {
-              const Icon = channel.icon;
               return (
                 <article
                   key={channel.id}
                   className="flex min-h-[210px] flex-col rounded-[24px] border bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-start gap-3">
-                    <span
-                      className={`grid size-12 shrink-0 place-items-center rounded-2xl shadow-sm ${channel.color}`}
-                    >
-                      <Icon className="size-6" />
+                    <span className="grid size-12 shrink-0 place-items-center rounded-2xl border bg-white p-2.5 shadow-sm">
+                      <img
+                        src={channel.logo}
+                        alt={`${channel.name} Logo`}
+                        width={32}
+                        height={32}
+                        className="size-8 object-contain"
+                      />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -2374,10 +2369,14 @@ function ChannelsView({
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <div className="flex items-center gap-3 pr-12">
               {setupChannel && (
-                <span
-                  className={`grid size-12 shrink-0 place-items-center rounded-2xl shadow-sm ${setupChannel.color}`}
-                >
-                  <SetupIcon className="size-6" />
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl border bg-white p-2.5 shadow-sm">
+                  <img
+                    src={setupChannel.logo}
+                    alt={`${setupChannel.name} Logo`}
+                    width={32}
+                    height={32}
+                    className="size-8 object-contain"
+                  />
                 </span>
               )}
               <div className="min-w-0">
