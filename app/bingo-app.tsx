@@ -10,7 +10,6 @@ import {
   Bell,
   Blocks,
   Box,
-  Bot,
   BookOpen,
   BrainCircuit,
   Camera,
@@ -3788,7 +3787,7 @@ function ChatView({
             >
               {message.role === 'assistant' && (
                 <img
-                  src={currentSkillImage}
+                  src="/brand/bingomate-owl.png"
                   alt=""
                   aria-hidden="true"
                   width={36}
@@ -3840,7 +3839,7 @@ function ChatView({
           {sending && (
             <div className="flex items-center gap-3">
               <img
-                src={currentSkillImage}
+                src="/brand/bingomate-owl.png"
                 alt=""
                 aria-hidden="true"
                 width={36}
@@ -4497,9 +4496,14 @@ function PhotoFlow({
         />
         <div className="space-y-4 px-5 py-5">
           <div className="flex items-start gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-white">
-              <Bot className="size-5" />
-            </span>
+            <img
+              src="/brand/bingomate-owl.png"
+              alt=""
+              aria-hidden="true"
+              width={36}
+              height={36}
+              className="size-9 shrink-0 object-contain"
+            />
             <div className="rounded-2xl rounded-tl-md bg-blue-50 p-4 text-sm leading-relaxed text-slate-800">
               <p className="font-semibold">先不急着看答案。</p>
               <p className="mt-1">
