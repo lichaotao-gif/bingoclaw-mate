@@ -70,6 +70,7 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
@@ -1071,7 +1072,6 @@ function Sidebar({
   currentDeviceName,
   onSwitchDevice,
   points,
-  onRecharge,
   notify,
 }: {
   open: boolean;
@@ -1083,7 +1083,6 @@ function Sidebar({
   currentDeviceName: string;
   onSwitchDevice: () => void;
   points: number;
-  onRecharge: () => void;
   notify: (message: string) => void;
 }) {
   return (
@@ -1215,7 +1214,7 @@ function Sidebar({
             </button>
             <button
               aria-label="充值积分"
-              onClick={onRecharge}
+              onClick={onPoints}
               className="min-h-11 shrink-0 rounded-xl border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100"
             >
               充值
@@ -4932,7 +4931,6 @@ export function BingoApp() {
           }
           onSwitchDevice={() => setDeviceSwitcherOpen(true)}
           points={points}
-          onRecharge={() => setRechargeOpen(true)}
           notify={notify}
         />
         <div className="min-w-0 flex-1">
@@ -5061,7 +5059,7 @@ export function BingoApp() {
         onOpenChange={setRechargeOpen}
         showSwipeHandle
       >
-        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px] [--drawer-height:min(68dvh,610px)]">
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] md:max-w-[680px]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
               <PointsIcon className="size-9" />
@@ -5077,7 +5075,7 @@ export function BingoApp() {
               <X className="size-5" />
             </DrawerClose>
           </DrawerHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(18px,env(safe-area-inset-bottom))]">
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-4">
             <div className="grid grid-cols-2 gap-3">
               {rechargePlans.map((plan) => {
                 const selected = plan.id === selectedPlanId;
@@ -5107,8 +5105,10 @@ export function BingoApp() {
                 );
               })}
             </div>
+          </div>
+          <DrawerFooter className="px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-5">
             <Button
-              className="mt-5 h-12 w-full rounded-2xl bg-amber-500 text-base font-bold text-white hover:bg-amber-600"
+              className="h-12 w-full rounded-2xl bg-amber-500 text-base font-bold text-white hover:bg-amber-600"
               onClick={() => {
                 const plan = rechargePlans.find(
                   (item) => item.id === selectedPlanId,
@@ -5133,7 +5133,7 @@ export function BingoApp() {
             >
               确认充值
             </Button>
-          </div>
+          </DrawerFooter>
         </DrawerContent>
       </Drawer>
       <Drawer
