@@ -4521,7 +4521,7 @@ function ChatView({
               }}
               placeholder={mode.placeholder}
               rows={2}
-              className="w-full resize-none bg-transparent px-2 text-base outline-none placeholder:text-muted-foreground"
+              className="w-full resize-none bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-500"
             />
             <div className="mt-2 flex items-center gap-1.5">
               <button
@@ -4535,18 +4535,21 @@ function ChatView({
               </button>
               <button
                 aria-label="拍题辅导"
+                title="拍题"
                 onClick={() => onCamera(input)}
-                className="flex min-h-10 items-center gap-1.5 rounded-full bg-blue-50 px-3 text-xs font-medium text-blue-700"
+                className="group relative mb-0.5 grid size-11 shrink-0 touch-manipulation place-items-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700 shadow-[0_3px_0_#bfdbfe,0_5px_12px_rgba(37,99,235,.12)] transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-blue-100 active:translate-y-[2px] active:shadow-[0_1px_0_#bfdbfe,0_2px_6px_rgba(37,99,235,.10)] motion-reduce:transform-none"
               >
-                <Camera className="size-4" />
-                拍题
+                <span className="pointer-events-none absolute inset-x-2 top-1 h-px rounded-full bg-white" />
+                <span className="pointer-events-none grid size-7 place-items-center rounded-xl border border-blue-100 bg-white/80 shadow-sm">
+                  <Camera className="size-[18px] stroke-[2.3]" />
+                </span>
               </button>
               <button
                 aria-label={`选择技能，当前为${currentSkillName}`}
                 aria-haspopup="dialog"
                 aria-expanded={skillSheetOpen}
                 onClick={() => setSkillSheetOpen(true)}
-                className={`flex min-h-10 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-medium text-slate-700 transition-[background-color,box-shadow] hover:bg-slate-200 ${demoTourStep === 0 ? 'relative z-[70] ring-4 ring-orange-300 shadow-lg' : ''}`}
+                className={`flex min-h-10 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-950 transition-[background-color,box-shadow] hover:bg-slate-200 ${demoTourStep === 0 ? 'relative z-[70] ring-4 ring-orange-300 shadow-lg' : ''}`}
               >
                 <img
                   src={currentSkillImage}
