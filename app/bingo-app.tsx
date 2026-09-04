@@ -2340,6 +2340,111 @@ function AccountSecurityView({
   );
 }
 
+function AddDeviceDrawer({
+  open,
+  onOpenChange,
+  onBind,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onBind: (deviceCode: string, activationCode: string, name: string) => void;
+}) {
+  const [deviceCode, setDeviceCode] = useState('');
+  const [activationCode, setActivationCode] = useState('');
+  const [deviceName, setDeviceName] = useState('我的 BingoMate');
+  const canBind =
+    deviceCode.trim().length > 0 &&
+    activationCode.trim().length > 0 &&
+    deviceName.trim().length > 0;
+
+  const bindDevice = () => {
+    if (!canBind) return;
+    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
+    setDeviceCode('');
+    setActivationCode('');
+    setDeviceName('我的 BingoMate');
+    onOpenChange(false);
+  };
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
+      <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(68dvh,560px)]">
+        <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+          <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+            <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+              <MonitorSmartphone className="size-5" />
+            </span>
+            添加 BingoMate 设备
+          </DrawerTitle>
+          <DrawerDescription className="text-left">
+            输入设备机身上的设备码和激活码完成绑定。
+          </DrawerDescription>
+          <DrawerClose
+            aria-label="关闭添加设备"
+            className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+          >
+            <X className="size-5" />
+          </DrawerClose>
+        </DrawerHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
+          <div className="space-y-4">
+            <div>
+              <span className="mb-2 block text-sm font-semibold">设备码</span>
+              <div className="flex gap-2">
+                <input
+                  aria-label="设备码"
+                  value={deviceCode}
+                  onChange={(event) => setDeviceCode(event.target.value)}
+                  placeholder="例如 BM-20260901"
+                  autoComplete="off"
+                  className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+                <button
+                  aria-label="扫码录入设备码"
+                  onClick={() => setDeviceCode('BM-20260901')}
+                  className="flex h-12 shrink-0 items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                >
+                  <ScanLine className="size-5" />
+                  扫码
+                </button>
+              </div>
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">激活码</span>
+              <input
+                aria-label="激活码"
+                value={activationCode}
+                onChange={(event) => setActivationCode(event.target.value)}
+                placeholder="请输入设备激活码"
+                autoComplete="off"
+                className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">设备名称</span>
+              <input
+                aria-label="设备名称"
+                value={deviceName}
+                onChange={(event) => setDeviceName(event.target.value)}
+                placeholder="给设备起一个名称"
+                autoComplete="off"
+                className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+          </div>
+          <Button
+            disabled={!canBind}
+            onClick={bindDevice}
+            className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+          >
+            绑定设备
+          </Button>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
 function DevicesView({
   devices,
   currentDeviceId,
@@ -2354,24 +2459,8 @@ function DevicesView({
   onRename: (deviceId: string, name: string) => void;
 }) {
   const [addDeviceOpen, setAddDeviceOpen] = useState(false);
-  const [deviceCode, setDeviceCode] = useState('');
-  const [activationCode, setActivationCode] = useState('');
-  const [deviceName, setDeviceName] = useState('我的 BingoMate');
   const [renameDevice, setRenameDevice] = useState<BingoDevice | null>(null);
   const [renameName, setRenameName] = useState('');
-  const canBind =
-    deviceCode.trim().length > 0 &&
-    activationCode.trim().length > 0 &&
-    deviceName.trim().length > 0;
-
-  const bindDevice = () => {
-    if (!canBind) return;
-    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
-    setDeviceCode('');
-    setActivationCode('');
-    setDeviceName('我的 BingoMate');
-    setAddDeviceOpen(false);
-  };
 
   const openRename = (device: BingoDevice) => {
     setRenameDevice(device);
@@ -2460,81 +2549,11 @@ function DevicesView({
         </div>
       </div>
 
-      <Drawer open={addDeviceOpen} onOpenChange={setAddDeviceOpen} showSwipeHandle>
-        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(68dvh,560px)]">
-          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
-            <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
-              <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
-                <MonitorSmartphone className="size-5" />
-              </span>
-              添加 BingoMate 设备
-            </DrawerTitle>
-            <DrawerDescription className="text-left">
-              输入设备机身上的设备码和激活码完成绑定。
-            </DrawerDescription>
-            <DrawerClose
-              aria-label="关闭添加设备"
-              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
-            >
-              <X className="size-5" />
-            </DrawerClose>
-          </DrawerHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(18px,env(safe-area-inset-bottom))]">
-            <div className="space-y-4">
-              <div>
-                <span className="mb-2 block text-sm font-semibold">设备码</span>
-                <div className="flex gap-2">
-                  <input
-                    aria-label="设备码"
-                    value={deviceCode}
-                    onChange={(event) => setDeviceCode(event.target.value)}
-                    placeholder="例如 BM-20260901"
-                    autoComplete="off"
-                    className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                  />
-                  <button
-                    aria-label="扫码录入设备码"
-                    onClick={() => setDeviceCode('BM-20260901')}
-                    className="flex h-12 shrink-0 items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-                  >
-                    <ScanLine className="size-5" />
-                    扫码
-                  </button>
-                </div>
-              </div>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold">激活码</span>
-                <input
-                  aria-label="激活码"
-                  value={activationCode}
-                  onChange={(event) => setActivationCode(event.target.value)}
-                  placeholder="请输入设备激活码"
-                  autoComplete="off"
-                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold">设备名称</span>
-                <input
-                  aria-label="设备名称"
-                  value={deviceName}
-                  onChange={(event) => setDeviceName(event.target.value)}
-                  placeholder="给设备起一个名称"
-                  autoComplete="off"
-                  className="h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-            </div>
-            <Button
-              disabled={!canBind}
-              onClick={bindDevice}
-              className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
-            >
-              绑定设备
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <AddDeviceDrawer
+        open={addDeviceOpen}
+        onOpenChange={setAddDeviceOpen}
+        onBind={onBind}
+      />
 
       <Drawer
         open={Boolean(renameDevice)}
@@ -5242,6 +5261,7 @@ export function BingoApp() {
   ]);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [deviceSwitcherOpen, setDeviceSwitcherOpen] = useState(false);
+  const [quickAddDeviceOpen, setQuickAddDeviceOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
   const [demoStage, setDemoStage] = useState<DemoStage>(null);
   const [demoTourStep, setDemoTourStep] = useState(0);
@@ -5783,9 +5803,28 @@ export function BingoApp() {
                 );
               })}
             </div>
+            <button
+              type="button"
+              aria-label="添加新设备"
+              onClick={() => {
+                setDeviceSwitcherOpen(false);
+                setQuickAddDeviceOpen(true);
+              }}
+              className="mt-3 flex min-h-14 w-full touch-manipulation items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-4 text-sm font-bold text-blue-700 transition-colors hover:border-blue-200 hover:from-blue-100 hover:to-cyan-100"
+            >
+              <span className="grid size-8 place-items-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
+                <Plus className="size-4" />
+              </span>
+              添加新设备
+            </button>
           </div>
         </DrawerContent>
       </Drawer>
+      <AddDeviceDrawer
+        open={quickAddDeviceOpen}
+        onOpenChange={setQuickAddDeviceOpen}
+        onBind={bindDevice}
+      />
     </main>
   );
 }
