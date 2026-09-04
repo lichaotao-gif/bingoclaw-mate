@@ -77,7 +77,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
-type DemoStage = null | 'menu' | 'login' | 'bind' | 'tour';
+type DemoStage = null | 'menu' | 'login' | 'bind' | 'bind-success' | 'tour';
 type Message = {
   id: number;
   role: 'assistant' | 'user';
@@ -3658,8 +3658,10 @@ function DemoExperience({
   const [deviceCode, setDeviceCode] = useState('');
   const [activationCode, setActivationCode] = useState('');
   const [deviceName, setDeviceName] = useState('我的 BingoMate');
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startDemo = () => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
     setPhone('13800138000');
     setVerificationCode('888888');
     setLoginError('');
@@ -3698,7 +3700,11 @@ function DemoExperience({
   const bind = () => {
     if (!deviceCode.trim() || !activationCode.trim() || !deviceName.trim()) return;
     onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
-    onStartTour();
+    setStage('bind-success');
+    successTimerRef.current = setTimeout(() => {
+      successTimerRef.current = null;
+      onStartTour();
+    }, 1600);
   };
 
   return (
@@ -4002,6 +4008,38 @@ function DemoExperience({
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {stage === 'bind-success' && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-blue-50 px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))]"
+        >
+          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-sm text-center duration-300">
+            <div className="relative mx-auto grid size-24 place-items-center rounded-[32px] bg-gradient-to-br from-emerald-400 to-teal-500 shadow-[0_20px_50px_rgba(16,185,129,.28)]">
+              <span className="absolute inset-2 rounded-[26px] border border-white/35" />
+              <Check className="relative size-12 stroke-[3] text-white" />
+            </div>
+            <h2 className="mt-7 text-2xl font-black tracking-tight text-slate-950">
+              绑定成功
+            </h2>
+            <p className="mt-2 text-base font-semibold text-slate-700">
+              {deviceName}
+            </p>
+            <p className="mt-2 text-sm text-slate-500">
+              设备已连接，正在进入首页
+            </p>
+            <div
+              aria-hidden="true"
+              className="mx-auto mt-6 flex w-fit gap-2 motion-safe:animate-pulse"
+            >
+              <span className="size-2 rounded-full bg-emerald-500" />
+              <span className="size-2 rounded-full bg-emerald-400" />
+              <span className="size-2 rounded-full bg-emerald-300" />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
