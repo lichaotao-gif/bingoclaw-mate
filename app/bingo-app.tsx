@@ -3648,19 +3648,23 @@ function DemoExperience({
   onStartTour: () => void;
   notify: (message: string) => void;
 }) {
-  const [phone, setPhone] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [phone, setPhone] = useState('13800138000');
+  const [verificationCode, setVerificationCode] = useState('888888');
   const [loginError, setLoginError] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
+  const [codeSent, setCodeSent] = useState(true);
+  const [legalDocument, setLegalDocument] = useState<
+    null | 'terms' | 'privacy'
+  >(null);
   const [deviceCode, setDeviceCode] = useState('');
   const [activationCode, setActivationCode] = useState('');
   const [deviceName, setDeviceName] = useState('我的 BingoMate');
 
   const startDemo = () => {
-    setPhone('');
-    setVerificationCode('');
+    setPhone('13800138000');
+    setVerificationCode('888888');
     setLoginError('');
-    setCodeSent(false);
+    setCodeSent(true);
+    setLegalDocument(null);
     setDeviceCode('');
     setActivationCode('');
     setDeviceName('我的 BingoMate');
@@ -3822,9 +3826,102 @@ function DemoExperience({
                 >
                   登录并继续
                 </Button>
+                <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+                  登录或注册即表示您已阅读并同意
+                  <button
+                    type="button"
+                    onClick={() => setLegalDocument('terms')}
+                    className="mx-0.5 rounded text-blue-600 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                  >
+                    《用户服务协议》
+                  </button>
+                  和
+                  <button
+                    type="button"
+                    onClick={() => setLegalDocument('privacy')}
+                    className="mx-0.5 rounded text-blue-600 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                  >
+                    《隐私政策》
+                  </button>
+                </p>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {legalDocument && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center">
+          <button
+            type="button"
+            aria-label="关闭协议详情"
+            onClick={() => setLegalDocument(null)}
+            className="absolute inset-0 bg-slate-950/45"
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="demo-legal-title"
+            className="relative z-10 flex max-h-[72dvh] w-[calc(100%-16px)] max-w-[560px] flex-col rounded-t-[30px] bg-white shadow-2xl sm:w-[calc(100%-32px)]"
+          >
+            <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-slate-200" />
+            <header className="flex items-center justify-between gap-3 border-b px-5 py-3">
+              <h3 id="demo-legal-title" className="text-lg font-bold text-slate-950">
+                {legalDocument === 'terms' ? '用户服务协议' : '隐私政策'}
+              </h3>
+              <button
+                type="button"
+                aria-label="关闭"
+                onClick={() => setLegalDocument(null)}
+                className="grid size-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600"
+              >
+                <X className="size-5" />
+              </button>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm leading-7 text-slate-600">
+              {legalDocument === 'terms' ? (
+                <>
+                  <p className="font-semibold text-slate-900">一、账号与服务</p>
+                  <p className="mt-1">
+                    用户可通过手机号验证码登录，未注册的手机号将自动创建 BingoMate
+                    账号。请妥善保管账号及绑定设备信息，不得将服务用于违法或侵害他人权益的活动。
+                  </p>
+                  <p className="mt-4 font-semibold text-slate-900">二、学习辅助说明</p>
+                  <p className="mt-1">
+                    BingoMate 提供学习规划、答疑和练习辅助。用户应结合教材、教师指导及实际学习情况判断和使用生成内容。
+                  </p>
+                  <p className="mt-4 font-semibold text-slate-900">三、账号管理</p>
+                  <p className="mt-1">
+                    用户可以在账号与安全中修改手机号、密码及管理设备连接；停止使用服务时，可按产品提供的方式申请注销账号。
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-slate-900">一、信息收集</p>
+                  <p className="mt-1">
+                    为完成登录、设备绑定和个性化学习服务，我们会处理手机号、设备码、学习记录及用户主动填写的学生档案。
+                  </p>
+                  <p className="mt-4 font-semibold text-slate-900">二、信息使用</p>
+                  <p className="mt-1">
+                    相关信息仅用于提供账号服务、同步学习进度、生成成长报告和改善辅导体验，不会用于与这些目的无关的用途。
+                  </p>
+                  <p className="mt-4 font-semibold text-slate-900">三、用户权利</p>
+                  <p className="mt-1">
+                    用户可以在设置中查看和修改个人资料、管理绑定设备，并依法申请访问、更正或删除个人信息。
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="border-t px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
+              <Button
+                type="button"
+                onClick={() => setLegalDocument(null)}
+                className="h-12 w-full rounded-2xl font-bold"
+              >
+                我知道了
+              </Button>
+            </div>
+          </section>
         </div>
       )}
 
