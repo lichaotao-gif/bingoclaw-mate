@@ -77,6 +77,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
+type DemoStage = null | 'menu' | 'login' | 'bind' | 'tour';
 type Message = {
   id: number;
   role: 'assistant' | 'user';
@@ -797,6 +798,24 @@ function SkillsView({
   onSelect: (skill: Skill) => void;
   installedSkills: Set<string>;
 }) {
+  const skillCategoryGroups: { label: string; categories: string[] }[] = [
+    { label: '全部', categories: [] },
+    { label: '学科辅导', categories: ['数学辅导', '英语学习'] },
+    { label: '复习练习', categories: ['复习规划', '智能练习'] },
+    { label: '学习效率', categories: ['学习效率'] },
+    { label: '知识拓展', categories: ['知识拓展'] },
+  ];
+  const [activeCategory, setActiveCategory] = useState('全部');
+  const selectedCategory = skillCategoryGroups.find(
+    (group) => group.label === activeCategory,
+  );
+  const filteredSkills =
+    activeCategory === '全部'
+      ? skills
+      : skills.filter((skill) =>
+          selectedCategory?.categories.includes(skill.category),
+        );
+
   return (
     <>
       <Header
@@ -808,18 +827,46 @@ function SkillsView({
       <div className="mx-auto h-[calc(100dvh-72px)] w-full max-w-6xl overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold">热门技能</h2>
+            <h2 className="text-lg font-bold">
+              {activeCategory === '全部' ? '热门技能' : activeCategory}
+            </h2>
             <p className="text-xs text-muted-foreground">
               全部免费 · 随时可以使用
             </p>
           </div>
           <Badge variant="secondary" className="h-7 px-3">
-            {skills.length} 个技能
+            {filteredSkills.length} 个技能
           </Badge>
         </div>
 
+        <nav
+          aria-label="技能分类"
+          className="-mx-4 mb-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
+        >
+          <div className="flex w-max gap-2 md:w-full md:flex-wrap">
+            {skillCategoryGroups.map((group) => {
+              const selected = activeCategory === group.label;
+              return (
+                <button
+                  key={group.label}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setActiveCategory(group.label)}
+                  className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors ${
+                    selected
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-200'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700'
+                  }`}
+                >
+                  {group.label}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
         <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
-          {skills.map((skill) => {
+          {filteredSkills.map((skill) => {
             const installed = installedSkills.has(skill.id);
             return (
               <button
@@ -3588,19 +3635,301 @@ function PointsView({
   );
 }
 
+function DemoExperience({
+  stage,
+  setStage,
+  onBind,
+  onStartTour,
+  notify,
+}: {
+  stage: DemoStage;
+  setStage: (stage: DemoStage) => void;
+  onBind: (deviceCode: string, activationCode: string, deviceName: string) => void;
+  onStartTour: () => void;
+  notify: (message: string) => void;
+}) {
+  const [phone, setPhone] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [deviceCode, setDeviceCode] = useState('');
+  const [activationCode, setActivationCode] = useState('');
+  const [deviceName, setDeviceName] = useState('我的 BingoMate');
+
+  const startDemo = () => {
+    setPhone('');
+    setVerificationCode('');
+    setLoginError('');
+    setCodeSent(false);
+    setDeviceCode('');
+    setActivationCode('');
+    setDeviceName('我的 BingoMate');
+    setStage('login');
+  };
+
+  const sendCode = () => {
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      setLoginError('请输入正确的 11 位手机号');
+      return;
+    }
+    setLoginError('');
+    setCodeSent(true);
+    setVerificationCode('888888');
+    notify('验证码已发送并自动填入');
+  };
+
+  const login = () => {
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      setLoginError('请输入正确的 11 位手机号');
+      return;
+    }
+    if (!/^\d{4,6}$/.test(verificationCode)) {
+      setLoginError('请输入收到的验证码');
+      return;
+    }
+    setLoginError('');
+    setStage('bind');
+  };
+
+  const bind = () => {
+    if (!deviceCode.trim() || !activationCode.trim() || !deviceName.trim()) return;
+    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
+    onStartTour();
+  };
+
+  return (
+    <>
+      <Drawer
+        open={stage === 'menu'}
+        onOpenChange={(open) => setStage(open ? 'menu' : null)}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">演示中心</DrawerTitle>
+            <DrawerDescription className="text-left">
+              选择一个流程，快速了解 BingoMate 的主要功能。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭演示中心"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="px-4 pb-[max(20px,env(safe-area-inset-bottom))]">
+            <button
+              onClick={startDemo}
+              className="flex min-h-[88px] w-full items-center gap-4 rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50 to-violet-50 p-4 text-left shadow-sm transition-[transform,box-shadow] active:scale-[.98]"
+            >
+              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-md shadow-blue-200">
+                <GraduationCap className="size-7" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-slate-900">新手引导演示</span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-600">
+                  登录、绑定设备并完成第一次对话
+                </span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-blue-500" />
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {stage === 'login' && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="demo-login-title"
+          className="fixed inset-0 z-[80] overflow-y-auto bg-gradient-to-b from-blue-50 via-white to-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))]"
+        >
+          <div className="mx-auto flex min-h-full w-full max-w-md flex-col">
+            <div className="flex items-center justify-between">
+              <span className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700">
+                第 1 步 · 登录
+              </span>
+              <button
+                aria-label="退出新手引导"
+                onClick={() => setStage(null)}
+                className="grid size-11 place-items-center rounded-2xl bg-white text-slate-600 shadow-sm"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-1 flex-col justify-center py-8">
+              <img
+                src="/brand/bingomate-owl.png"
+                alt="BingoMate 猫头鹰"
+                width={88}
+                height={88}
+                className="mx-auto size-[88px] object-contain drop-shadow-[0_14px_24px_rgba(37,99,235,.18)]"
+              />
+              <h2
+                id="demo-login-title"
+                className="mt-5 text-center text-2xl font-black tracking-tight text-slate-950"
+              >
+                欢迎使用 BingoMate
+              </h2>
+              <p className="mt-2 text-center text-sm text-slate-500">
+                验证码登录，未注册手机号将自动创建账号
+              </p>
+
+              <div className="mt-8 rounded-[28px] border bg-white p-4 shadow-[0_18px_50px_rgba(37,99,235,.08)]">
+                <label htmlFor="demo-phone" className="block text-sm font-semibold text-slate-800">
+                  手机号
+                </label>
+                <input
+                  id="demo-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 11))}
+                  placeholder="请输入手机号"
+                  className="mt-2 h-12 w-full rounded-2xl border bg-slate-50 px-4 text-base outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+
+                <label htmlFor="demo-code" className="mt-4 block text-sm font-semibold text-slate-800">
+                  验证码
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="demo-code"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={verificationCode}
+                    onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="请输入验证码"
+                    className="h-12 min-w-0 flex-1 rounded-2xl border bg-slate-50 px-4 text-base outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <button
+                    onClick={sendCode}
+                    className="min-h-12 shrink-0 rounded-2xl bg-blue-50 px-4 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    {codeSent ? '重新获取' : '获取验证码'}
+                  </button>
+                </div>
+                {loginError && (
+                  <p role="alert" className="mt-2 text-sm font-medium text-rose-600">
+                    {loginError}
+                  </p>
+                )}
+                <Button
+                  onClick={login}
+                  className="mt-6 h-12 w-full rounded-2xl text-base font-bold"
+                >
+                  登录并继续
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Drawer
+        open={stage === 'bind'}
+        onOpenChange={(open) => {
+          if (!open) setStage(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <span className="mb-2 w-fit rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700">
+              第 2 步 · 绑定设备
+            </span>
+            <DrawerTitle className="text-xl font-bold">连接你的 BingoMate</DrawerTitle>
+            <DrawerDescription className="text-left">
+              当前账号还没有设备，完成绑定后即可开始使用。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="退出设备绑定"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="space-y-4 px-5">
+            <div>
+              <label htmlFor="demo-device-code" className="block text-sm font-semibold">
+                设备码
+              </label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  id="demo-device-code"
+                  value={deviceCode}
+                  onChange={(event) => setDeviceCode(event.target.value)}
+                  placeholder="例如 BM-20260904"
+                  className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+                <button
+                  aria-label="扫码录入演示设备码"
+                  onClick={() => setDeviceCode('BM-20260904')}
+                  className="flex min-h-12 shrink-0 items-center gap-1.5 rounded-2xl bg-blue-50 px-3 text-sm font-bold text-blue-700"
+                >
+                  <ScanLine className="size-5" />
+                  扫码
+                </button>
+              </div>
+            </div>
+            <label htmlFor="demo-activation-code" className="block text-sm font-semibold">
+              激活码
+              <input
+                id="demo-activation-code"
+                value={activationCode}
+                onChange={(event) => setActivationCode(event.target.value)}
+                placeholder="请输入设备激活码"
+                className="mt-2 h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+            <label htmlFor="demo-device-name" className="block text-sm font-semibold">
+              设备名称
+              <input
+                id="demo-device-name"
+                value={deviceName}
+                onChange={(event) => setDeviceName(event.target.value)}
+                className="mt-2 h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
+          </div>
+          <DrawerFooter className="px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-5">
+            <Button
+              disabled={!deviceCode.trim() || !activationCode.trim() || !deviceName.trim()}
+              onClick={bind}
+              className="h-12 w-full rounded-2xl text-base font-bold"
+            >
+              绑定设备并进入首页
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
 function ChatView({
   onMenu,
+  onDemo,
   onCamera,
   onScheduleFromChat,
   installedSkills,
   photoConversation,
+  demoTourStep,
+  onDemoTourNext,
+  onDemoTourFinish,
   notify,
 }: {
   onMenu: () => void;
+  onDemo: () => void;
   onCamera: (request: string) => void;
   onScheduleFromChat: (text: string) => void;
   installedSkills: Set<string>;
   photoConversation: PhotoConversation | null;
+  demoTourStep: number | null;
+  onDemoTourNext: () => void;
+  onDemoTourFinish: () => void;
   notify: (message: string) => void;
 }) {
   const hasPhotoRequest = Boolean(photoConversation?.request.trim());
@@ -3648,6 +3977,31 @@ function ChatView({
   ).map((modeId) => chatModes[modeId]);
   const currentSkillName = selectedChatSkill?.name ?? mode.label;
   const currentSkillImage = selectedChatSkill?.image ?? mode.image;
+  const demoTourContent = [
+    {
+      title: '选择适合的技能',
+      description: '点击技能按钮，可以在 BingoMate 与已安装的学习技能之间切换。',
+    },
+    {
+      title: '说出你的学习需求',
+      description: '在输入框描述问题，也可以先拍题或添加学习资料。',
+    },
+    {
+      title: '发送并开始辅导',
+      description: '确认内容后点击右下角发送，BingoMate 就会开始回应。',
+    },
+  ];
+
+  const advanceDemoTour = () => {
+    if (demoTourStep === 1 && !input.trim()) {
+      setInput('帮我制定一份今天的数学复习计划');
+    }
+    if (demoTourStep === 2) {
+      onDemoTourFinish();
+      return;
+    }
+    onDemoTourNext();
+  };
 
   const selectMode = (nextMode: ChatModeId) => {
     setChatMode(nextMode);
@@ -3764,16 +4118,26 @@ function ChatView({
           )
         }
         right={
-          <button
-            aria-label={`选择模型，当前为${selectedModel.name}`}
-            aria-haspopup="dialog"
-            aria-expanded={modelSheetOpen}
-            onClick={() => setModelSheetOpen(true)}
-            className="flex min-h-11 max-w-32 items-center gap-1.5 rounded-xl bg-muted px-3 text-xs font-semibold transition-colors hover:bg-slate-200"
-          >
-            <span className="truncate">{selectedModel.name}</span>
-            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              aria-label="打开演示中心"
+              onClick={onDemo}
+              className="flex min-h-10 items-center gap-1 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-2 text-[11px] font-bold text-orange-700 ring-1 ring-orange-100 transition-[transform,background-color] active:scale-95"
+            >
+              <GraduationCap className="size-4" />
+              演示
+            </button>
+            <button
+              aria-label={`选择模型，当前为${selectedModel.name}`}
+              aria-haspopup="dialog"
+              aria-expanded={modelSheetOpen}
+              onClick={() => setModelSheetOpen(true)}
+              className="flex min-h-10 max-w-24 items-center gap-1 rounded-xl bg-muted px-2.5 text-xs font-semibold transition-colors hover:bg-slate-200"
+            >
+              <span className="truncate">{selectedModel.name}</span>
+              <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+            </button>
+          </div>
         }
       />
       <div className="flex h-[calc(100dvh-72px)] flex-col">
@@ -3949,7 +4313,7 @@ function ChatView({
           </div>
         </div>
         <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-8 md:pb-5">
-          <div className="mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-shadow focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)]">
+          <div className={`mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-[box-shadow,border-color] focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)] ${demoTourStep === 1 ? 'relative z-[70] border-orange-300 ring-4 ring-orange-200/80' : ''}`}>
             {attachments.length > 0 && (
               <div
                 aria-label="已添加的附件"
@@ -4028,7 +4392,7 @@ function ChatView({
                 aria-haspopup="dialog"
                 aria-expanded={skillSheetOpen}
                 onClick={() => setSkillSheetOpen(true)}
-                className="flex min-h-10 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
+                className={`flex min-h-10 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-medium text-slate-700 transition-[background-color,box-shadow] hover:bg-slate-200 ${demoTourStep === 0 ? 'relative z-[70] ring-4 ring-orange-300 shadow-lg' : ''}`}
               >
                 <img
                   src={currentSkillImage}
@@ -4045,12 +4409,15 @@ function ChatView({
               <button
                 aria-label={input.trim() || attachments.length ? '发送' : '语音输入'}
                 disabled={sending}
-                onClick={() =>
-                  input.trim() || attachments.length
-                    ? send()
-                    : notify('请开始说话')
-                }
-                className={`grid size-11 place-items-center rounded-full transition-colors disabled:opacity-40 ${input.trim() || attachments.length ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'}`}
+                onClick={() => {
+                  if (input.trim() || attachments.length) {
+                    send();
+                    if (demoTourStep === 2) onDemoTourFinish();
+                  } else {
+                    notify('请开始说话');
+                  }
+                }}
+                className={`grid size-11 place-items-center rounded-full transition-[background-color,box-shadow] disabled:opacity-40 ${input.trim() || attachments.length ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'} ${demoTourStep === 2 ? 'relative z-[70] ring-4 ring-orange-300 shadow-lg' : ''}`}
               >
                 {input.trim() || attachments.length ? (
                   <Send className="size-5" />
@@ -4062,6 +4429,55 @@ function ChatView({
           </div>
         </div>
       </div>
+      {demoTourStep !== null && demoTourContent[demoTourStep] && (
+        <div className="pointer-events-none fixed inset-0 z-[60]">
+          <div aria-hidden="true" className="absolute inset-0 bg-slate-950/28" />
+          <section
+            aria-label={`新手引导第${demoTourStep + 1}步`}
+            className="pointer-events-auto absolute inset-x-4 bottom-[154px] mx-auto max-w-sm rounded-[24px] border border-orange-100 bg-white p-4 shadow-2xl shadow-slate-900/20"
+          >
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 font-black text-white shadow-sm">
+                {demoTourStep + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-bold text-slate-950">
+                  {demoTourContent[demoTourStep].title}
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  {demoTourContent[demoTourStep].description}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="flex flex-1 gap-1.5" aria-label={`共3步，当前第${demoTourStep + 1}步`}>
+                {demoTourContent.map((item, index) => (
+                  <span
+                    key={item.title}
+                    className={`h-1.5 rounded-full transition-all ${index === demoTourStep ? 'w-6 bg-orange-500' : 'w-1.5 bg-slate-200'}`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={onDemoTourFinish}
+                className="min-h-11 rounded-xl px-3 text-xs font-semibold text-slate-500"
+              >
+                跳过
+              </button>
+              <button
+                onClick={advanceDemoTour}
+                className="min-h-11 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white transition-transform active:scale-95"
+              >
+                {demoTourStep === 1
+                  ? '填入示例'
+                  : demoTourStep === 2
+                    ? '完成'
+                    : '下一步'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <input
         ref={imageInputRef}
         type="file"
@@ -4692,6 +5108,8 @@ export function BingoApp() {
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [deviceSwitcherOpen, setDeviceSwitcherOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
+  const [demoStage, setDemoStage] = useState<DemoStage>(null);
+  const [demoTourStep, setDemoTourStep] = useState(0);
 
   const notify = (message: string) => {
     setToast(message);
@@ -4915,6 +5333,24 @@ export function BingoApp() {
     notify(`“${skill.name}”已安装，可在聊天中使用`);
   };
 
+  const startDemoTour = () => {
+    setMenuOpen(false);
+    setView('chat');
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setPhotoConversation(null);
+    setPendingPhotoRequest('');
+    setConversationKey((key) => key + 1);
+    setDemoTourStep(0);
+    setDemoStage('tour');
+  };
+
+  const finishDemoTour = () => {
+    setDemoStage(null);
+    setDemoTourStep(0);
+    notify('新手引导已完成');
+  };
+
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <div className="relative flex h-dvh w-full overflow-hidden bg-background">
@@ -5033,6 +5469,7 @@ export function BingoApp() {
             <ChatView
               key={conversationKey}
               onMenu={() => setMenuOpen(true)}
+              onDemo={() => setDemoStage('menu')}
               onCamera={(request) => {
                 setView('chat');
                 setPendingPhotoRequest(request);
@@ -5041,6 +5478,11 @@ export function BingoApp() {
               onScheduleFromChat={createTaskFromChat}
               installedSkills={installedSkills}
               photoConversation={photoConversation}
+              demoTourStep={demoStage === 'tour' ? demoTourStep : null}
+              onDemoTourNext={() =>
+                setDemoTourStep((step) => Math.min(step + 1, 2))
+              }
+              onDemoTourFinish={finishDemoTour}
               notify={notify}
             />
           )}
@@ -5054,6 +5496,13 @@ export function BingoApp() {
           </output>
         )}
       </div>
+      <DemoExperience
+        stage={demoStage}
+        setStage={setDemoStage}
+        onBind={bindDevice}
+        onStartTour={startDemoTour}
+        notify={notify}
+      />
       <Drawer
         open={rechargeOpen}
         onOpenChange={setRechargeOpen}
