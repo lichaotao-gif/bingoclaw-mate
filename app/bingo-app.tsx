@@ -45,6 +45,7 @@ import {
   Pencil,
   PenLine,
   Plus,
+  Presentation,
   RotateCcw,
   ScanLine,
   Search,
@@ -94,7 +95,7 @@ type ChatAttachment = {
   kind: 'image' | 'file';
   size: string;
 };
-type StudentProfile = {
+type UserProfile = {
   nickname: string;
   region: string;
   grade: string;
@@ -104,6 +105,44 @@ type StudentProfile = {
   weakTopics: string;
   learningGoal: string;
   guidanceStyle: string;
+};
+type ProfileCopy = {
+  sectionTitle: string;
+  entryLabel: string;
+  entryDoneDescription: string;
+  entryTodoDescription: string;
+  entryIcon: LucideIcon;
+  entryColor: string;
+  title: string;
+  subtitle: string;
+  heroIcon: LucideIcon;
+  heroGradient: string;
+  heroDone: string;
+  heroTodo: string;
+  basicTitle: string;
+  basicDescription: string;
+  nicknameLabel: string;
+  nicknamePlaceholder: string;
+  gradeLabel: string;
+  gradePlaceholder: string;
+  schoolLabel: string;
+  schoolPlaceholder: string;
+  schoolHint: string;
+  courseTitle: string;
+  courseDescription: string;
+  subjectLabel: string;
+  subjectPlaceholder: string;
+  weakTopicsLabel: string;
+  weakTopicsPlaceholder: string;
+  goalLabel: string;
+  goalPlaceholder: string;
+  guidanceLabel: string;
+  guidanceOptions: string[];
+  footerHint: string;
+  rewardTitle: string;
+  rewardDetail: string;
+  rewardMessage: string;
+  savedMessage: string;
 };
 type TutoringPreferences = {
   guidanceMode: string;
@@ -115,7 +154,35 @@ type TutoringPreferences = {
   autoSaveMistakes: boolean;
   lessonSummary: boolean;
 };
-type ChatModeId = 'default' | 'photo' | 'homework' | 'mistakes' | 'practice';
+type ChatModeId =
+  | 'default'
+  | 'photo'
+  | 'homework'
+  | 'mistakes'
+  | 'practice'
+  | 'lesson'
+  | 'courseware'
+  | 'exam'
+  | 'notice';
+type EditionId = 'family' | 'teacher';
+type Edition = {
+  id: EditionId;
+  name: string;
+  shortName: string;
+  role: string;
+  tagline: string;
+  price: number;
+  billing: string;
+  billingNote: string;
+  highlights: string[];
+  icon: LucideIcon;
+  accent: string;
+  homeSubtitle: string;
+  homeHeadline: string;
+  homeDescription: string;
+  homePlaceholder: string;
+  recommendedModes: ChatModeId[];
+};
 type AppView =
   | 'chat'
   | 'skills'
@@ -169,7 +236,11 @@ type Skill = {
   category: string;
   users: string;
   version: string;
-  image: string;
+  edition: 'all' | EditionId;
+  price?: number;
+  image?: string;
+  icon?: LucideIcon;
+  accent?: string;
   capabilities: string[];
   example: string;
 };
@@ -190,7 +261,7 @@ type ChatMode = {
   description: string;
   placeholder: string;
   icon: LucideIcon;
-  image: string;
+  image?: string;
   iconStyle: string;
   suggestions: string[];
   reply: string;
@@ -241,6 +312,142 @@ const rechargePlans = [
   { id: 'max', price: 68, points: 8800, label: '加赠 2,000' },
 ];
 
+const editions: Record<EditionId, Edition> = {
+  family: {
+    id: 'family',
+    name: '缤果学伴（家庭版）',
+    shortName: '家庭版',
+    role: '家长',
+    tagline: '陪孩子完成日常作业与复习',
+    price: 0,
+    billing: '随设备赠送',
+    billingNote: '绑定设备后自动可用',
+    highlights: [
+      '拍题辅导、错题复习、智能练习全部免费',
+      '成长报告与学习提醒',
+      '技能广场内家庭版技能不额外收费',
+    ],
+    icon: UserRound,
+    accent: 'bg-blue-50 text-blue-700 ring-blue-100',
+    homeSubtitle: '在线 · 启发式辅导',
+    homeHeadline: '今天想学点什么？',
+    homeDescription: '问一道题、检查思路，或者把今天的复习交给我安排。',
+    homePlaceholder: '发消息或创建学习任务…',
+    recommendedModes: ['photo', 'homework', 'mistakes', 'practice'],
+  },
+  teacher: {
+    id: 'teacher',
+    name: '缤果学伴（教师版）',
+    shortName: '教师版',
+    role: '教师',
+    tagline: '备课、组卷与班级事务一站式完成',
+    price: 199,
+    billing: '¥199 一次性买断',
+    billingNote: '一次性买断 · 永久可用，不按年续费',
+    highlights: [
+      '教案、课件、PPT 一站式生成',
+      '智能组卷与通知文书',
+      '教师工作流串联批量事务',
+      '一次性买断，后续不再收年费',
+      '教师版专属技能按需单独购买',
+    ],
+    icon: School,
+    accent: 'bg-violet-50 text-violet-700 ring-violet-100',
+    homeSubtitle: '在线 · 备课与班级助手',
+    homeHeadline: '今天要备哪节课？',
+    homeDescription: '写教案、做课件、组一份卷子，或者交给我起草班级通知。',
+    homePlaceholder: '发消息或创建备课任务…',
+    recommendedModes: ['lesson', 'courseware', 'exam', 'notice'],
+  },
+};
+
+const profileCopy: Record<EditionId, ProfileCopy> = {
+  family: {
+    sectionTitle: '学习设置',
+    entryLabel: '学生档案',
+    entryDoneDescription: '资料已完善 · AI 将结合学情提供辅导',
+    entryTodoDescription: '待补充地区、学校和教材信息',
+    entryIcon: UserRound,
+    entryColor: 'bg-blue-50 text-blue-600',
+    title: '学生档案',
+    subtitle: '让 AI 更懂你的学习情况',
+    heroIcon: GraduationCap,
+    heroGradient: 'from-blue-600 to-indigo-600 shadow-blue-100',
+    heroDone: '档案已完善，后续修改会自动更新 AI 的辅导参考。',
+    heroTodo: '补全关键学习信息，AI 的讲解和练习会更贴合你。',
+    basicTitle: '基本学习信息',
+    basicDescription: '帮助 AI 判断所在地区的课程范围、年级难度和学校进度。',
+    nicknameLabel: '学生昵称',
+    nicknamePlaceholder: '例如：林小满',
+    gradeLabel: '当前年级',
+    gradePlaceholder: '请选择年级',
+    schoolLabel: '学校',
+    schoolPlaceholder: '可填写学校简称',
+    schoolHint: '仅用于匹配本地教学进度',
+    courseTitle: '课程与学习目标',
+    courseDescription: '教材、薄弱点和目标会用于生成更合适的例题与复习计划。',
+    subjectLabel: '重点科目',
+    subjectPlaceholder: '请选择重点科目',
+    weakTopicsLabel: '当前薄弱点',
+    weakTopicsPlaceholder: '例如：二次函数、几何证明容易丢分',
+    goalLabel: '阶段目标',
+    goalPlaceholder: '例如：期末数学稳定在 90 分以上',
+    guidanceLabel: 'AI 辅导方式',
+    guidanceOptions: [
+      '先启发思考，再给完整解析',
+      '先讲知识点，再带我做题',
+      '直接指出错误，并给出改进建议',
+    ],
+    footerHint: '这些资料只用于个性化学习辅助，可随时回来修改。',
+    rewardTitle: '学生档案完善奖励',
+    rewardDetail: '首次完善学生学习档案',
+    rewardMessage: '学生档案已完善，100 积分已到账',
+    savedMessage: '学生档案已更新',
+  },
+  teacher: {
+    sectionTitle: '教学设置',
+    entryLabel: '教师档案',
+    entryDoneDescription: '资料已完善 · AI 将结合任教情况备课',
+    entryTodoDescription: '待补充学校、任教年级和教材信息',
+    entryIcon: School,
+    entryColor: 'bg-indigo-50 text-indigo-600',
+    title: '教师档案',
+    subtitle: '让 AI 更懂你的教学情况',
+    heroIcon: School,
+    heroGradient: 'from-violet-600 to-indigo-600 shadow-violet-100',
+    heroDone: '档案已完善，后续修改会自动更新 AI 的备课参考。',
+    heroTodo: '补全任教信息，生成的教案和试卷会更贴合你的课堂。',
+    basicTitle: '基本任教信息',
+    basicDescription: '帮助 AI 判断课标范围、学段难度和学校教学进度。',
+    nicknameLabel: '教师称呼',
+    nicknamePlaceholder: '例如：林老师',
+    gradeLabel: '任教年级',
+    gradePlaceholder: '请选择任教年级',
+    schoolLabel: '任教学校',
+    schoolPlaceholder: '可填写学校简称',
+    schoolHint: '仅用于匹配本地教学进度与课标版本',
+    courseTitle: '任教科目与教学目标',
+    courseDescription: '科目、教材和班级学情会用于生成教案、课件与试卷。',
+    subjectLabel: '任教科目',
+    subjectPlaceholder: '请选择任教科目',
+    weakTopicsLabel: '班级学情与薄弱章节',
+    weakTopicsPlaceholder: '例如：一次函数图像理解不牢，几何证明书写不规范',
+    goalLabel: '本学期教学目标',
+    goalPlaceholder: '例如：期中前讲完一次函数单元，班级均分提升 5 分',
+    guidanceLabel: 'AI 备课方式',
+    guidanceOptions: [
+      '先给教学目标，再展开分环节流程',
+      '先列教案提纲，我确认后再展开',
+      '直接给出完整教案初稿',
+    ],
+    footerHint: '这些资料只用于个性化备课辅助，可随时回来修改。',
+    rewardTitle: '教师档案完善奖励',
+    rewardDetail: '首次完善教师任教档案',
+    rewardMessage: '教师档案已完善，100 积分已到账',
+    savedMessage: '教师档案已更新',
+  },
+};
+
 const skills: Skill[] = [
   {
     id: 'thinking-coach',
@@ -250,6 +457,7 @@ const skills: Skill[] = [
     category: '数学辅导',
     users: '8.6k',
     version: '1.4.0',
+    edition: 'family',
     image: '/skills/thinking-coach.png',
     capabilities: [
       '分步骤拆解题目',
@@ -266,6 +474,7 @@ const skills: Skill[] = [
     category: '英语学习',
     users: '6.3k',
     version: '1.2.1',
+    edition: 'family',
     image: '/skills/english-partner.png',
     capabilities: [
       '课本主题情景对话',
@@ -282,6 +491,7 @@ const skills: Skill[] = [
     category: '学习效率',
     users: '5.1k',
     version: '2.0.0',
+    edition: 'family',
     image: '/skills/focus-timer.png',
     capabilities: ['25 分钟专注计时', '休息提醒', '生成专注记录'],
     example: '帮我安排 45 分钟完成数学作业。',
@@ -294,6 +504,7 @@ const skills: Skill[] = [
     category: '复习规划',
     users: '4.8k',
     version: '1.3.2',
+    edition: 'family',
     image: '/skills/mistake-review.png',
     capabilities: ['按掌握度安排复习', '归纳高频错因', '追踪复习效果'],
     example: '从我的错题里挑 5 道今天最该复习的。',
@@ -306,6 +517,7 @@ const skills: Skill[] = [
     category: '智能练习',
     users: '5.4k',
     version: '0.9.5',
+    edition: 'family',
     image: '/skills/paper-maker.png',
     capabilities: ['选择章节与题型', '设置难度与题量', '生成答案和解析'],
     example: '出一份八年级一次函数小测，共 10 道题。',
@@ -318,9 +530,106 @@ const skills: Skill[] = [
     category: '知识拓展',
     users: '3.2k',
     version: '1.1.0',
+    edition: 'family',
     image: '/skills/daily-brief.png',
     capabilities: ['每日知识点精选', '关键词快速解释', '收藏后生成小测'],
     example: '给我一份今天的科技知识简报。',
+  },
+  {
+    id: 'lesson-plan',
+    name: '教案制作',
+    author: 'BingoLab',
+    description: '按课标和教材章节生成完整教案，含教学目标与流程设计。',
+    category: '教学备课',
+    users: '2.1k',
+    version: '1.0.2',
+    edition: 'teacher',
+    price: 29,
+    image: '/skills/lesson-plan.png',
+    icon: BookOpen,
+    accent: 'bg-violet-50 text-violet-600',
+    capabilities: ['按课标拆解教学目标', '生成分环节教学流程', '配套作业与板书建议'],
+    example: '帮我写一份八年级上册一次函数第一课时的教案。',
+  },
+  {
+    id: 'courseware',
+    name: '课件制作',
+    author: 'BingoLab',
+    description: '把教案要点整理成可直接讲的课件结构与配图建议。',
+    category: '教学备课',
+    users: '1.8k',
+    version: '1.0.0',
+    edition: 'teacher',
+    price: 39,
+    image: '/skills/courseware.png',
+    icon: FileImage,
+    accent: 'bg-indigo-50 text-indigo-600',
+    capabilities: ['自动拆分课件章节', '生成讲解要点与提问', '给出配图与动画建议'],
+    example: '把这份教案做成 12 页的课件大纲。',
+  },
+  {
+    id: 'ppt-maker',
+    name: 'PPT 生成',
+    author: 'BingoLab',
+    description: '一句话生成整套演示文稿，可按学科风格套用模板。',
+    category: '教学备课',
+    users: '3.4k',
+    version: '1.1.0',
+    edition: 'teacher',
+    price: 39,
+    image: '/skills/ppt-maker.png',
+    icon: Presentation,
+    accent: 'bg-orange-50 text-orange-600',
+    capabilities: ['一句话生成整套 PPT', '按学科套用模板配色', '导出可继续编辑的文件'],
+    example: '生成一套“光的折射”实验课 PPT。',
+  },
+  {
+    id: 'exam-builder',
+    name: '智能组卷',
+    author: 'BingoLab',
+    description: '按知识点、题型和难度比例组卷，自动附答案与解析。',
+    category: '考试评测',
+    users: '2.7k',
+    version: '1.2.1',
+    edition: 'teacher',
+    price: 35,
+    image: '/skills/exam-builder.png',
+    icon: FileText,
+    accent: 'bg-emerald-50 text-emerald-600',
+    capabilities: ['按难度比例自动组卷', '生成答案与评分标准', '导出试卷和答题卡'],
+    example: '出一份八年级数学期中卷，难度中等偏上。',
+  },
+  {
+    id: 'notice-writer',
+    name: '通知文书',
+    author: 'BingoLab',
+    description: '快速起草家长通知、活动方案和班级总结等常用文书。',
+    category: '行政文书',
+    users: '1.5k',
+    version: '1.0.1',
+    edition: 'teacher',
+    price: 19,
+    image: '/skills/notice-writer.png',
+    icon: Bell,
+    accent: 'bg-amber-50 text-amber-600',
+    capabilities: ['常用文书模板一键套用', '按场景调整语气', '批量替换班级信息'],
+    example: '写一份期中家长会通知，时间是下周五下午三点。',
+  },
+  {
+    id: 'teacher-workflow',
+    name: '教师工作流',
+    author: 'BingoLab',
+    description: '把备课、组卷、批改和通知串成一条可复用的自动流程。',
+    category: '效率工具',
+    users: '1.2k',
+    version: '0.9.8',
+    edition: 'teacher',
+    price: 59,
+    image: '/skills/teacher-workflow.png',
+    icon: Blocks,
+    accent: 'bg-cyan-50 text-cyan-600',
+    capabilities: ['多个技能串联执行', '保存为可复用流程', '按课表定时触发'],
+    example: '每周五自动汇总本周作业情况并生成通知。',
   },
 ];
 
@@ -457,6 +766,78 @@ const chatModes: Record<ChatModeId, ChatMode> = {
       '出 5 道英语语法选择题',
     ],
     reply: '好的。告诉我年级、章节、题量和期望难度，我会生成练习并在完成后给出解析。',
+  },
+  lesson: {
+    id: 'lesson',
+    label: '教案制作',
+    name: '教案制作专家',
+    subtitle: '课标对齐 · 分环节设计',
+    headline: '把这节课的教案写清楚',
+    description: '按课标拆解教学目标，生成分环节流程、作业与板书建议。',
+    placeholder: '告诉我学段、教材章节和课时…',
+    icon: BookOpen,
+    iconStyle: 'bg-violet-50 text-violet-600',
+    suggestions: [
+      '写一份八年级上册一次函数第一课时教案',
+      '把这节课拆成导入、探究和练习三个环节',
+      '给这节课配一组课堂提问',
+      '补充这节课的作业与板书设计',
+    ],
+    reply: '好的。告诉我学段、教材版本和章节，我会先给出教学目标，再展开分环节流程。',
+  },
+  courseware: {
+    id: 'courseware',
+    label: '课件制作',
+    name: '课件制作专家',
+    subtitle: '结构梳理 · 配图建议',
+    headline: '把教案变成能直接讲的课件',
+    description: '整理成页面结构和讲解要点，并给出每页的配图建议。',
+    placeholder: '粘贴教案要点，或说明课件主题…',
+    icon: FileImage,
+    iconStyle: 'bg-indigo-50 text-indigo-600',
+    suggestions: [
+      '把这份教案整理成课件结构',
+      '给每页课件配一条讲解要点',
+      '这节课的配图该怎么选',
+      '压缩到 12 页以内',
+    ],
+    reply: '可以。把教案或主题发给我，我会给出页面结构、每页要点和配图建议。',
+  },
+  exam: {
+    id: 'exam',
+    label: '智能组卷',
+    name: '智能组卷专家',
+    subtitle: '按知识点 · 难度可控',
+    headline: '按知识点组一份卷子',
+    description: '指定知识点、题型和难度比例组卷，自动附答案与解析。',
+    placeholder: '说明学段、知识点、题型和难度比例…',
+    icon: FileText,
+    iconStyle: 'bg-emerald-50 text-emerald-600',
+    suggestions: [
+      '出一份八年级数学期中卷，难度中等偏上',
+      '按 3:5:2 的易中难比例组卷',
+      '只考一次函数和三角形这两章',
+      '把答案和解析单独放一页',
+    ],
+    reply: '好的。告诉我学段、覆盖章节、题型和难度比例，我会组卷并附上答案与解析。',
+  },
+  notice: {
+    id: 'notice',
+    label: '通知文书',
+    name: '通知文书专家',
+    subtitle: '措辞得体 · 一次成稿',
+    headline: '起草一份班级通知',
+    description: '家长通知、活动方案和班级总结，按场景给出得体措辞。',
+    placeholder: '说明通知场景、对象和要交代的事项…',
+    icon: Bell,
+    iconStyle: 'bg-amber-50 text-amber-600',
+    suggestions: [
+      '写一份家长会通知',
+      '起草春季运动会活动方案',
+      '写一份期中家长沟通短信',
+      '把这份通知改得更简短',
+    ],
+    reply: '可以。告诉我通知对象、时间地点和要交代的事项，我会起草一份可直接发出的稿子。',
   },
 };
 
@@ -715,6 +1096,90 @@ const initialScheduledTasks: ScheduledTask[] = [
   },
 ];
 
+const skillCategoryGroups: Record<
+  EditionId,
+  { label: string; categories: string[] }[]
+> = {
+  family: [
+    { label: '全部', categories: [] },
+    { label: '学科辅导', categories: ['数学辅导', '英语学习'] },
+    { label: '复习练习', categories: ['复习规划', '智能练习'] },
+    { label: '学习效率', categories: ['学习效率'] },
+    { label: '知识拓展', categories: ['知识拓展'] },
+  ],
+  teacher: [
+    { label: '全部', categories: [] },
+    { label: '教学备课', categories: ['教学备课'] },
+    { label: '考试评测', categories: ['考试评测'] },
+    { label: '行政文书', categories: ['行政文书'] },
+    { label: '效率工具', categories: ['效率工具'] },
+  ],
+};
+
+function SkillArt({
+  skill,
+  className,
+  iconClassName,
+}: {
+  skill: Skill;
+  className: string;
+  iconClassName: string;
+}) {
+  if (skill.image) {
+    return (
+      <img
+        src={skill.image}
+        alt={`${skill.name}卡通插画`}
+        width={512}
+        height={512}
+        loading="lazy"
+        className={`object-cover ${className}`}
+      />
+    );
+  }
+  const Icon = skill.icon ?? Sparkles;
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid place-items-center ${skill.accent ?? 'bg-slate-100 text-slate-600'} ${className}`}
+    >
+      <Icon className={iconClassName} />
+    </span>
+  );
+}
+
+function ModeArt({
+  mode,
+  className,
+  iconClassName,
+}: {
+  mode: ChatMode;
+  className: string;
+  iconClassName: string;
+}) {
+  if (mode.image) {
+    return (
+      <img
+        src={mode.image}
+        alt=""
+        aria-hidden="true"
+        width={96}
+        height={96}
+        className={`object-contain ${className}`}
+      />
+    );
+  }
+  const Icon = mode.icon;
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid place-items-center rounded-2xl ${mode.iconStyle} ${className}`}
+    >
+      <Icon className={iconClassName} />
+    </span>
+  );
+}
+
 function IconBox({
   icon: Icon,
   color,
@@ -790,29 +1255,28 @@ function Header({
 }
 
 function SkillsView({
+  edition,
   onBack,
   onSelect,
   installedSkills,
 }: {
+  edition: Edition;
   onBack: () => void;
   onSelect: (skill: Skill) => void;
   installedSkills: Set<string>;
 }) {
-  const skillCategoryGroups: { label: string; categories: string[] }[] = [
-    { label: '全部', categories: [] },
-    { label: '学科辅导', categories: ['数学辅导', '英语学习'] },
-    { label: '复习练习', categories: ['复习规划', '智能练习'] },
-    { label: '学习效率', categories: ['学习效率'] },
-    { label: '知识拓展', categories: ['知识拓展'] },
-  ];
+  const categoryGroups = skillCategoryGroups[edition.id];
   const [activeCategory, setActiveCategory] = useState('全部');
-  const selectedCategory = skillCategoryGroups.find(
+  const selectedCategory = categoryGroups.find(
     (group) => group.label === activeCategory,
+  );
+  const editionSkills = skills.filter(
+    (skill) => skill.edition === 'all' || skill.edition === edition.id,
   );
   const filteredSkills =
     activeCategory === '全部'
-      ? skills
-      : skills.filter((skill) =>
+      ? editionSkills
+      : editionSkills.filter((skill) =>
           selectedCategory?.categories.includes(skill.category),
         );
 
@@ -820,7 +1284,7 @@ function SkillsView({
     <>
       <Header
         title="技能广场"
-        subtitle="为 BingoMate 添加新能力"
+        subtitle={`${edition.shortName} · 为 BingoMate 添加新能力`}
         onBack={onBack}
         backLabel="返回聊天"
       />
@@ -831,7 +1295,9 @@ function SkillsView({
               {activeCategory === '全部' ? '热门技能' : activeCategory}
             </h2>
             <p className="text-xs text-muted-foreground">
-              全部免费 · 随时可以使用
+              {edition.id === 'family'
+                ? '家庭版技能全部免费 · 随时可以使用'
+                : '教师版专属技能 · 按需单独购买'}
             </p>
           </div>
           <Badge variant="secondary" className="h-7 px-3">
@@ -844,7 +1310,7 @@ function SkillsView({
           className="-mx-4 mb-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
         >
           <div className="flex w-max gap-2 md:w-full md:flex-wrap">
-            {skillCategoryGroups.map((group) => {
+            {categoryGroups.map((group) => {
               const selected = activeCategory === group.label;
               return (
                 <button
@@ -876,13 +1342,10 @@ function SkillsView({
                 className="group grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 rounded-[24px] border bg-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md active:translate-y-0 active:bg-blue-50 sm:grid-cols-[128px_minmax(0,1fr)]"
               >
                 <div className="aspect-square w-full self-center overflow-hidden rounded-[20px] bg-slate-100">
-                  <img
-                    src={skill.image}
-                    alt={`${skill.name}卡通插画`}
-                    width={512}
-                    height={512}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  <SkillArt
+                    skill={skill}
+                    className="h-full w-full transition-transform duration-300 group-hover:scale-105"
+                    iconClassName="size-12"
                   />
                 </div>
                 <div className="flex min-w-0 flex-col py-0.5">
@@ -904,6 +1367,10 @@ function SkillsView({
                         <Check className="size-3" />
                         已安装
                       </Badge>
+                    ) : skill.price ? (
+                      <span className="shrink-0 text-sm font-bold text-amber-700">
+                        ¥{skill.price}
+                      </span>
                     ) : (
                       <span className="font-semibold text-foreground">免费</span>
                     )}
@@ -947,12 +1414,10 @@ function SkillDetailView({
           <section className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
             <div className="flex items-start gap-4">
               <div className="size-24 shrink-0 overflow-hidden rounded-[24px] bg-white shadow-sm">
-                <img
-                  src={skill.image}
-                  alt={`${skill.name}卡通插画`}
-                  width={512}
-                  height={512}
-                  className="h-full w-full object-cover"
+                <SkillArt
+                  skill={skill}
+                  className="h-full w-full"
+                  iconClassName="size-10"
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -963,6 +1428,18 @@ function SkillDetailView({
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                   <Badge variant="outline" className="border-blue-200 bg-white">
                     {skill.category}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={
+                      skill.edition === 'teacher'
+                        ? 'border-violet-200 bg-violet-50 text-violet-700'
+                        : 'border-slate-200 bg-white'
+                    }
+                  >
+                    {skill.edition === 'all'
+                      ? '通用'
+                      : `${editions[skill.edition].shortName}专属`}
                   </Badge>
                   <span>v{skill.version}</span>
                   <span className="flex items-center gap-1">
@@ -1028,7 +1505,7 @@ function SkillDetailView({
                     ['开发者', skill.author],
                     ['版本', skill.version],
                     ['适用范围', skill.category],
-                    ['费用', '免费'],
+                    ['费用', skill.price ? `¥${skill.price}` : '免费'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-4">
                       <dt className="text-muted-foreground">{label}</dt>
@@ -1082,8 +1559,12 @@ function SkillDetailView({
         <div className="shrink-0 border-t bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 md:px-8">
           <div className="mx-auto flex w-full max-w-4xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="font-bold">免费</p>
-              <p className="text-xs text-muted-foreground">安装后立即可用</p>
+              <p className="font-bold">
+                {skill.price ? `¥${skill.price}` : '免费'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {skill.price ? '购买后即可在聊天中使用' : '安装后立即可用'}
+              </p>
             </div>
             <Button
               disabled={installed}
@@ -1095,6 +1576,8 @@ function SkillDetailView({
                   <Check className="size-5" />
                   已安装
                 </>
+              ) : skill.price ? (
+                <>¥{skill.price} 购买并安装</>
               ) : (
                 <>
                   <Plus className="size-5" />
@@ -1116,8 +1599,8 @@ function Sidebar({
   onHistory,
   onSettings,
   onPoints,
-  currentDeviceName,
-  onSwitchDevice,
+  edition,
+  onSwitchEdition,
   points,
   notify,
 }: {
@@ -1127,11 +1610,12 @@ function Sidebar({
   onHistory: (title: string) => void;
   onSettings: () => void;
   onPoints: () => void;
-  currentDeviceName: string;
-  onSwitchDevice: () => void;
+  edition: Edition;
+  onSwitchEdition: () => void;
   points: number;
   notify: (message: string) => void;
 }) {
+  const EditionIcon = edition.icon;
   return (
     <div
       className={`${open ? 'flex' : 'hidden'} fixed inset-0 z-50 justify-start bg-slate-950/55 backdrop-blur-[2px]`}
@@ -1151,16 +1635,14 @@ function Sidebar({
             <div className="min-w-0">
               <p className="truncate font-bold">林小满</p>
               <button
-                aria-label={`切换设备，当前为${currentDeviceName}`}
-                onClick={onSwitchDevice}
-                className="mt-0.5 flex max-w-[190px] items-center gap-1.5 rounded-lg text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={`切换版本，当前为${edition.name}`}
+                onClick={onSwitchEdition}
+                className={`mt-1 flex max-w-[190px] items-center gap-1.5 rounded-lg px-1.5 py-0.5 text-left text-xs font-semibold ring-1 transition-opacity hover:opacity-80 ${edition.accent}`}
               >
-                <span
-                  aria-hidden="true"
-                  className="size-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
-                />
-                <span className="sr-only">设备连接正常：</span>
-                <span className="truncate">{currentDeviceName}</span>
+                <EditionIcon className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {edition.shortName} · {edition.role}
+                </span>
                 <ChevronsUpDown className="size-3.5 shrink-0" />
               </button>
             </div>
@@ -1295,6 +1777,7 @@ function SettingsView({
   currentDeviceName,
   profileCompleted,
   preferences,
+  copy,
   notify,
 }: {
   onBack: () => void;
@@ -1306,6 +1789,7 @@ function SettingsView({
   currentDeviceName: string;
   profileCompleted: boolean;
   preferences: TutoringPreferences;
+  copy: ProfileCopy;
   notify: (message: string) => void;
 }) {
   const sections: {
@@ -1319,15 +1803,15 @@ function SettingsView({
     }[];
   }[] = [
     {
-      title: '学习设置',
+      title: copy.sectionTitle,
       items: [
         {
-          label: '学生档案',
+          label: copy.entryLabel,
           description: profileCompleted
-            ? '资料已完善 · AI 将结合学情提供辅导'
-            : '待补充地区、学校和教材信息',
-          icon: UserRound,
-          color: 'bg-blue-50 text-blue-600',
+            ? copy.entryDoneDescription
+            : copy.entryTodoDescription,
+          icon: copy.entryIcon,
+          color: copy.entryColor,
           reward: profileCompleted ? undefined : '完善送 100 积分',
         },
         {
@@ -1408,7 +1892,7 @@ function SettingsView({
                     <button
                       key={item.label}
                       onClick={() =>
-                        item.label === '学生档案'
+                        item.label === copy.entryLabel
                           ? onProfile()
                           : item.label === '辅导偏好'
                             ? onPreferences()
@@ -1464,20 +1948,22 @@ function SettingsView({
   );
 }
 
-function StudentProfileView({
+function ProfileView({
   profile,
   completed,
+  copy,
   onBack,
   onSave,
 }: {
-  profile: StudentProfile;
+  profile: UserProfile;
   completed: boolean;
+  copy: ProfileCopy;
   onBack: () => void;
-  onSave: (profile: StudentProfile) => void;
+  onSave: (profile: UserProfile) => void;
 }) {
   const [draft, setDraft] = useState(profile);
   const [error, setError] = useState('');
-  const requiredFields: (keyof StudentProfile)[] = [
+  const requiredFields: (keyof UserProfile)[] = [
     'nickname',
     'region',
     'grade',
@@ -1493,7 +1979,7 @@ function StudentProfileView({
     (completedCount / requiredFields.length) * 100,
   );
 
-  const updateProfile = (field: keyof StudentProfile, value: string) => {
+  const updateProfile = (field: keyof UserProfile, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
     if (error) setError('');
   };
@@ -1509,21 +1995,26 @@ function StudentProfileView({
   const inputClassName =
     'mt-2 min-h-12 w-full rounded-2xl border bg-slate-50 px-4 text-base text-slate-900 outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100';
 
+  const HeroIcon = copy.heroIcon;
+  const EntryIcon = copy.entryIcon;
+
   return (
     <>
       <Header
-        title="学生档案"
-        subtitle="让 AI 更懂你的学习情况"
+        title={copy.title}
+        subtitle={copy.subtitle}
         onBack={onBack}
         backLabel="返回设置"
       />
       <div className="flex h-[calc(100dvh-72px)] flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-8 md:py-6">
           <div className="mx-auto w-full max-w-3xl space-y-4">
-            <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-600 p-5 text-white shadow-lg shadow-blue-100">
+            <section
+              className={`overflow-hidden rounded-[28px] bg-gradient-to-br p-5 text-white shadow-lg ${copy.heroGradient}`}
+            >
               <div className="flex items-start gap-4">
                 <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-                  <GraduationCap className="size-7" />
+                  <HeroIcon className="size-7" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-3">
@@ -1538,10 +2029,8 @@ function StudentProfileView({
                       style={{ width: `${completion}%` }}
                     />
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-blue-50">
-                    {completed
-                      ? '档案已完善，后续修改会自动更新 AI 的辅导参考。'
-                      : '补全关键学习信息，AI 的讲解和练习会更贴合你。'}
+                  <p className="mt-3 text-sm leading-relaxed text-white/85">
+                    {completed ? copy.heroDone : copy.heroTodo}
                   </p>
                 </div>
               </div>
@@ -1555,31 +2044,33 @@ function StudentProfileView({
 
             <section className="rounded-3xl border bg-white p-4 md:p-5">
               <div className="flex items-start gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
-                  <UserRound className="size-5" />
+                <span
+                  className={`grid size-10 shrink-0 place-items-center rounded-xl ${copy.entryColor}`}
+                >
+                  <EntryIcon className="size-5" />
                 </span>
                 <div>
-                  <h2 className="font-bold">基本学习信息</h2>
+                  <h2 className="font-bold">{copy.basicTitle}</h2>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    帮助 AI 判断所在地区的课程范围、年级难度和学校进度。
+                    {copy.basicDescription}
                   </p>
                 </div>
               </div>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <label htmlFor="profile-nickname" className="text-sm font-semibold">
-                  学生昵称 <span className="text-rose-500">必填</span>
+                  {copy.nicknameLabel} <span className="text-rose-500">必填</span>
                   <input
                     id="profile-nickname"
                     value={draft.nickname}
                     onChange={(event) =>
                       updateProfile('nickname', event.target.value)
                     }
-                    placeholder="例如：林小满"
+                    placeholder={copy.nicknamePlaceholder}
                     className={inputClassName}
                   />
                 </label>
                 <label htmlFor="profile-grade" className="text-sm font-semibold">
-                  当前年级 <span className="text-rose-500">必填</span>
+                  {copy.gradeLabel} <span className="text-rose-500">必填</span>
                   <select
                     id="profile-grade"
                     value={draft.grade}
@@ -1588,7 +2079,7 @@ function StudentProfileView({
                     }
                     className={inputClassName}
                   >
-                    <option value="">请选择年级</option>
+                    <option value="">{copy.gradePlaceholder}</option>
                     {[
                       '一年级',
                       '二年级',
@@ -1623,7 +2114,7 @@ function StudentProfileView({
                   </div>
                 </label>
                 <label htmlFor="profile-school" className="text-sm font-semibold">
-                  学校 <span className="text-rose-500">必填</span>
+                  {copy.schoolLabel} <span className="text-rose-500">必填</span>
                   <div className="relative">
                     <School className="pointer-events-none absolute left-4 top-1/2 mt-1 size-4 -translate-y-1/2 text-slate-400" />
                     <input
@@ -1632,12 +2123,12 @@ function StudentProfileView({
                       onChange={(event) =>
                         updateProfile('school', event.target.value)
                       }
-                      placeholder="可填写学校简称"
+                      placeholder={copy.schoolPlaceholder}
                       className={`${inputClassName} pl-11`}
                     />
                   </div>
                   <span className="mt-1.5 block text-xs font-normal text-muted-foreground">
-                    仅用于匹配本地教学进度
+                    {copy.schoolHint}
                   </span>
                 </label>
               </div>
@@ -1649,15 +2140,15 @@ function StudentProfileView({
                   <BookOpen className="size-5" />
                 </span>
                 <div>
-                  <h2 className="font-bold">课程与学习目标</h2>
+                  <h2 className="font-bold">{copy.courseTitle}</h2>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    教材、薄弱点和目标会用于生成更合适的例题与复习计划。
+                    {copy.courseDescription}
                   </p>
                 </div>
               </div>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <label htmlFor="profile-subject" className="text-sm font-semibold">
-                  重点科目 <span className="text-rose-500">必填</span>
+                  {copy.subjectLabel} <span className="text-rose-500">必填</span>
                   <select
                     id="profile-subject"
                     value={draft.focusSubject}
@@ -1666,7 +2157,7 @@ function StudentProfileView({
                     }
                     className={inputClassName}
                   >
-                    <option value="">请选择重点科目</option>
+                    <option value="">{copy.subjectPlaceholder}</option>
                     {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
                       (subject) => (
                         <option key={subject}>{subject}</option>
@@ -1694,20 +2185,20 @@ function StudentProfileView({
                 </label>
               </div>
               <label htmlFor="profile-weak-topics" className="mt-4 block text-sm font-semibold">
-                当前薄弱点 <span className="font-normal text-muted-foreground">选填</span>
+                {copy.weakTopicsLabel} <span className="font-normal text-muted-foreground">选填</span>
                 <textarea
                   id="profile-weak-topics"
                   value={draft.weakTopics}
                   onChange={(event) =>
                     updateProfile('weakTopics', event.target.value)
                   }
-                  placeholder="例如：二次函数、几何证明容易丢分"
+                  placeholder={copy.weakTopicsPlaceholder}
                   rows={3}
                   className={`${inputClassName} resize-none py-3 leading-relaxed`}
                 />
               </label>
               <label htmlFor="profile-goal" className="mt-4 block text-sm font-semibold">
-                阶段目标 <span className="text-rose-500">必填</span>
+                {copy.goalLabel} <span className="text-rose-500">必填</span>
                 <div className="relative">
                   <Target className="pointer-events-none absolute left-4 top-6 size-4 text-slate-400" />
                   <textarea
@@ -1716,7 +2207,7 @@ function StudentProfileView({
                     onChange={(event) =>
                       updateProfile('learningGoal', event.target.value)
                     }
-                    placeholder="例如：期末数学稳定在 90 分以上"
+                    placeholder={copy.goalPlaceholder}
                     rows={3}
                     className={`${inputClassName} resize-none py-3 pl-11 leading-relaxed`}
                   />
@@ -1726,7 +2217,7 @@ function StudentProfileView({
 
             <section className="rounded-3xl border bg-white p-4 md:p-5">
               <label htmlFor="profile-guidance" className="text-sm font-semibold">
-                AI 辅导方式
+                {copy.guidanceLabel}
                 <select
                   id="profile-guidance"
                   value={draft.guidanceStyle}
@@ -1735,13 +2226,13 @@ function StudentProfileView({
                   }
                   className={inputClassName}
                 >
-                  <option>先启发思考，再给完整解析</option>
-                  <option>先讲知识点，再带我做题</option>
-                  <option>直接指出错误，并给出改进建议</option>
+                  {copy.guidanceOptions.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
                 </select>
               </label>
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                这些资料只用于个性化学习辅助，可随时回来修改。
+                {copy.footerHint}
               </p>
             </section>
           </div>
@@ -2451,12 +2942,14 @@ function DevicesView({
   onBack,
   onBind,
   onRename,
+  onSwitch,
 }: {
   devices: BingoDevice[];
   currentDeviceId: string;
   onBack: () => void;
   onBind: (deviceCode: string, activationCode: string, name: string) => void;
   onRename: (deviceId: string, name: string) => void;
+  onSwitch: (device: BingoDevice) => void;
 }) {
   const [addDeviceOpen, setAddDeviceOpen] = useState(false);
   const [renameDevice, setRenameDevice] = useState<BingoDevice | null>(null);
@@ -2506,35 +2999,51 @@ function DevicesView({
               return (
                 <div
                   key={device.id}
-                  className={`flex min-h-[82px] items-center gap-3 px-4 py-3 ${index ? 'border-t' : ''}`}
+                  className={`flex min-h-[82px] items-center gap-1 px-2 py-3 ${index ? 'border-t' : ''}`}
                 >
-                  <span
-                    className={`grid size-12 shrink-0 place-items-center rounded-2xl ${isCurrent ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}
+                  <button
+                    type="button"
+                    disabled={isCurrent}
+                    aria-label={
+                      isCurrent
+                        ? `${device.name}已是当前设备`
+                        : `切换到${device.name}`
+                    }
+                    onClick={() => onSwitch(device)}
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-1 text-left transition-colors enabled:hover:bg-muted"
                   >
-                    <MonitorSmartphone className="size-6" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold">
-                        {device.name}
-                      </p>
-                      {isCurrent && (
-                        <Badge className="shrink-0 bg-blue-50 text-blue-700">
-                          当前设备
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex shrink-0 items-center gap-1.5">
-                        <span
-                          aria-hidden="true"
-                          className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                        />
-                        {device.online ? '在线' : '离线'}
+                    <span
+                      className={`grid size-12 shrink-0 place-items-center rounded-2xl ${isCurrent ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}
+                    >
+                      <MonitorSmartphone className="size-6" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold">
+                          {device.name}
+                        </span>
+                        {isCurrent ? (
+                          <Badge className="shrink-0 bg-blue-50 text-blue-700">
+                            当前设备
+                          </Badge>
+                        ) : (
+                          <span className="shrink-0 text-xs font-semibold text-blue-600">
+                            设为当前
+                          </span>
+                        )}
                       </span>
-                      <span className="truncate">设备码 {device.code}</span>
-                    </div>
-                  </div>
+                      <span className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <span
+                            aria-hidden="true"
+                            className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                          />
+                          {device.online ? '在线' : '离线'}
+                        </span>
+                        <span className="truncate">设备码 {device.code}</span>
+                      </span>
+                    </span>
+                  </button>
                   <button
                     aria-label={`编辑设备名称：${device.name}`}
                     onClick={() => openRename(device)}
@@ -4064,6 +4573,7 @@ function DemoExperience({
 }
 
 function ChatView({
+  edition,
   onMenu,
   onDemo,
   onCamera,
@@ -4075,6 +4585,7 @@ function ChatView({
   onDemoTourFinish,
   notify,
 }: {
+  edition: Edition;
   onMenu: () => void;
   onDemo: () => void;
   onCamera: (request: string) => void;
@@ -4125,12 +4636,15 @@ function ChatView({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mode = chatModes[chatMode];
   const ModeIcon = mode.icon;
-  const availableSkills = skills.filter((skill) => installedSkills.has(skill.id));
-  const recommendedModes = (
-    ['photo', 'homework', 'mistakes', 'practice'] as ChatModeId[]
-  ).map((modeId) => chatModes[modeId]);
+  const availableSkills = skills.filter(
+    (skill) =>
+      installedSkills.has(skill.id) &&
+      (skill.edition === 'all' || skill.edition === edition.id),
+  );
+  const recommendedModes = edition.recommendedModes.map(
+    (modeId) => chatModes[modeId],
+  );
   const currentSkillName = selectedChatSkill?.name ?? mode.label;
-  const currentSkillImage = selectedChatSkill?.image ?? mode.image;
   const demoTourContent = [
     {
       title: '选择适合的技能',
@@ -4248,7 +4762,11 @@ function ChatView({
     <>
       <Header
         title={mode.name}
-        subtitle={mode.subtitle}
+        subtitle={
+          chatMode === 'default'
+            ? edition.shortName
+            : mode.subtitle
+        }
         onMenu={onMenu}
         brandMark={
           chatMode === 'default' ? (
@@ -4261,13 +4779,10 @@ function ChatView({
               className="size-11 shrink-0 object-contain"
             />
           ) : (
-            <img
-              src={mode.image}
-              alt=""
-              aria-hidden="true"
-              width={44}
-              height={44}
-              className="size-11 shrink-0 object-contain drop-shadow-sm"
+            <ModeArt
+              mode={mode}
+              className="size-11 shrink-0 drop-shadow-sm"
+              iconClassName="size-5"
             />
           )
         }
@@ -4383,22 +4898,21 @@ function ChatView({
                   <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
                 </span>
               ) : (
-                <img
-                  src={mode.image}
-                  alt=""
-                  aria-hidden="true"
-                  width={88}
-                  height={88}
-                  className="size-[88px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.18)]"
+                <ModeArt
+                  mode={mode}
+                  className="size-[88px] drop-shadow-[0_12px_20px_rgba(37,99,235,.18)]"
+                  iconClassName="size-10"
                 />
               )}
               <h2 className="mt-5 text-[28px] font-bold tracking-tight">
-                {mode.headline}
+                {chatMode === 'default' ? edition.homeHeadline : mode.headline}
               </h2>
               <p
-                className={`mt-2 max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-sm ${chatMode === 'default' ? 'whitespace-nowrap' : 'px-2'}`}
+                className={`mt-2 max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-sm ${chatMode === 'default' ? 'px-2 sm:whitespace-nowrap' : 'px-2'}`}
               >
-                {mode.description}
+                {chatMode === 'default'
+                  ? edition.homeDescription
+                  : mode.description}
               </p>
               {chatMode === 'default' && !selectedChatSkill && (
                 <p className="mt-7 w-full max-w-[360px] text-left text-xs font-semibold text-muted-foreground md:max-w-2xl">
@@ -4407,42 +4921,18 @@ function ChatView({
               )}
               <div className={`grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2 ${chatMode === 'default' && !selectedChatSkill ? 'mt-2' : 'mt-7'}`}>
                 {chatMode === 'default'
-                  ? [
-                      {
-                        label: '拍题辅导',
-                        target: 'photo' as ChatModeId,
-                        image: chatModes.photo.image,
-                      },
-                      {
-                        label: '作业批阅',
-                        target: 'homework' as ChatModeId,
-                        image: chatModes.homework.image,
-                      },
-                      {
-                        label: '错题复习',
-                        target: 'mistakes' as ChatModeId,
-                        image: chatModes.mistakes.image,
-                      },
-                      {
-                        label: '智能练习',
-                        target: 'practice' as ChatModeId,
-                        image: chatModes.practice.image,
-                      },
-                    ].map(({ label, target, image }) => (
+                  ? recommendedModes.map((recommendedMode) => (
                       <button
-                        key={target}
-                        onClick={() => selectMode(target)}
+                        key={recommendedMode.id}
+                        onClick={() => selectMode(recommendedMode.id)}
                         className="flex min-h-[64px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-semibold shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
                       >
-                        <img
-                          src={image}
-                          alt=""
-                          aria-hidden="true"
-                          width={48}
-                          height={48}
-                          className="size-12 shrink-0 object-contain drop-shadow-sm"
+                        <ModeArt
+                          mode={recommendedMode}
+                          className="size-12 shrink-0 drop-shadow-sm"
+                          iconClassName="size-6"
                         />
-                        {label}
+                        {recommendedMode.label}
                         <ChevronRight className="ml-auto size-4 text-muted-foreground" />
                       </button>
                     ))
@@ -4519,7 +5009,11 @@ function ChatView({
                   send();
                 }
               }}
-              placeholder={mode.placeholder}
+              placeholder={
+                chatMode === 'default'
+                  ? edition.homePlaceholder
+                  : mode.placeholder
+              }
               rows={2}
               className="w-full resize-none bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-500"
             />
@@ -4548,14 +5042,19 @@ function ChatView({
                 onClick={() => setSkillSheetOpen(true)}
                 className={`flex min-h-11 max-w-36 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-950 transition-[background-color,box-shadow] hover:bg-slate-200 ${demoTourStep === 0 ? 'relative z-[70] ring-4 ring-orange-300 shadow-lg' : ''}`}
               >
-                <img
-                  src={currentSkillImage}
-                  alt=""
-                  aria-hidden="true"
-                  width={20}
-                  height={20}
-                  className="size-5 shrink-0 rounded-md object-contain"
-                />
+                {selectedChatSkill ? (
+                  <SkillArt
+                    skill={selectedChatSkill}
+                    className="size-5 shrink-0 rounded-md"
+                    iconClassName="size-3.5"
+                  />
+                ) : (
+                  <ModeArt
+                    mode={mode}
+                    className="size-5 shrink-0 rounded-md"
+                    iconClassName="size-3.5"
+                  />
+                )}
                 <span className="truncate">{currentSkillName}</span>
                 <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
               </button>
@@ -4837,13 +5336,10 @@ function ChatView({
                     }}
                     className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${selected ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
                   >
-                    <img
-                      src={recommendedMode.image}
-                      alt=""
-                      aria-hidden="true"
-                      width={44}
-                      height={44}
-                      className="size-11 shrink-0 object-contain"
+                    <ModeArt
+                      mode={recommendedMode}
+                      className="size-11 shrink-0"
+                      iconClassName="size-5"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-base font-bold">
@@ -4878,12 +5374,10 @@ function ChatView({
                     }}
                     className={`flex min-h-[68px] w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors ${selected ? 'border-blue-200 bg-blue-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
                   >
-                    <img
-                      src={skill.image}
-                      alt={`${skill.name} Logo`}
-                      width={44}
-                      height={44}
-                      className="size-11 shrink-0 rounded-2xl object-cover"
+                    <SkillArt
+                      skill={skill}
+                      className="size-11 shrink-0 rounded-2xl"
+                      iconClassName="size-5"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-base font-bold">{skill.name}</span>
@@ -5117,7 +5611,7 @@ function PhotoFlow({
       <div className="space-y-4 px-5 py-5">
         <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
           <div className="flex items-center gap-3">
-            <IconBox icon={CircleAlert} />
+            <IconBox icon={CircleAlert} color="bg-amber-100 text-amber-700" />
             <div>
               <p className="font-bold">思路接近了，还差一步</p>
               <p className="text-xs text-muted-foreground">置信度较高</p>
@@ -5159,18 +5653,33 @@ export function BingoApp() {
   const [toast, setToast] = useState('');
   const [conversationKey, setConversationKey] = useState(0);
   const [points, setPoints] = useState(1280);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile>({
-    nickname: '林小满',
-    region: '',
-    grade: '八年级',
-    school: '',
-    textbook: '',
-    focusSubject: '数学',
-    weakTopics: '',
-    learningGoal: '',
-    guidanceStyle: '先启发思考，再给完整解析',
+  const [profiles, setProfiles] = useState<Record<EditionId, UserProfile>>({
+    family: {
+      nickname: '林小满',
+      region: '',
+      grade: '八年级',
+      school: '',
+      textbook: '',
+      focusSubject: '数学',
+      weakTopics: '',
+      learningGoal: '',
+      guidanceStyle: '先启发思考，再给完整解析',
+    },
+    teacher: {
+      nickname: '林老师',
+      region: '',
+      grade: '八年级',
+      school: '',
+      textbook: '',
+      focusSubject: '数学',
+      weakTopics: '',
+      learningGoal: '',
+      guidanceStyle: '先给教学目标，再展开分环节流程',
+    },
   });
-  const [profileCompleted, setProfileCompleted] = useState(false);
+  const [profilesCompleted, setProfilesCompleted] = useState<
+    Record<EditionId, boolean>
+  >({ family: false, teacher: false });
   const [tutoringPreferences, setTutoringPreferences] =
     useState<TutoringPreferences>({
       guidanceMode: '启发式引导',
@@ -5260,8 +5769,12 @@ export function BingoApp() {
     },
   ]);
   const [rechargeOpen, setRechargeOpen] = useState(false);
-  const [deviceSwitcherOpen, setDeviceSwitcherOpen] = useState(false);
-  const [quickAddDeviceOpen, setQuickAddDeviceOpen] = useState(false);
+  const [currentEdition, setCurrentEdition] = useState<EditionId>('family');
+  const [ownedEditions, setOwnedEditions] = useState<Set<EditionId>>(
+    () => new Set<EditionId>(['family']),
+  );
+  const [editionSwitcherOpen, setEditionSwitcherOpen] = useState(false);
+  const [upgradeTarget, setUpgradeTarget] = useState<EditionId | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
   const [demoStage, setDemoStage] = useState<DemoStage>(null);
   const [demoTourStep, setDemoTourStep] = useState(0);
@@ -5341,32 +5854,36 @@ export function BingoApp() {
     setPhotoStep(null);
     setView('channels');
   };
-  const saveStudentProfile = (profile: StudentProfile) => {
-    setStudentProfile(profile);
-    if (!profileCompleted) {
-      setProfileCompleted(true);
+  const saveProfile = (profile: UserProfile) => {
+    const copy = profileCopy[currentEdition];
+    setProfiles((current) => ({ ...current, [currentEdition]: profile }));
+    if (!profilesCompleted[currentEdition]) {
+      setProfilesCompleted((current) => ({
+        ...current,
+        [currentEdition]: true,
+      }));
       setPoints((current) => current + 100);
       setPointTransactions((current) => [
         {
           id: `profile-reward-${Date.now()}`,
-          title: '学生档案完善奖励',
-          detail: '首次完善学生学习档案',
+          title: copy.rewardTitle,
+          detail: copy.rewardDetail,
           time: '刚刚',
           amount: 100,
         },
         ...current,
       ]);
-      notify('学生档案已完善，100 积分已到账');
+      notify(copy.rewardMessage);
     } else {
-      notify('学生档案已更新');
+      notify(copy.savedMessage);
     }
     setView('settings');
   };
   const saveTutoringPreferences = (preferences: TutoringPreferences) => {
     setTutoringPreferences(preferences);
-    setStudentProfile((current) => ({
+    setProfiles((current) => ({
       ...current,
-      guidanceStyle: preferences.guidanceMode,
+      family: { ...current.family, guidanceStyle: preferences.guidanceMode },
     }));
     notify('辅导偏好已保存');
     setView('settings');
@@ -5413,7 +5930,6 @@ export function BingoApp() {
         item.id === device.id ? { ...item, online: true } : item,
       ),
     );
-    setDeviceSwitcherOpen(false);
     notify(`已切换至 ${device.name}`);
   };
   const connectChannel = (channel: RemoteChannel) => {
@@ -5485,7 +6001,43 @@ export function BingoApp() {
   const installSkill = (skill: Skill) => {
     if (installedSkills.has(skill.id)) return;
     setInstalledSkills((current) => new Set(current).add(skill.id));
-    notify(`“${skill.name}”已安装，可在聊天中使用`);
+    notify(
+      skill.price
+        ? `“${skill.name}”已购买并安装，可在聊天中使用`
+        : `“${skill.name}”已安装，可在聊天中使用`,
+    );
+  };
+
+  const switchEdition = (editionId: EditionId) => {
+    if (!ownedEditions.has(editionId)) {
+      setEditionSwitcherOpen(false);
+      setUpgradeTarget(editionId);
+      return;
+    }
+    setEditionSwitcherOpen(false);
+    if (editionId === currentEdition) return;
+    setCurrentEdition(editionId);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setPhotoConversation(null);
+    setPendingPhotoRequest('');
+    setConversationKey((key) => key + 1);
+    setView('chat');
+    notify(`已切换至${editions[editionId].name}`);
+  };
+
+  const purchaseEdition = (editionId: EditionId) => {
+    setOwnedEditions((current) => new Set(current).add(editionId));
+    setCurrentEdition(editionId);
+    setUpgradeTarget(null);
+    setEditionSwitcherOpen(false);
+    setSelectedSkill(null);
+    setPhotoStep(null);
+    setPhotoConversation(null);
+    setPendingPhotoRequest('');
+    setConversationKey((key) => key + 1);
+    setView('chat');
+    notify(`升级成功，已切换至${editions[editionId].name}`);
   };
 
   const startDemoTour = () => {
@@ -5516,11 +6068,8 @@ export function BingoApp() {
           onHistory={chooseHistory}
           onSettings={chooseSettings}
           onPoints={choosePoints}
-          currentDeviceName={
-            devices.find((device) => device.id === currentDeviceId)?.name ??
-            '未连接设备'
-          }
-          onSwitchDevice={() => setDeviceSwitcherOpen(true)}
+          edition={editions[currentEdition]}
+          onSwitchEdition={() => setEditionSwitcherOpen(true)}
           points={points}
           notify={notify}
         />
@@ -5534,6 +6083,7 @@ export function BingoApp() {
             />
           ) : view === 'skills' ? (
             <SkillsView
+              edition={editions[currentEdition]}
               onBack={() => setView('chat')}
               onSelect={setSelectedSkill}
               installedSkills={installedSkills}
@@ -5550,16 +6100,18 @@ export function BingoApp() {
                 devices.find((device) => device.id === currentDeviceId)?.name ??
                 '未连接设备'
               }
-              profileCompleted={profileCompleted}
+              profileCompleted={profilesCompleted[currentEdition]}
               preferences={tutoringPreferences}
+              copy={profileCopy[currentEdition]}
               notify={notify}
             />
           ) : view === 'profile' ? (
-            <StudentProfileView
-              profile={studentProfile}
-              completed={profileCompleted}
+            <ProfileView
+              profile={profiles[currentEdition]}
+              completed={profilesCompleted[currentEdition]}
+              copy={profileCopy[currentEdition]}
               onBack={() => setView('settings')}
-              onSave={saveStudentProfile}
+              onSave={saveProfile}
             />
           ) : view === 'preferences' ? (
             <TutoringPreferencesView
@@ -5591,6 +6143,7 @@ export function BingoApp() {
               onBack={() => setView('settings')}
               onBind={bindDevice}
               onRename={renameDevice}
+              onSwitch={switchDevice}
             />
           ) : view === 'channels' ? (
             <ChannelsView
@@ -5623,6 +6176,7 @@ export function BingoApp() {
           ) : (
             <ChatView
               key={conversationKey}
+              edition={editions[currentEdition]}
               onMenu={() => setMenuOpen(true)}
               onDemo={() => setDemoStage('menu')}
               onCamera={(request) => {
@@ -5741,90 +6295,156 @@ export function BingoApp() {
         </DrawerContent>
       </Drawer>
       <Drawer
-        open={deviceSwitcherOpen}
-        onOpenChange={setDeviceSwitcherOpen}
+        open={editionSwitcherOpen}
+        onOpenChange={setEditionSwitcherOpen}
         showSwipeHandle
       >
-        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(54dvh,460px)]">
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(58dvh,500px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
               <span className="grid size-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
                 <ChevronsUpDown className="size-5" />
               </span>
-              切换设备
+              切换版本
             </DrawerTitle>
             <DrawerDescription className="text-left">
-              选择要连接和使用的 BingoMate 设备。
+              不同版本对应不同的技能和辅导方式。
             </DrawerDescription>
             <DrawerClose
-              aria-label="关闭设备选择"
+              aria-label="关闭版本选择"
               className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
             >
               <X className="size-5" />
             </DrawerClose>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(18px,env(safe-area-inset-bottom))]">
-            <div className="overflow-hidden rounded-3xl border bg-white">
-              {devices.map((device, index) => {
-                const isCurrent = device.id === currentDeviceId;
+            <div className="space-y-3">
+              {Object.values(editions).map((item) => {
+                const isCurrent = item.id === currentEdition;
+                const owned = ownedEditions.has(item.id);
+                const ItemIcon = item.icon;
                 return (
                   <button
-                    key={device.id}
-                    aria-label={`切换到${device.name}`}
+                    key={item.id}
+                    aria-label={
+                      owned ? `切换到${item.name}` : `升级解锁${item.name}`
+                    }
                     aria-pressed={isCurrent}
-                    onClick={() => switchDevice(device)}
-                    className={`flex min-h-[72px] w-full items-center gap-3 px-4 text-left transition-colors ${index ? 'border-t' : ''} ${isCurrent ? 'bg-blue-50/70' : 'hover:bg-muted'}`}
+                    onClick={() => switchEdition(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-3xl border p-4 text-left transition-colors ${isCurrent ? 'border-blue-200 bg-blue-50/70' : 'border-slate-200 bg-white hover:bg-muted'}`}
                   >
                     <span
-                      className={`grid size-11 shrink-0 place-items-center rounded-2xl ${isCurrent ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}
+                      className={`grid size-12 shrink-0 place-items-center rounded-2xl ring-1 ${item.accent}`}
                     >
-                      <MonitorSmartphone className="size-5" />
+                      <ItemIcon className="size-6" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">
-                        {device.name}
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-base font-bold">
+                          {item.name}
+                        </span>
+                        {!owned && (
+                          <Badge className="shrink-0 bg-amber-50 text-amber-700">
+                            需升级
+                          </Badge>
+                        )}
                       </span>
-                      <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span
-                          aria-hidden="true"
-                          className={`size-2 rounded-full ${device.online ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                        />
-                        {device.online ? '在线' : '离线'} · {device.code}
+                      <span className="mt-1 block truncate text-xs text-muted-foreground">
+                        {item.tagline}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold text-slate-700">
+                        {item.billing}
                       </span>
                     </span>
                     {isCurrent ? (
                       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-600 text-white">
                         <Check className="size-4" />
                       </span>
-                    ) : (
+                    ) : owned ? (
                       <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <span className="shrink-0 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-white">
+                        升级解锁
+                      </span>
                     )}
                   </button>
                 );
               })}
             </div>
-            <button
-              type="button"
-              aria-label="添加新设备"
-              onClick={() => {
-                setDeviceSwitcherOpen(false);
-                setQuickAddDeviceOpen(true);
-              }}
-              className="mt-3 flex min-h-14 w-full touch-manipulation items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-4 text-sm font-bold text-blue-700 transition-colors hover:border-blue-200 hover:from-blue-100 hover:to-cyan-100"
-            >
-              <span className="grid size-8 place-items-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
-                <Plus className="size-4" />
-              </span>
-              添加新设备
-            </button>
           </div>
         </DrawerContent>
       </Drawer>
-      <AddDeviceDrawer
-        open={quickAddDeviceOpen}
-        onOpenChange={setQuickAddDeviceOpen}
-        onBind={bindDevice}
-      />
+      <Drawer
+        open={Boolean(upgradeTarget)}
+        onOpenChange={(open) => {
+          if (!open) setUpgradeTarget(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(62dvh,540px)]">
+          {upgradeTarget && (
+            <>
+              <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+                <DrawerTitle className="flex items-center gap-2 text-xl font-bold">
+                  <span
+                    className={`grid size-10 place-items-center rounded-2xl ring-1 ${editions[upgradeTarget].accent}`}
+                  >
+                    <Sparkles className="size-5" />
+                  </span>
+                  升级{editions[upgradeTarget].shortName}
+                </DrawerTitle>
+                <DrawerDescription className="text-left">
+                  {editions[upgradeTarget].tagline}
+                </DrawerDescription>
+                <DrawerClose
+                  aria-label="关闭版本升级"
+                  className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+                >
+                  <X className="size-5" />
+                </DrawerClose>
+              </DrawerHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
+                <div className="rounded-3xl border bg-white p-5">
+                  <p className="text-sm font-bold">
+                    {editions[upgradeTarget].name}
+                  </p>
+                  <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-2xl font-black text-slate-900">
+                      ¥{editions[upgradeTarget].price}
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {editions[upgradeTarget].billingNote}
+                    </span>
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {editions[upgradeTarget].highlights.map((highlight) => (
+                      <div key={highlight} className="flex items-start gap-3">
+                        <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600">
+                          <Check className="size-3.5" />
+                        </span>
+                        <p className="text-sm leading-relaxed text-slate-700">
+                          {highlight}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                  买断后可在侧边栏随时切换版本，已购买的技能不会失效。
+                </p>
+              </div>
+              <DrawerFooter className="px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-4">
+                <Button
+                  className="h-12 w-full rounded-2xl bg-amber-500 text-base font-bold text-white hover:bg-amber-600"
+                  onClick={() => purchaseEdition(upgradeTarget)}
+                >
+                  支付 ¥{editions[upgradeTarget].price} 一次性买断
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </main>
   );
 }
