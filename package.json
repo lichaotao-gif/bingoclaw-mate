@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "sync:down": "sh scripts/sync-down.sh",
     "sync:up": "sh scripts/sync-up.sh",
-    "work:start": "npm run sync:down && npm run dev",
+    "work:start": "sh scripts/work-start.sh",
     "build": "STATIC_EXPORT=1 vinext build && node scripts/prepare-static-output.mjs",
     "build:tencent": "STATIC_EXPORT=1 vinext build",
     "build:worker": "vinext build",

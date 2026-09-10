@@ -25,7 +25,12 @@ echo "正在检查项目依赖…"
 if npm ls --depth=0 >/dev/null 2>&1; then
   echo "项目依赖已经就绪。"
 else
-  npm install --prefer-offline --no-audit --no-fund
+  echo "检测到缺少或不完整的依赖，正在安装…"
+  if [ -f package-lock.json ]; then
+    npm ci --prefer-offline --no-audit --no-fund
+  else
+    npm install --prefer-offline --no-audit --no-fund
+  fi
 fi
 
 echo "同步完成，本机代码已经是最新版本。"
