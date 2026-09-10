@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Bell,
+  Bookmark,
   Blocks,
   Box,
   BookOpen,
@@ -22,17 +23,22 @@ import {
   CircleHelp,
   Clock3,
   Cpu,
+  Database,
+  Download,
   Eye,
   EyeOff,
   FileImage,
   FileText,
+  Film,
   Flame,
   Gauge,
+  Gamepad2,
   Gift,
   GraduationCap,
   History,
   Image as ImageIcon,
   Link2,
+  LibraryBig,
   KeyRound,
   LockKeyhole,
   LogOut,
@@ -42,6 +48,7 @@ import {
   Mic,
   MonitorSmartphone,
   MoreHorizontal,
+  MousePointerClick,
   Pencil,
   PenLine,
   Plus,
@@ -51,6 +58,7 @@ import {
   Search,
   Send,
   School,
+  Share2,
   ShieldCheck,
   SlidersHorizontal,
   Sparkle,
@@ -59,6 +67,7 @@ import {
   Star,
   Smartphone,
   Target,
+  Upload,
   UserRound,
   Users,
   X,
@@ -78,13 +87,66 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PhotoStep = null | 'camera' | 'ocr' | 'guide' | 'feedback';
-type DemoStage = null | 'menu' | 'login' | 'bind' | 'bind-success' | 'tour';
+type DemoStage =
+  | null
+  | 'menu'
+  | 'login'
+  | 'bind'
+  | 'bind-success'
+  | 'profile'
+  | 'tour';
+type ExportFormat = 'PDF' | 'PPT' | 'Word';
+type ExportKind = 'lesson' | 'courseware' | 'practice';
+type GeneratedFile = {
+  format: ExportFormat;
+  name: string;
+  size: string;
+  title: string;
+  sections: { heading: string; content: string }[];
+};
 type Message = {
   id: number;
   role: 'assistant' | 'user';
   text: string;
   attachment?: 'captured-photo';
+  modeId?: ChatModeId;
+  followUps?: string[];
+  exportOptions?: ExportFormat[];
+  exportKind?: ExportKind;
+  generatedFile?: GeneratedFile;
 };
+type SavedConversation = {
+  modeId: ChatModeId;
+  messages: Message[];
+  updatedAt: string;
+};
+type KnowledgeShareChannel = 'wechat' | 'qq' | 'download';
+
+function WeChatBrandIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="#07C160"
+    >
+      <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z" />
+    </svg>
+  );
+}
+
+function QqBrandIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="#1EBAFC"
+    >
+      <path d="M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673.54.065 2.103-2.472 2.103-2.472 0 1.469.756 3.387 2.394 4.771-.612.188-1.363.479-1.845.835-.434.32-.379.646-.301.778.343.578 5.883.369 7.482.189 1.6.18 7.14.389 7.483-.189.078-.132.132-.458-.301-.778-.483-.356-1.233-.646-1.846-.836 1.637-1.384 2.393-3.302 2.393-4.771 0 0 1.563 2.537 2.103 2.472.251-.03.581-1.39-.438-4.673" />
+    </svg>
+  );
+}
 type PhotoConversation = {
   id: number;
   request: string;
@@ -99,12 +161,20 @@ type UserProfile = {
   nickname: string;
   region: string;
   grade: string;
+  semester: string;
   school: string;
   textbook: string;
   focusSubject: string;
   weakTopics: string;
   learningGoal: string;
   guidanceStyle: string;
+  dailyStudyTime: string;
+  encouragementStyle: string;
+  reportFrequency: string;
+  teachingExperience: string;
+  classLevel: string;
+  isHeadTeacher: string;
+  coursewareStyle: string;
 };
 type ProfileCopy = {
   sectionTitle: string;
@@ -186,6 +256,8 @@ type Edition = {
 type AppView =
   | 'chat'
   | 'skills'
+  | 'resources'
+  | 'knowledge'
   | 'growth'
   | 'settings'
   | 'security'
@@ -200,6 +272,31 @@ type BingoDevice = {
   name: string;
   code: string;
   online: boolean;
+};
+type SharedResource = {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  edition: EditionId;
+  author: string;
+  authorRole: string;
+  avatarStyle: string;
+  cover: string;
+  views: string;
+  favorites: number;
+  tags: string[];
+  sections: { heading: string; content: string }[];
+  remixPrompt: string;
+};
+type KnowledgeItem = {
+  id: string;
+  title: string;
+  summary: string;
+  source: 'generated' | 'upload';
+  kind: string;
+  meta: string;
+  createdAt: string;
 };
 type RemoteChannel = {
   id: string;
@@ -264,6 +361,7 @@ type ChatMode = {
   image?: string;
   iconStyle: string;
   suggestions: string[];
+  followUps: string[];
   reply: string;
 };
 type GrowthPeriod = 'daily' | 'weekly' | 'monthly';
@@ -279,11 +377,20 @@ type GrowthReport = {
   nextStep: string;
 };
 
+const DEVICE_CODE_EXAMPLE = 'BC-76E3-7LIDD';
+const DEVICE_CODE_PATTERN = /^BC-[A-Z0-9]{4}-[A-Z0-9]{5}$/;
+
+function normalizeDeviceCode(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 13);
+}
+
 const features: {
   label: string;
   hint: string;
   icon: LucideIcon;
   iconColor: string;
+  status?: string;
+  preview?: boolean;
 }[] = [
   {
     label: '技能广场',
@@ -292,10 +399,24 @@ const features: {
     iconColor: 'bg-violet-50 text-violet-600',
   },
   {
+    label: '资源广场',
+    hint: '发现与分享优质学习资源',
+    icon: LibraryBig,
+    iconColor: 'bg-cyan-50 text-cyan-700',
+  },
+  {
+    label: '我的知识库',
+    hint: '生成、收藏与上传内容',
+    icon: Database,
+    iconColor: 'bg-blue-50 text-blue-700',
+  },
+  {
     label: '成长报告',
-    hint: '本周正确率 +12%',
+    hint: '预览学习表现与成长趋势',
     icon: BarChart3,
     iconColor: 'bg-indigo-50 text-indigo-600',
+    status: '暂不做',
+    preview: true,
   },
   {
     label: '定时任务',
@@ -354,7 +475,7 @@ const editions: Record<EditionId, Edition> = {
     icon: School,
     accent: 'bg-violet-50 text-violet-700 ring-violet-100',
     homeSubtitle: '在线 · 备课与班级助手',
-    homeHeadline: '今天要备哪节课？',
+    homeHeadline: '今天想先准备什么？',
     homeDescription: '写教案、做课件、组一份卷子，或者交给我起草班级通知。',
     homePlaceholder: '发消息或创建备课任务…',
     recommendedModes: ['lesson', 'courseware', 'exam', 'notice'],
@@ -366,7 +487,7 @@ const profileCopy: Record<EditionId, ProfileCopy> = {
     sectionTitle: '学习设置',
     entryLabel: '学生档案',
     entryDoneDescription: '资料已完善 · AI 将结合学情提供辅导',
-    entryTodoDescription: '待补充地区、学校和教材信息',
+    entryTodoDescription: '待补充学期、学校和教材信息',
     entryIcon: UserRound,
     entryColor: 'bg-blue-50 text-blue-600',
     title: '学生档案',
@@ -376,7 +497,7 @@ const profileCopy: Record<EditionId, ProfileCopy> = {
     heroDone: '档案已完善，后续修改会自动更新 AI 的辅导参考。',
     heroTodo: '补全关键学习信息，AI 的讲解和练习会更贴合你。',
     basicTitle: '基本学习信息',
-    basicDescription: '帮助 AI 判断所在地区的课程范围、年级难度和学校进度。',
+    basicDescription: '帮助 AI 判断当前学期、所在地区、年级难度和学校进度。',
     nicknameLabel: '学生昵称',
     nicknamePlaceholder: '例如：林小满',
     gradeLabel: '当前年级',
@@ -385,9 +506,9 @@ const profileCopy: Record<EditionId, ProfileCopy> = {
     schoolPlaceholder: '可填写学校简称',
     schoolHint: '仅用于匹配本地教学进度',
     courseTitle: '课程与学习目标',
-    courseDescription: '教材、薄弱点和目标会用于生成更合适的例题与复习计划。',
-    subjectLabel: '重点科目',
-    subjectPlaceholder: '请选择重点科目',
+    courseDescription: '学习科目、教材、薄弱点和目标会用于生成更合适的例题与复习计划。',
+    subjectLabel: '学习科目',
+    subjectPlaceholder: '请选择一个或多个科目',
     weakTopicsLabel: '当前薄弱点',
     weakTopicsPlaceholder: '例如：二次函数、几何证明容易丢分',
     goalLabel: '阶段目标',
@@ -447,6 +568,52 @@ const profileCopy: Record<EditionId, ProfileCopy> = {
     savedMessage: '教师档案已更新',
   },
 };
+
+const studentGoalOptions = [
+  '巩固基础知识',
+  '集中攻克薄弱点',
+  '提高作业正确率',
+  '提升考试成绩',
+  '养成稳定学习习惯',
+  '增强自主学习能力',
+];
+
+const regionOptions = [
+  '北京市',
+  '天津市',
+  '河北省',
+  '山西省',
+  '内蒙古自治区',
+  '辽宁省',
+  '吉林省',
+  '黑龙江省',
+  '上海市',
+  '江苏省',
+  '浙江省',
+  '安徽省',
+  '福建省',
+  '江西省',
+  '山东省',
+  '河南省',
+  '湖北省',
+  '湖南省',
+  '广东省',
+  '广西壮族自治区',
+  '海南省',
+  '重庆市',
+  '四川省',
+  '贵州省',
+  '云南省',
+  '西藏自治区',
+  '陕西省',
+  '甘肃省',
+  '青海省',
+  '宁夏回族自治区',
+  '新疆维吾尔自治区',
+  '香港特别行政区',
+  '澳门特别行政区',
+  '台湾省',
+];
 
 const skills: Skill[] = [
   {
@@ -549,7 +716,7 @@ const skills: Skill[] = [
     icon: BookOpen,
     accent: 'bg-violet-50 text-violet-600',
     capabilities: ['按课标拆解教学目标', '生成分环节教学流程', '配套作业与板书建议'],
-    example: '帮我写一份八年级上册一次函数第一课时的教案。',
+    example: '帮我生成一份课堂教案。',
   },
   {
     id: 'courseware',
@@ -565,7 +732,7 @@ const skills: Skill[] = [
     icon: FileImage,
     accent: 'bg-indigo-50 text-indigo-600',
     capabilities: ['自动拆分课件章节', '生成讲解要点与提问', '给出配图与动画建议'],
-    example: '把这份教案做成 12 页的课件大纲。',
+    example: '把这份教案整理成课件大纲。',
   },
   {
     id: 'ppt-maker',
@@ -581,7 +748,7 @@ const skills: Skill[] = [
     icon: Presentation,
     accent: 'bg-orange-50 text-orange-600',
     capabilities: ['一句话生成整套 PPT', '按学科套用模板配色', '导出可继续编辑的文件'],
-    example: '生成一套“光的折射”实验课 PPT。',
+    example: '帮我生成一套课堂演示 PPT。',
   },
   {
     id: 'exam-builder',
@@ -597,7 +764,7 @@ const skills: Skill[] = [
     icon: FileText,
     accent: 'bg-emerald-50 text-emerald-600',
     capabilities: ['按难度比例自动组卷', '生成答案与评分标准', '导出试卷和答题卡'],
-    example: '出一份八年级数学期中卷，难度中等偏上。',
+    example: '帮我生成一份课堂检测卷。',
   },
   {
     id: 'notice-writer',
@@ -613,7 +780,55 @@ const skills: Skill[] = [
     icon: Bell,
     accent: 'bg-amber-50 text-amber-600',
     capabilities: ['常用文书模板一键套用', '按场景调整语气', '批量替换班级信息'],
-    example: '写一份期中家长会通知，时间是下周五下午三点。',
+    example: '帮我写一份家长会通知。',
+  },
+  {
+    id: 'teaching-game',
+    name: '教学游戏',
+    author: 'BingoLab',
+    description: '把知识点转化为课堂小游戏，快速生成玩法、题目与互动流程。',
+    category: '课堂互动',
+    users: '1.3k',
+    version: '1.0.0',
+    edition: 'teacher',
+    price: 29,
+    image: '/skills/teaching-game-icon.png',
+    icon: Gamepad2,
+    accent: 'bg-blue-50 text-blue-600',
+    capabilities: ['生成课堂游戏玩法', '自动配置题目与计分规则', '适配个人或小组互动'],
+    example: '把这个知识点设计成一个课堂小游戏。',
+  },
+  {
+    id: 'teaching-animation',
+    name: '教学动画',
+    author: 'BingoLab',
+    description: '将抽象知识转成简洁动画脚本，帮助学生看懂变化过程。',
+    category: '课堂互动',
+    users: '1.1k',
+    version: '1.0.0',
+    edition: 'teacher',
+    price: 39,
+    image: '/skills/teaching-animation-icon.png',
+    icon: Film,
+    accent: 'bg-violet-50 text-violet-600',
+    capabilities: ['拆分动画讲解步骤', '生成画面与旁白脚本', '突出关键变化过程'],
+    example: '把这个概念设计成一段教学动画。',
+  },
+  {
+    id: 'interactive-courseware',
+    name: '互动课件',
+    author: 'BingoLab',
+    description: '生成可点击、可问答的课堂课件，让讲解与练习自然衔接。',
+    category: '课堂互动',
+    users: '1.6k',
+    version: '1.0.0',
+    edition: 'teacher',
+    price: 39,
+    image: '/skills/interactive-courseware-icon.png',
+    icon: MousePointerClick,
+    accent: 'bg-cyan-50 text-cyan-600',
+    capabilities: ['设计点击与问答互动', '生成课堂练习环节', '串联讲解、演示与反馈'],
+    example: '把这节课设计成一份互动课件。',
   },
   {
     id: 'teacher-workflow',
@@ -629,7 +844,86 @@ const skills: Skill[] = [
     icon: Blocks,
     accent: 'bg-cyan-50 text-cyan-600',
     capabilities: ['多个技能串联执行', '保存为可复用流程', '按课表定时触发'],
-    example: '每周五自动汇总本周作业情况并生成通知。',
+    example: '帮我创建一个可重复使用的教学工作流。',
+  },
+];
+
+const initialSharedResources: SharedResource[] = [
+  {
+    id: 'math-mistake-cards',
+    title: '函数图像错题精讲卡',
+    summary: '把常见易错点整理成可复习、可继续追问的图文学习卡。',
+    category: '学习资料',
+    edition: 'family',
+    author: '林小满',
+    authorRole: '学生创作者',
+    avatarStyle: 'from-blue-500 to-cyan-500',
+    cover: '/resources/math-review.png',
+    views: '3.8k',
+    favorites: 426,
+    tags: ['错题复习', '函数图像', '学习卡'],
+    sections: [
+      { heading: '资源内容', content: '包含典型错因、关键思路、图像观察方法和三组递进练习。' },
+      { heading: '使用建议', content: '先独立判断图像变化，再展开提示；完成后可让 BingoMate 生成同类练习。' },
+    ],
+    remixPrompt: '请基于这份函数图像错题精讲卡，保留讲解结构，帮我改成适合当前薄弱点的复习资料。',
+  },
+  {
+    id: 'english-speaking-pack',
+    title: '英语情境口语任务包',
+    summary: '用生活化情境练习表达，包含角色任务、追问和复盘清单。',
+    category: '学习资料',
+    edition: 'family',
+    author: '小雨同学',
+    authorRole: '学生创作者',
+    avatarStyle: 'from-violet-500 to-fuchsia-500',
+    cover: '/resources/english-speaking.png',
+    views: '2.6k',
+    favorites: 318,
+    tags: ['英语口语', '情境对话', '表达练习'],
+    sections: [
+      { heading: '资源内容', content: '包含四类生活情境、角色卡、常用表达和对话后的自查问题。' },
+      { heading: '使用建议', content: '选择一个情境与 BingoMate 开始角色扮演，完成后再查看表达建议。' },
+    ],
+    remixPrompt: '请基于这份英语情境口语任务包，换一个生活场景，并继续用角色扮演的方式陪我练习。',
+  },
+  {
+    id: 'classroom-game-pack',
+    title: '课堂破冰互动游戏包',
+    summary: '五分钟即可开展的课堂小游戏，包含规则、题卡和计分方式。',
+    category: '教学资源',
+    edition: 'teacher',
+    author: '周老师',
+    authorRole: '一线教师',
+    avatarStyle: 'from-orange-500 to-amber-400',
+    cover: '/resources/classroom-game.png',
+    views: '5.1k',
+    favorites: 672,
+    tags: ['课堂互动', '教学游戏', '小组活动'],
+    sections: [
+      { heading: '资源内容', content: '提供热身、抢答、协作和复盘四类玩法，可替换为任意知识点。' },
+      { heading: '使用建议', content: '先告诉 BingoMate 本节课的知识主题和课堂人数，再生成对应题卡。' },
+    ],
+    remixPrompt: '请参考这份课堂破冰互动游戏包，根据我的教学主题重新设计游戏规则、题卡和计分方式。',
+  },
+  {
+    id: 'interactive-lesson-template',
+    title: '探究式互动课件模板',
+    summary: '从情境导入到课堂反馈的完整互动课件结构，可直接二次编辑。',
+    category: '教学资源',
+    edition: 'teacher',
+    author: '陈老师',
+    authorRole: '教研组长',
+    avatarStyle: 'from-cyan-500 to-blue-600',
+    cover: '/resources/interactive-lesson.png',
+    views: '4.4k',
+    favorites: 589,
+    tags: ['互动课件', '探究学习', '课堂反馈'],
+    sections: [
+      { heading: '资源内容', content: '包含问题情境、探究任务、分组讨论、即时检测和课堂总结页面。' },
+      { heading: '使用建议', content: '在对话编辑中补充教学主题和课堂目标，即可生成专属课件内容。' },
+    ],
+    remixPrompt: '请基于这份探究式互动课件模板，按照我的教学主题补全每一页内容和互动问题。',
   },
 ];
 
@@ -688,8 +982,14 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     icon: Sparkles,
     image: '/brand/bingomate-owl.png',
     iconStyle: 'bg-blue-50 text-blue-600',
-    suggestions: [],
-    reply: '可以。先告诉我你具体卡在哪一步？我会先给提示，不会直接把完整答案丢给你。',
+    suggestions: [
+      '找出我最需要解决的问题',
+      '今天只有 30 分钟，帮我安排学习',
+      '生成本周薄弱项汇总',
+      '我明天要考试了，有点紧张',
+    ],
+    followUps: ['先从最重要的一项开始', '把计划安排得轻松一点', '鼓励我开始第一步', '整理成行动清单'],
+    reply: '我已经根据你的需求整理了一份初步结果。你可以继续补充目标或限制，我会在当前结果上继续完善。',
   },
   photo: {
     id: 'photo',
@@ -703,11 +1003,12 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     image: '/features/photo-tutor-3d.png',
     iconStyle: 'bg-blue-50 text-blue-600',
     suggestions: [
-      '帮我分析下这道题',
-      '检查一下我的解题思路',
-      '只提示我下一步怎么做',
-      '帮我讲清楚这道题的知识点',
+      '这道题用清晰的思路给我讲',
+      '先别给答案，给我一个提示',
+      '这道题我完全不会做',
+      '结合故事讲这道题',
     ],
+    followUps: ['解释这一步为什么', '再给我一个提示', '换一种解题方法', '出一道同类题'],
     reply: '我先帮你识别题目条件，再从关键突破口开始提示。你也可以把已经做到的步骤一起发给我。',
   },
   homework: {
@@ -722,12 +1023,13 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     image: '/features/homework-review-3d.png',
     iconStyle: 'bg-violet-50 text-violet-600',
     suggestions: [
-      '请批改这份学生作业',
-      '帮我分析这次作业的错题原因',
-      '总结这份作业的薄弱知识点',
-      '给这位学生一些改进建议',
+      '这是今天的作业，请帮我分析',
+      '这是一份单元测验，帮我整卷分析',
+      '找出我最需要解决的问题',
+      '本周薄弱项有哪些',
     ],
-    reply: '可以。我会先检查答案和过程，再归纳错因、薄弱知识点以及下一步练习建议。请上传作业或题目。',
+    followUps: ['汇总主要错因', '生成讲评建议', '按知识点分类', '给出改进练习'],
+    reply: '已完成初步批阅：答题思路基本清晰，主要问题集中在关键步骤不完整和检查不充分。建议先订正典型错题，再用同类题确认是否掌握。',
   },
   mistakes: {
     id: 'mistakes',
@@ -741,12 +1043,13 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     image: '/features/mistake-review-3d.png',
     iconStyle: 'bg-orange-50 text-orange-600',
     suggestions: [
-      '从错题本挑 5 道复习',
+      '开始今天的薄弱项消除',
+      '开始数学系统复习',
       '分析我最近反复出错的原因',
-      '帮我整理今天上传的错题',
-      '根据这道错题出一道同类题',
+      '生成本周薄弱项汇总',
     ],
-    reply: '我会先判断错因和掌握度，再安排复习顺序，并用一道相似题确认你是否真正掌握。',
+    followUps: ['安排复习顺序', '生成同类练习', '解释高频错因', '更新掌握情况'],
+    reply: '已经按错因和掌握度完成初步整理。建议先复习概念理解类错题，再练习步骤不完整的题目，最后用一道同类题进行自测。',
   },
   practice: {
     id: 'practice',
@@ -754,18 +1057,19 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     name: '智能练习专家',
     subtitle: '按薄弱点出题 · 难度自适应',
     headline: '为你生成刚刚好的练习',
-    description: '根据年级、章节和薄弱知识点生成练习，完成后自动调整下一组难度。',
-    placeholder: '告诉我科目、章节、题量和难度…',
+    description: '根据学习目标和薄弱知识点生成练习，完成后自动调整下一组难度。',
+    placeholder: '告诉我科目、学习目标、题量和难度…',
     icon: BrainCircuit,
     image: '/features/smart-practice-3d.png',
     iconStyle: 'bg-emerald-50 text-emerald-600',
     suggestions: [
-      '生成 10 道一次函数练习',
+      '今天只有 30 分钟，优先安排数学',
+      '我明天要考试了，帮我安排复习',
       '根据最近错题出一组巩固题',
-      '给我一组难度适中的数学题',
-      '出 5 道英语语法选择题',
+      '给我一组难度适中的练习',
     ],
-    reply: '好的。告诉我年级、章节、题量和期望难度，我会生成练习并在完成后给出解析。',
+    followUps: ['查看答案解析', '调整练习难度', '再生成一组', '只练薄弱知识点'],
+    reply: '已根据当前需求生成一组练习，题目由基础理解逐步过渡到综合应用。完成后可以继续查看解析，或按作答情况调整难度。',
   },
   lesson: {
     id: 'lesson',
@@ -776,14 +1080,16 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '按课标拆解教学目标，生成分环节流程、作业与板书建议。',
     placeholder: '告诉我学段、教材章节和课时…',
     icon: BookOpen,
+    image: '/skills/lesson-plan-icon.png',
     iconStyle: 'bg-violet-50 text-violet-600',
     suggestions: [
-      '写一份八年级上册一次函数第一课时教案',
-      '把这节课拆成导入、探究和练习三个环节',
-      '给这节课配一组课堂提问',
-      '补充这节课的作业与板书设计',
+      '上传教材或讲义，帮我备这份内容',
+      '先生成教案大纲，我确认后再展开',
+      '根据班级薄弱点调整教学重点',
+      '设计一个 5 分钟课堂导入',
     ],
-    reply: '好的。告诉我学段、教材版本和章节，我会先给出教学目标，再展开分环节流程。',
+    followUps: ['细化教学流程', '补充课堂提问', '生成板书设计', '调整课堂节奏'],
+    reply: '已生成教案初稿：\n\n【教学目标】帮助学生理解核心概念，并能在典型情境中进行应用。\n【教学重点】核心概念、关键方法与实际迁移。\n【教学流程】情境导入 → 问题探究 → 合作练习 → 归纳小结。\n【课后任务】完成基础巩固，并尝试一项拓展应用。\n\n你希望将这份教案导出为什么格式？',
   },
   courseware: {
     id: 'courseware',
@@ -794,14 +1100,16 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '整理成页面结构和讲解要点，并给出每页的配图建议。',
     placeholder: '粘贴教案要点，或说明课件主题…',
     icon: FileImage,
+    image: '/skills/courseware-icon.png',
     iconStyle: 'bg-indigo-50 text-indigo-600',
     suggestions: [
-      '把这份教案整理成课件结构',
-      '给每页课件配一条讲解要点',
-      '这节课的配图该怎么选',
-      '压缩到 12 页以内',
+      '把刚才的教案转成 PPT',
+      '生成与教案配套的课件',
+      '课件换成简约学术风格',
+      '增加几个小组互动环节',
     ],
-    reply: '可以。把教案或主题发给我，我会给出页面结构、每页要点和配图建议。',
+    followUps: ['补充每页讲稿', '推荐配图方案', '调整页面结构', '生成课堂互动'],
+    reply: '已生成课件大纲：\n\n01 封面：课程主题与学习目标\n02 导入：用一个真实情境引出核心问题\n03 讲解：分步呈现概念、方法和典型示例\n04 互动：设置思考题与课堂练习\n05 小结：回顾重点并布置课后任务\n\n你希望将这份课件导出为什么格式？',
   },
   exam: {
     id: 'exam',
@@ -812,14 +1120,16 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '指定知识点、题型和难度比例组卷，自动附答案与解析。',
     placeholder: '说明学段、知识点、题型和难度比例…',
     icon: FileText,
+    image: '/skills/exam-builder-icon.png',
     iconStyle: 'bg-emerald-50 text-emerald-600',
     suggestions: [
-      '出一份八年级数学期中卷，难度中等偏上',
-      '按 3:5:2 的易中难比例组卷',
-      '只考一次函数和三角形这两章',
-      '把答案和解析单独放一页',
+      '生成一套本周练习题',
+      '生成一份阶段测验并附答案解析',
+      '按基础、提高、突破分层出题',
+      '生成一份双向细目表',
     ],
-    reply: '好的。告诉我学段、覆盖章节、题型和难度比例，我会组卷并附上答案与解析。',
+    followUps: ['调整题目难度', '补充评分标准', '生成答题卡', '替换其中一道题'],
+    reply: '已生成一份试卷初稿，包含基础题、理解题和综合应用题，并配有参考答案与解析。你可以继续调整难度、题量或考查范围。',
   },
   notice: {
     id: 'notice',
@@ -830,14 +1140,16 @@ const chatModes: Record<ChatModeId, ChatMode> = {
     description: '家长通知、活动方案和班级总结，按场景给出得体措辞。',
     placeholder: '说明通知场景、对象和要交代的事项…',
     icon: Bell,
+    image: '/skills/notice-writer-icon.png',
     iconStyle: 'bg-amber-50 text-amber-600',
     suggestions: [
-      '写一份家长会通知',
-      '起草春季运动会活动方案',
-      '写一份期中家长沟通短信',
-      '把这份通知改得更简短',
+      '生成一份家长通知',
+      '帮我写一份家长会方案',
+      '给进步学生写一段评语',
+      '帮我整理一份班级工作总结',
     ],
-    reply: '可以。告诉我通知对象、时间地点和要交代的事项，我会起草一份可直接发出的稿子。',
+    followUps: ['改得更简短', '调整表达语气', '补充时间地点', '生成家长回复模板'],
+    reply: '已完成通知初稿：\n\n各位家长您好，班级近期将开展相关教学活动，请提前做好准备并留意后续安排。感谢您的理解与配合。\n\n你可以继续补充通知对象、时间地点，或调整表达语气。',
   },
 };
 
@@ -1110,6 +1422,7 @@ const skillCategoryGroups: Record<
   teacher: [
     { label: '全部', categories: [] },
     { label: '教学备课', categories: ['教学备课'] },
+    { label: '课堂互动', categories: ['课堂互动'] },
     { label: '考试评测', categories: ['考试评测'] },
     { label: '行政文书', categories: ['行政文书'] },
     { label: '效率工具', categories: ['效率工具'] },
@@ -1289,22 +1602,6 @@ function SkillsView({
         backLabel="返回聊天"
       />
       <div className="mx-auto h-[calc(100dvh-72px)] w-full max-w-6xl overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">
-              {activeCategory === '全部' ? '热门技能' : activeCategory}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {edition.id === 'family'
-                ? '家庭版技能全部免费 · 随时可以使用'
-                : '教师版专属技能 · 按需单独购买'}
-            </p>
-          </div>
-          <Badge variant="secondary" className="h-7 px-3">
-            {filteredSkills.length} 个技能
-          </Badge>
-        </div>
-
         <nav
           aria-label="技能分类"
           className="-mx-4 mb-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
@@ -1592,6 +1889,639 @@ function SkillDetailView({
   );
 }
 
+function resourceMatches(resource: SharedResource, query: string) {
+  const needle = query.trim().toLowerCase().replace(/\s+/g, '');
+  if (!needle) return true;
+  const haystack = [
+    resource.title,
+    resource.summary,
+    resource.category,
+    resource.author,
+    ...resource.tags,
+  ]
+    .join('')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+  if (haystack.includes(needle)) return true;
+  let matched = 0;
+  for (const character of haystack) {
+    if (character === needle[matched]) matched += 1;
+    if (matched === needle.length) return true;
+  }
+  return false;
+}
+
+function ResourcesView({
+  edition,
+  resources,
+  favoriteResources,
+  onBack,
+  onSelect,
+  onToggleFavorite,
+  onPublish,
+  notify,
+}: {
+  edition: Edition;
+  resources: SharedResource[];
+  favoriteResources: Set<string>;
+  onBack: () => void;
+  onSelect: (resource: SharedResource) => void;
+  onToggleFavorite: (resource: SharedResource) => void;
+  onPublish: (resource: SharedResource) => void;
+  notify: (message: string) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('全部');
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishTitle, setPublishTitle] = useState('');
+  const [publishSummary, setPublishSummary] = useState('');
+  const filters = ['全部', '学习资料', '教学资源', '我的收藏'];
+  const visibleResources = resources
+    .filter((resource) => {
+      if (activeFilter === '我的收藏') {
+        return favoriteResources.has(resource.id);
+      }
+      return activeFilter === '全部' || resource.category === activeFilter;
+    })
+    .filter((resource) => resourceMatches(resource, query))
+    .sort(
+      (left, right) =>
+        Number(right.edition === edition.id) -
+        Number(left.edition === edition.id),
+    );
+
+  const publishResource = () => {
+    const title = publishTitle.trim();
+    const summary = publishSummary.trim();
+    if (!title || !summary) return;
+    const teacher = edition.id === 'teacher';
+    onPublish({
+      id: `shared-resource-${Date.now()}`,
+      title,
+      summary,
+      category: teacher ? '教学资源' : '学习资料',
+      edition: edition.id,
+      author: teacher ? '林老师' : '林小满',
+      authorRole: teacher ? '教师创作者' : '学生创作者',
+      avatarStyle: teacher
+        ? 'from-violet-500 to-blue-600'
+        : 'from-blue-500 to-cyan-500',
+      cover: teacher
+        ? '/resources/interactive-lesson.png'
+        : '/resources/math-review.png',
+      views: '刚刚发布',
+      favorites: 0,
+      tags: teacher ? ['教学资源', '可编辑'] : ['学习资料', '可编辑'],
+      sections: [
+        { heading: '资源简介', content: summary },
+        {
+          heading: '二次创作',
+          content: '点击“对话编辑”，可以继续补充要求、调整结构或生成新的版本。',
+        },
+      ],
+      remixPrompt: `请基于《${title}》继续编辑。先保留核心结构，再询问我希望调整的内容。`,
+    });
+    setPublishTitle('');
+    setPublishSummary('');
+    setPublishOpen(false);
+    notify('资源已发布到资源广场');
+  };
+
+  return (
+    <div className="flex h-dvh flex-col bg-slate-50/70">
+      <Header
+        title="资源广场"
+        subtitle={`${edition.shortName} · 发现和分享优质资源`}
+        onBack={onBack}
+        right={
+          <button
+            onClick={() => setPublishOpen(true)}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-bold text-white transition-[background-color,transform] hover:bg-blue-700 active:scale-[.97]"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            发布
+          </button>
+        }
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 md:px-8">
+          <label className="relative block">
+            <span className="sr-only">搜索资源</span>
+            <Search
+              aria-hidden="true"
+              className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜索标题、作者、分类或关键词"
+              className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-base outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+            />
+          </label>
+          <div
+            aria-label="资源分类"
+            className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {filters.map((filter) => (
+              <button
+                key={filter}
+                aria-pressed={activeFilter === filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-bold transition-colors ${activeFilter === filter ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'}`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+          {visibleResources.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {visibleResources.map((resource) => {
+                const favorited = favoriteResources.has(resource.id);
+                return (
+                  <article
+                    key={resource.id}
+                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <button
+                      aria-label={`查看资源：${resource.title}`}
+                      onClick={() => onSelect(resource)}
+                      className="block w-full text-left"
+                    >
+                      <img
+                        src={resource.cover}
+                        alt={`${resource.title}封面`}
+                        width={640}
+                        height={640}
+                        loading="lazy"
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                      <span className="block p-3">
+                        <span className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-slate-950">
+                          {resource.title}
+                        </span>
+                        <span className="mt-1 line-clamp-2 min-h-8 text-[11px] leading-4 text-slate-500">
+                          {resource.summary}
+                        </span>
+                        <span className="mt-3 flex items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            className={`grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white ${resource.avatarStyle}`}
+                          >
+                            {resource.author.slice(0, 1)}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-700">
+                            {resource.author}
+                          </span>
+                          <span className="shrink-0 text-[10px] text-slate-400">
+                            {resource.views}
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      aria-label={`${favorited ? '取消收藏' : '收藏'}${resource.title}`}
+                      aria-pressed={favorited}
+                      onClick={() => onToggleFavorite(resource)}
+                      className={`absolute right-2 top-2 grid size-10 place-items-center rounded-full border border-white/80 bg-white/90 shadow-sm backdrop-blur transition-[color,transform] active:scale-95 ${favorited ? 'text-amber-500' : 'text-slate-600'}`}
+                    >
+                      <Bookmark
+                        aria-hidden="true"
+                        className={`size-5 ${favorited ? 'fill-current' : ''}`}
+                      />
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-10 rounded-3xl border border-dashed bg-white px-6 py-12 text-center">
+              <Search aria-hidden="true" className="mx-auto size-8 text-slate-300" />
+              <p className="mt-3 font-bold text-slate-800">没有找到匹配的资源</p>
+              <p className="mt-1 text-sm text-slate-500">
+                试试缩短关键词，或搜索“课件”“口语”“错题”。
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+      <Drawer open={publishOpen} onOpenChange={setPublishOpen} showSwipeHandle>
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[620px] rounded-t-[30px] sm:w-[calc(100%-32px)]">
+          <DrawerHeader className="relative px-5 pb-3 pt-2 text-left">
+            <DrawerTitle className="text-xl font-bold">发布到资源广场</DrawerTitle>
+            <DrawerDescription className="text-left">
+              分享生成后的优质内容，其他用户可以收藏并继续编辑。
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭发布资源"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="space-y-4 px-5">
+            <label className="block text-sm font-semibold">
+              资源标题
+              <input
+                value={publishTitle}
+                onChange={(event) => setPublishTitle(event.target.value)}
+                placeholder="给资源起一个清楚的名字"
+                className="mt-2 min-h-12 w-full rounded-2xl border px-4 text-base font-normal outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+            <label className="block text-sm font-semibold">
+              资源简介
+              <textarea
+                value={publishSummary}
+                onChange={(event) => setPublishSummary(event.target.value)}
+                placeholder="简单说明资源内容和适用场景"
+                className="mt-2 min-h-28 w-full resize-none rounded-2xl border p-4 text-base font-normal outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+          </div>
+          <DrawerFooter className="px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-5">
+            <Button
+              disabled={!publishTitle.trim() || !publishSummary.trim()}
+              onClick={publishResource}
+              className="h-12 rounded-2xl text-base font-bold"
+            >
+              发布资源
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+}
+
+function ResourceDetailView({
+  resource,
+  favorited,
+  backLabel = '返回资源广场',
+  onBack,
+  onToggleFavorite,
+  onEdit,
+}: {
+  resource: SharedResource;
+  favorited: boolean;
+  backLabel?: string;
+  onBack: () => void;
+  onToggleFavorite: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="flex h-dvh flex-col bg-slate-50/70">
+      <Header
+        title="资源详情"
+        subtitle={resource.category}
+        onBack={onBack}
+        backLabel={backLabel}
+        right={
+          <button
+            aria-label={`${favorited ? '取消收藏' : '收藏'}${resource.title}`}
+            aria-pressed={favorited}
+            onClick={onToggleFavorite}
+            className={`grid size-11 place-items-center rounded-2xl border bg-white transition-colors ${favorited ? 'border-amber-200 text-amber-500' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            <Bookmark
+              aria-hidden="true"
+              className={`size-5 ${favorited ? 'fill-current' : ''}`}
+            />
+          </button>
+        }
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <article className="mx-auto w-full max-w-4xl px-4 pb-28 pt-4 md:px-8">
+          <img
+            src={resource.cover}
+            alt={`${resource.title}封面`}
+            width={640}
+            height={640}
+            className="aspect-[16/9] w-full rounded-[28px] object-cover shadow-sm"
+          />
+          <div className="mt-5 flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className={`grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white ${resource.avatarStyle}`}
+            >
+              {resource.author.slice(0, 1)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-slate-900">{resource.author}</p>
+              <p className="text-xs text-slate-500">{resource.authorRole}</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+              {resource.edition === 'teacher' ? '教师版资源' : '家庭版资源'}
+            </span>
+          </div>
+          <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-950">
+            {resource.title}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{resource.summary}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {resource.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="mt-6 space-y-3">
+            {resource.sections.map((section) => (
+              <section key={section.heading} className="rounded-3xl border bg-white p-5">
+                <h3 className="font-bold text-slate-900">{section.heading}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{section.content}</p>
+              </section>
+            ))}
+          </div>
+        </article>
+      </div>
+      <div className="shrink-0 border-t bg-white/95 px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 backdrop-blur md:px-8">
+        <div className="mx-auto flex max-w-4xl gap-3">
+          <button
+            onClick={onToggleFavorite}
+            className={`grid size-12 shrink-0 place-items-center rounded-2xl border transition-colors ${favorited ? 'border-amber-200 bg-amber-50 text-amber-500' : 'bg-white text-slate-600'}`}
+            aria-label={`${favorited ? '取消收藏' : '收藏'}${resource.title}`}
+            aria-pressed={favorited}
+          >
+            <Bookmark
+              aria-hidden="true"
+              className={`size-5 ${favorited ? 'fill-current' : ''}`}
+            />
+          </button>
+          <Button onClick={onEdit} className="h-12 flex-1 rounded-2xl text-base font-bold">
+            <PenLine className="size-5" />
+            对话编辑
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KnowledgeBaseView({
+  generatedItems,
+  favoriteItems,
+  uploadedItems,
+  onBack,
+  onUpload,
+  onShare,
+  onOpenFavorite,
+  notify,
+}: {
+  generatedItems: KnowledgeItem[];
+  favoriteItems: SharedResource[];
+  uploadedItems: KnowledgeItem[];
+  onBack: () => void;
+  onUpload: (items: KnowledgeItem[]) => void;
+  onShare: (title: string, channel: KnowledgeShareChannel) => void;
+  onOpenFavorite: (resource: SharedResource) => void;
+  notify: (message: string) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'generated' | 'favorite' | 'upload'>(
+    'generated',
+  );
+  const [shareTargetTitle, setShareTargetTitle] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const tabs = [
+    { id: 'generated' as const, label: '我的生成', count: generatedItems.length },
+    { id: 'favorite' as const, label: '我的收藏', count: favoriteItems.length },
+    { id: 'upload' as const, label: '我的上传', count: uploadedItems.length },
+  ];
+  const activeItems = activeTab === 'generated' ? generatedItems : uploadedItems;
+
+  const uploadFiles = (files: FileList | null) => {
+    if (!files?.length) return;
+    const nextItems = Array.from(files).map((file) => ({
+      id: `upload-${file.name}-${file.lastModified}`,
+      title: file.name,
+      summary: '用户上传的知识库内容，可用于后续查阅、分享和 AI 对话引用。',
+      source: 'upload' as const,
+      kind: file.name.split('.').pop()?.toUpperCase() || '文件',
+      meta:
+        file.size < 1024 * 1024
+          ? `${Math.max(1, Math.round(file.size / 1024))} KB`
+          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+      createdAt: '刚刚上传',
+    }));
+    onUpload(nextItems);
+    setActiveTab('upload');
+    notify(`已上传 ${nextItems.length} 个内容到知识库`);
+  };
+
+  return (
+    <div className="flex h-dvh flex-col bg-slate-50/70">
+      <Header
+        title="我的知识库"
+        subtitle="管理生成、收藏与上传内容"
+        onBack={onBack}
+        right={
+          <button
+            onClick={() => uploadInputRef.current?.click()}
+            className="flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-bold text-white transition-[background-color,transform] hover:bg-blue-700 active:scale-[.97]"
+          >
+            <Upload aria-hidden="true" className="size-4" />
+            上传
+          </button>
+        }
+      />
+      <input
+        ref={uploadInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.png,.jpg,.jpeg"
+        onChange={(event) => {
+          uploadFiles(event.target.files);
+          event.target.value = '';
+        }}
+        className="sr-only"
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-10 pt-4 md:px-8">
+          <div role="tablist" aria-label="知识库分类" className="grid grid-cols-3 rounded-2xl bg-slate-100 p-1">
+            {tabs.map((tabItem) => (
+              <button
+                key={tabItem.id}
+                role="tab"
+                aria-selected={activeTab === tabItem.id}
+                onClick={() => setActiveTab(tabItem.id)}
+                className={`min-h-11 rounded-xl px-2 text-xs font-bold transition-[background-color,color,box-shadow] sm:text-sm ${activeTab === tabItem.id ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500'}`}
+              >
+                {tabItem.label}
+                <span className="ml-1 text-[10px] opacity-70">{tabItem.count}</span>
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'favorite' ? (
+            favoriteItems.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {favoriteItems.map((resource) => (
+                  <article key={resource.id} className="flex items-center gap-3 rounded-3xl border bg-white p-3 shadow-sm">
+                    <button
+                      aria-label={`查看收藏资源${resource.title}`}
+                      onClick={() => onOpenFavorite(resource)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <img
+                        src={resource.cover}
+                        alt=""
+                        aria-hidden="true"
+                        width={80}
+                        height={80}
+                        loading="lazy"
+                        className="size-20 shrink-0 rounded-2xl object-cover"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-bold text-slate-900">{resource.title}</span>
+                        <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{resource.summary}</span>
+                        <span className="mt-1.5 block text-[11px] font-semibold text-blue-600">{resource.author} · 资源广场</span>
+                      </span>
+                    </button>
+                    <button
+                      aria-label={`分享${resource.title}`}
+                      onClick={() => setShareTargetTitle(resource.title)}
+                      className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-700 transition-colors hover:bg-blue-100"
+                    >
+                      <Share2 aria-hidden="true" className="size-5" />
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <KnowledgeEmpty title="还没有收藏资源" description="在资源广场收藏的内容会自动出现在这里。" />
+            )
+          ) : activeItems.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {activeItems.map((item) => (
+                <article key={item.id} className="flex items-center gap-3 rounded-3xl border bg-white p-4 shadow-sm">
+                  <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${item.source === 'generated' ? 'bg-violet-50 text-violet-600' : 'bg-cyan-50 text-cyan-700'}`}>
+                    {item.source === 'generated' ? (
+                      <Sparkles aria-hidden="true" className="size-5" />
+                    ) : (
+                      <FileText aria-hidden="true" className="size-5" />
+                    )}
+                  </span>
+                  <button
+                    onClick={() => notify(`已打开：${item.title}`)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <span className="block truncate font-bold text-slate-900">{item.title}</span>
+                    <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{item.summary}</span>
+                    <span className="mt-1.5 block text-[11px] text-slate-400">{item.kind} · {item.meta} · {item.createdAt}</span>
+                  </button>
+                  <button
+                    aria-label={`分享${item.title}`}
+                    onClick={() => setShareTargetTitle(item.title)}
+                    className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    <Share2 aria-hidden="true" className="size-5" />
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <KnowledgeEmpty
+              title={activeTab === 'generated' ? '还没有保存生成文件' : '还没有上传内容'}
+              description={activeTab === 'generated' ? 'AI 生成文件后，可在文件卡片中点击“存入知识库”。' : '点击右上角“上传”，添加自己的文件和资料。'}
+            />
+          )}
+        </div>
+      </div>
+      <Drawer
+        open={Boolean(shareTargetTitle)}
+        onOpenChange={(open) => {
+          if (!open) setShareTargetTitle(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-24px)] max-w-[680px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(38dvh,320px)]">
+          <DrawerHeader className="relative px-4 pb-3 pt-2 text-left sm:px-5">
+            <DrawerTitle className="pr-12 text-xl font-bold">分享</DrawerTitle>
+            <DrawerDescription className="mt-3 rounded-2xl bg-slate-100 px-3.5 py-3 text-left">
+              <span className="block text-xs font-normal text-slate-500">
+                分享内容
+              </span>
+              <span className="mt-1 block truncate text-sm font-bold text-slate-900">
+                {shareTargetTitle}
+              </span>
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭分享"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200"
+            >
+              <X aria-hidden="true" className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="grid grid-cols-3 gap-2 px-4 py-4 sm:gap-3 sm:px-5">
+            {[
+              {
+                id: 'wechat' as const,
+                label: '微信',
+                icon: WeChatBrandIcon,
+                style: 'bg-emerald-50',
+              },
+              {
+                id: 'qq' as const,
+                label: 'QQ',
+                icon: QqBrandIcon,
+                style: 'bg-sky-50',
+              },
+              {
+                id: 'download' as const,
+                label: '下载到本地',
+                icon: Download,
+                style: 'bg-violet-50 text-violet-600',
+              },
+            ].map((action) => {
+              const ActionIcon = action.icon;
+              return (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => {
+                    if (!shareTargetTitle) return;
+                    onShare(shareTargetTitle, action.id);
+                    setShareTargetTitle(null);
+                  }}
+                  className="flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border bg-white px-1.5 text-sm font-normal text-slate-700 transition-[border-color,background-color,transform] hover:border-blue-200 hover:bg-slate-50 active:scale-[.97] sm:px-2"
+                >
+                  <span className={`grid size-11 place-items-center rounded-2xl ${action.style}`}>
+                    <ActionIcon aria-hidden="true" className="size-5" />
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap">{action.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <DrawerFooter className="px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-1 sm:px-5">
+            <DrawerClose asChild>
+              <button
+                type="button"
+                className="min-h-11 w-full rounded-xl bg-slate-100 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
+              >
+                取消
+              </button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+}
+
+function KnowledgeEmpty({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mt-10 rounded-3xl border border-dashed bg-white px-6 py-12 text-center">
+      <Database aria-hidden="true" className="mx-auto size-9 text-slate-300" />
+      <p className="mt-3 font-bold text-slate-800">{title}</p>
+      <p className="mt-1 text-sm text-slate-500">{description}</p>
+    </div>
+  );
+}
+
 function Sidebar({
   open,
   onClose,
@@ -1601,6 +2531,7 @@ function Sidebar({
   onPoints,
   edition,
   onSwitchEdition,
+  showEditionUpgradeHint,
   points,
   notify,
 }: {
@@ -1612,6 +2543,7 @@ function Sidebar({
   onPoints: () => void;
   edition: Edition;
   onSwitchEdition: () => void;
+  showEditionUpgradeHint: boolean;
   points: number;
   notify: (message: string) => void;
 }) {
@@ -1632,12 +2564,15 @@ function Sidebar({
             >
               <UserRound className="size-6" />
             </span>
-            <div className="min-w-0">
+            <div className="relative min-w-0">
               <p className="truncate font-bold">林小满</p>
               <button
                 aria-label={`切换版本，当前为${edition.name}`}
                 onClick={onSwitchEdition}
-                className={`mt-1 flex max-w-[190px] items-center gap-1.5 rounded-lg px-1.5 py-0.5 text-left text-xs font-semibold ring-1 transition-opacity hover:opacity-80 ${edition.accent}`}
+                aria-describedby={
+                  showEditionUpgradeHint ? 'edition-upgrade-hint' : undefined
+                }
+                className={`mt-1 flex min-h-8 max-w-[190px] items-center gap-1.5 rounded-lg px-2 py-1 text-left text-xs font-semibold ring-1 transition-[opacity,box-shadow] hover:opacity-80 ${edition.accent} ${showEditionUpgradeHint ? 'relative z-10 shadow-[0_0_0_4px_rgba(139,92,246,.18)] ring-2 ring-violet-400' : ''}`}
               >
                 <EditionIcon className="size-3.5 shrink-0" />
                 <span className="truncate">
@@ -1645,6 +2580,24 @@ function Sidebar({
                 </span>
                 <ChevronsUpDown className="size-3.5 shrink-0" />
               </button>
+              {showEditionUpgradeHint && (
+                <div
+                  id="edition-upgrade-hint"
+                  role="status"
+                  className="absolute left-0 top-[calc(100%+10px)] z-20 w-[218px] rounded-2xl bg-violet-600 px-3.5 py-3 text-left text-xs leading-5 text-white shadow-[0_12px_30px_rgba(76,29,149,.3)]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1.5 left-6 size-3 rotate-45 bg-violet-600"
+                  />
+                  <span className="relative block font-bold">
+                    想解锁更多教学能力？
+                  </span>
+                  <span className="relative mt-0.5 block text-violet-100">
+                    点击这里升级教师版，使用教案、课件和智能组卷。
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <button
@@ -1668,20 +2621,30 @@ function Sidebar({
               其他功能
             </p>
             <div className="space-y-1">
-              {features.map(({ label, hint, icon, iconColor }) => (
+              {features.map(({ label, hint, icon, iconColor, status, preview }) => (
                 <button
                   key={label}
+                  aria-disabled={Boolean(status && !preview)}
                   onClick={() => onFeature(label)}
-                  className="flex min-h-[62px] w-full items-center gap-3 rounded-2xl px-2 text-left transition-colors hover:bg-muted"
+                  className={`flex min-h-[62px] w-full items-center gap-3 rounded-2xl px-2 text-left transition-colors hover:bg-muted ${status ? 'text-slate-500' : ''}`}
                 >
                   <IconBox icon={icon} color={iconColor} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">{label}</p>
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <span>{label}</span>
+                      {status && (
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                          {status}
+                        </span>
+                      )}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {hint}
                     </p>
                   </div>
-                  <ChevronRight className="size-4 text-muted-foreground" />
+                  {(!status || preview) && (
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  )}
                 </button>
               ))}
             </div>
@@ -1949,12 +2912,14 @@ function SettingsView({
 }
 
 function ProfileView({
+  edition,
   profile,
   completed,
   copy,
   onBack,
   onSave,
 }: {
+  edition: EditionId;
   profile: UserProfile;
   completed: boolean;
   copy: ProfileCopy;
@@ -1963,10 +2928,19 @@ function ProfileView({
 }) {
   const [draft, setDraft] = useState(profile);
   const [error, setError] = useState('');
+  const [usingCustomGoal, setUsingCustomGoal] = useState(
+    () =>
+      edition === 'family' &&
+      Boolean(
+        profile.learningGoal &&
+          !studentGoalOptions.includes(profile.learningGoal),
+      ),
+  );
   const requiredFields: (keyof UserProfile)[] = [
     'nickname',
     'region',
     'grade',
+    ...(edition === 'family' ? (['semester'] as const) : []),
     'school',
     'textbook',
     'focusSubject',
@@ -1984,6 +2958,16 @@ function ProfileView({
     if (error) setError('');
   };
 
+  const selectedStudentSubjects = draft.focusSubject
+    .split('、')
+    .filter(Boolean);
+  const toggleStudentSubject = (subject: string) => {
+    const nextSubjects = selectedStudentSubjects.includes(subject)
+      ? selectedStudentSubjects.filter((item) => item !== subject)
+      : [...selectedStudentSubjects, subject];
+    updateProfile('focusSubject', nextSubjects.join('、'));
+  };
+
   const saveProfile = () => {
     if (completedCount < requiredFields.length) {
       setError('请先完成带“必填”标识的信息，再领取积分奖励。');
@@ -1994,6 +2978,7 @@ function ProfileView({
 
   const inputClassName =
     'mt-2 min-h-12 w-full rounded-2xl border bg-slate-50 px-4 text-base text-slate-900 outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100';
+  const isTeacher = edition === 'teacher';
 
   const HeroIcon = copy.heroIcon;
   const EntryIcon = copy.entryIcon;
@@ -2098,21 +3083,58 @@ function ProfileView({
                     ))}
                   </select>
                 </label>
-                <label htmlFor="profile-region" className="text-sm font-semibold">
-                  所在地区 <span className="text-rose-500">必填</span>
-                  <div className="relative">
-                    <MapPin className="pointer-events-none absolute left-4 top-1/2 mt-1 size-4 -translate-y-1/2 text-slate-400" />
-                    <input
+                {!isTeacher && (
+                  <label htmlFor="profile-semester" className="text-sm font-semibold">
+                    当前学期 <span className="text-rose-500">必填</span>
+                    <select
+                      id="profile-semester"
+                      value={draft.semester}
+                      onChange={(event) =>
+                        updateProfile('semester', event.target.value)
+                      }
+                      className={inputClassName}
+                    >
+                      <option value="">请选择当前学期</option>
+                      {['上学期', '下学期', '寒假', '暑假'].map((semester) => (
+                        <option key={semester}>{semester}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {isTeacher ? (
+                  <label htmlFor="profile-region" className="text-sm font-semibold">
+                    所在地区 <span className="text-rose-500">必填</span>
+                    <div className="relative">
+                      <MapPin className="pointer-events-none absolute left-4 top-1/2 mt-1 size-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="profile-region"
+                        value={draft.region}
+                        onChange={(event) =>
+                          updateProfile('region', event.target.value)
+                        }
+                        placeholder="例如：广东省深圳市"
+                        className={`${inputClassName} pl-11`}
+                      />
+                    </div>
+                  </label>
+                ) : (
+                  <label htmlFor="profile-region" className="text-sm font-semibold">
+                    所在省份/地区 <span className="text-rose-500">必填</span>
+                    <select
                       id="profile-region"
                       value={draft.region}
                       onChange={(event) =>
                         updateProfile('region', event.target.value)
                       }
-                      placeholder="例如：广东省深圳市"
-                      className={`${inputClassName} pl-11`}
-                    />
-                  </div>
-                </label>
+                      className={inputClassName}
+                    >
+                      <option value="">请选择所在省份或地区</option>
+                      {regionOptions.map((region) => (
+                        <option key={region}>{region}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label htmlFor="profile-school" className="text-sm font-semibold">
                   {copy.schoolLabel} <span className="text-rose-500">必填</span>
                   <div className="relative">
@@ -2147,26 +3169,59 @@ function ProfileView({
                 </div>
               </div>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <label htmlFor="profile-subject" className="text-sm font-semibold">
-                  {copy.subjectLabel} <span className="text-rose-500">必填</span>
-                  <select
-                    id="profile-subject"
-                    value={draft.focusSubject}
-                    onChange={(event) =>
-                      updateProfile('focusSubject', event.target.value)
-                    }
-                    className={inputClassName}
-                  >
-                    <option value="">{copy.subjectPlaceholder}</option>
-                    {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
-                      (subject) => (
-                        <option key={subject}>{subject}</option>
-                      ),
-                    )}
-                  </select>
-                </label>
+                {isTeacher ? (
+                  <label htmlFor="profile-subject" className="text-sm font-semibold">
+                    {copy.subjectLabel} <span className="text-rose-500">必填</span>
+                    <select
+                      id="profile-subject"
+                      value={draft.focusSubject}
+                      onChange={(event) =>
+                        updateProfile('focusSubject', event.target.value)
+                      }
+                      className={inputClassName}
+                    >
+                      <option value="">{copy.subjectPlaceholder}</option>
+                      {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
+                        (subject) => (
+                          <option key={subject}>{subject}</option>
+                        ),
+                      )}
+                    </select>
+                  </label>
+                ) : (
+                  <fieldset className="md:col-span-2">
+                    <legend className="text-sm font-semibold">
+                      {copy.subjectLabel} <span className="text-rose-500">必填</span>
+                    </legend>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      可多选，选择后 AI 会同时支持这些科目的学习。
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
+                        (subject) => {
+                          const selected = selectedStudentSubjects.includes(subject);
+                          return (
+                            <button
+                              key={subject}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => toggleStudentSubject(subject)}
+                              className={`min-h-11 rounded-xl border px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 ${
+                                selected
+                                  ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-300 hover:bg-blue-50'
+                              }`}
+                            >
+                              {subject}
+                            </button>
+                          );
+                        },
+                      )}
+                    </div>
+                  </fieldset>
+                )}
                 <label htmlFor="profile-textbook" className="text-sm font-semibold">
-                  教材版本 <span className="text-rose-500">必填</span>
+                  {isTeacher ? '教材版本' : '主要教材版本'} <span className="text-rose-500">必填</span>
                   <select
                     id="profile-textbook"
                     value={draft.textbook}
@@ -2197,23 +3252,186 @@ function ProfileView({
                   className={`${inputClassName} resize-none py-3 leading-relaxed`}
                 />
               </label>
-              <label htmlFor="profile-goal" className="mt-4 block text-sm font-semibold">
-                {copy.goalLabel} <span className="text-rose-500">必填</span>
-                <div className="relative">
-                  <Target className="pointer-events-none absolute left-4 top-6 size-4 text-slate-400" />
-                  <textarea
-                    id="profile-goal"
-                    value={draft.learningGoal}
-                    onChange={(event) =>
-                      updateProfile('learningGoal', event.target.value)
-                    }
-                    placeholder={copy.goalPlaceholder}
-                    rows={3}
-                    className={`${inputClassName} resize-none py-3 pl-11 leading-relaxed`}
-                  />
+              {isTeacher ? (
+                <label htmlFor="profile-goal" className="mt-4 block text-sm font-semibold">
+                  {copy.goalLabel} <span className="text-rose-500">必填</span>
+                  <div className="relative">
+                    <Target className="pointer-events-none absolute left-4 top-6 size-4 text-slate-400" />
+                    <textarea
+                      id="profile-goal"
+                      value={draft.learningGoal}
+                      onChange={(event) =>
+                        updateProfile('learningGoal', event.target.value)
+                      }
+                      placeholder={copy.goalPlaceholder}
+                      rows={3}
+                      className={`${inputClassName} resize-none py-3 pl-11 leading-relaxed`}
+                    />
+                  </div>
+                </label>
+              ) : (
+                <div className="mt-4">
+                  <label htmlFor="profile-goal-select" className="block text-sm font-semibold">
+                    {copy.goalLabel} <span className="text-rose-500">必填</span>
+                    <select
+                      id="profile-goal-select"
+                      value={usingCustomGoal ? '__custom__' : draft.learningGoal}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        const isCustom = value === '__custom__';
+                        setUsingCustomGoal(isCustom);
+                        updateProfile('learningGoal', isCustom ? '' : value);
+                      }}
+                      className={inputClassName}
+                    >
+                      <option value="">请选择阶段目标</option>
+                      {studentGoalOptions.map((goal) => (
+                        <option key={goal}>{goal}</option>
+                      ))}
+                      <option value="__custom__">自定义目标</option>
+                    </select>
+                  </label>
+                  {usingCustomGoal && (
+                    <label htmlFor="profile-goal" className="mt-3 block text-sm font-semibold">
+                      补充目标内容
+                      <div className="relative">
+                        <Target className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="profile-goal"
+                          value={draft.learningGoal}
+                          onChange={(event) =>
+                            updateProfile('learningGoal', event.target.value)
+                          }
+                          placeholder={copy.goalPlaceholder}
+                          className={`${inputClassName} pl-11`}
+                        />
+                      </div>
+                    </label>
+                  )}
                 </div>
-              </label>
+              )}
             </section>
+
+            {isTeacher && (
+              <section className="rounded-3xl border bg-white p-4 md:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-700">
+                    <SlidersHorizontal aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold">教学偏好</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      选择常用选项即可，班级学情和具体目标可以在上方补充。
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  {[
+                    {
+                      id: 'profile-teaching-experience',
+                      label: '教龄',
+                      field: 'teachingExperience' as const,
+                      placeholder: '请选择教龄范围',
+                      options: ['1—3 年', '4—7 年', '8—15 年', '16 年以上'],
+                    },
+                    {
+                      id: 'profile-class-level',
+                      label: '班级层次',
+                      field: 'classLevel' as const,
+                      placeholder: '请选择班级层次',
+                      options: ['普通班', '实验班', '分层教学班', '其他'],
+                    },
+                    {
+                      id: 'profile-head-teacher',
+                      label: '是否兼任班主任',
+                      field: 'isHeadTeacher' as const,
+                      placeholder: '请选择',
+                      options: ['是', '否'],
+                    },
+                    {
+                      id: 'profile-courseware-style',
+                      label: '课件风格',
+                      field: 'coursewareStyle' as const,
+                      placeholder: '请选择常用风格',
+                      options: ['简约清晰', '学术严谨', '活泼互动', '图文故事化'],
+                    },
+                  ].map((field) => (
+                    <label key={field.id} htmlFor={field.id} className="text-sm font-semibold">
+                      {field.label}{' '}
+                      <span className="font-normal text-muted-foreground">选填</span>
+                      <select
+                        id={field.id}
+                        value={draft[field.field]}
+                        onChange={(event) => updateProfile(field.field, event.target.value)}
+                        className={inputClassName}
+                      >
+                        <option value="">{field.placeholder}</option>
+                        {field.options.map((option) => (
+                          <option key={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {!isTeacher && (
+              <section className="rounded-3xl border bg-white p-4 md:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <SlidersHorizontal aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold">学习习惯</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      选填常用偏好，帮助 AI 安排更合适的节奏和反馈。
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  {[
+                    {
+                      id: 'profile-daily-study-time',
+                      label: '每天可用学习时间',
+                      field: 'dailyStudyTime' as const,
+                      placeholder: '请选择大致时长',
+                      options: ['15 分钟以内', '约 30 分钟', '约 45 分钟', '60 分钟以上'],
+                    },
+                    {
+                      id: 'profile-encouragement-style',
+                      label: '更适合的鼓励方式',
+                      field: 'encouragementStyle' as const,
+                      placeholder: '请选择鼓励方式',
+                      options: ['温柔鼓励', '活泼陪伴', '直接明确', '严格督促'],
+                    },
+                    {
+                      id: 'profile-report-frequency',
+                      label: '学习报告频率',
+                      field: 'reportFrequency' as const,
+                      placeholder: '请选择报告频率',
+                      options: ['每天简报', '每周一次', '每月总结', '仅需要时生成'],
+                    },
+                  ].map((field) => (
+                    <label key={field.id} htmlFor={field.id} className="text-sm font-semibold">
+                      {field.label}{' '}
+                      <span className="font-normal text-muted-foreground">选填</span>
+                      <select
+                        id={field.id}
+                        value={draft[field.field]}
+                        onChange={(event) => updateProfile(field.field, event.target.value)}
+                        className={inputClassName}
+                      >
+                        <option value="">{field.placeholder}</option>
+                        {field.options.map((option) => (
+                          <option key={option}>{option}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className="rounded-3xl border bg-white p-4 md:p-5">
               <label htmlFor="profile-guidance" className="text-sm font-semibold">
@@ -2843,14 +4061,16 @@ function AddDeviceDrawer({
   const [deviceCode, setDeviceCode] = useState('');
   const [activationCode, setActivationCode] = useState('');
   const [deviceName, setDeviceName] = useState('我的 BingoMate');
+  const normalizedDeviceCode = deviceCode.trim().toUpperCase();
+  const deviceCodeIsValid = DEVICE_CODE_PATTERN.test(normalizedDeviceCode);
   const canBind =
-    deviceCode.trim().length > 0 &&
+    deviceCodeIsValid &&
     activationCode.trim().length > 0 &&
     deviceName.trim().length > 0;
 
   const bindDevice = () => {
     if (!canBind) return;
-    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
+    onBind(normalizedDeviceCode, activationCode.trim(), deviceName.trim());
     setDeviceCode('');
     setActivationCode('');
     setDeviceName('我的 BingoMate');
@@ -2884,21 +4104,32 @@ function AddDeviceDrawer({
               <div className="flex gap-2">
                 <input
                   aria-label="设备码"
+                  aria-describedby="add-device-code-hint"
+                  aria-invalid={deviceCode.length > 0 && !deviceCodeIsValid}
                   value={deviceCode}
-                  onChange={(event) => setDeviceCode(event.target.value)}
-                  placeholder="例如 BM-20260901"
+                  onChange={(event) => setDeviceCode(normalizeDeviceCode(event.target.value))}
+                  placeholder={`例如 ${DEVICE_CODE_EXAMPLE}`}
+                  maxLength={13}
                   autoComplete="off"
                   className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
                 <button
                   aria-label="扫码录入设备码"
-                  onClick={() => setDeviceCode('BM-20260901')}
+                  onClick={() => setDeviceCode(DEVICE_CODE_EXAMPLE)}
                   className="flex h-12 shrink-0 items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                 >
                   <ScanLine className="size-5" />
                   扫码
                 </button>
               </div>
+              <p
+                id="add-device-code-hint"
+                className={`mt-1.5 text-xs ${deviceCode.length > 0 && !deviceCodeIsValid ? 'text-red-600' : 'text-slate-500'}`}
+              >
+                {deviceCode.length > 0 && !deviceCodeIsValid
+                  ? '设备码格式应为 BC-XXXX-XXXXX'
+                  : '格式：BC-XXXX-XXXXX'}
+              </p>
             </div>
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">激活码</span>
@@ -3707,6 +4938,29 @@ function GrowthReportView({ onBack }: { onBack: () => void }) {
   const [selectedReport, setSelectedReport] = useState<GrowthReport | null>(null);
   const [indexHelpOpen, setIndexHelpOpen] = useState(false);
   const current = growthReports[period];
+  const learningReport = {
+    daily: {
+      completed: 6,
+      pending: 2,
+      mastery: 67,
+      weakPoints: ['二次函数顶点', '阅读概括'],
+      highlights: ['今天完成 6 道练习', '做对 4 道题，并主动订正 1 道'],
+    },
+    weekly: {
+      completed: 20,
+      pending: 8,
+      mastery: 60,
+      weakPoints: ['压力与浮力', '单位换算', '公式建模', '结尾作用', '选择性记忆'],
+      highlights: ['本周完成 20 道练习', '做对 12 道题，继续保持', '连续学习 5 天，节奏稳定'],
+    },
+    monthly: {
+      completed: 86,
+      pending: 13,
+      mastery: 79,
+      weakPoints: ['函数综合应用', '几何辅助线', '阅读信息提取'],
+      highlights: ['本月完成 86 道练习', '已掌握 12 个重点知识点', '主动复盘比例达到 76%'],
+    },
+  }[period];
   const indexDimensions = [
     {
       label: '知识掌握',
@@ -3814,6 +5068,68 @@ function GrowthReportView({ onBack }: { onBack: () => void }) {
               </button>
             ))}
           </div>
+
+          <section className="mt-4 rounded-3xl border bg-white p-4 shadow-sm md:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
+                  <BookOpen aria-hidden="true" className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold text-slate-900">学习报告</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">练习结果与知识掌握情况</p>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
+                预览
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+              {[
+                [`${learningReport.completed}道`, '本期做题'],
+                [`${learningReport.pending}道`, '本期错题'],
+                [`${learningReport.mastery}%`, '掌握率'],
+              ].map(([value, label]) => (
+                <div key={label} className="min-w-0 rounded-2xl bg-slate-50 px-2 py-3 text-center sm:px-3">
+                  <strong className="block truncate text-lg font-bold text-slate-900 tabular-nums">{value}</strong>
+                  <span className="mt-0.5 block truncate text-[11px] text-slate-500 sm:text-xs">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <Target aria-hidden="true" className="size-4 text-orange-500" />
+                  本期薄弱知识点
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {learningReport.weakPoints.map((point) => (
+                    <div key={point} className="flex min-h-9 items-center gap-2 rounded-xl bg-slate-50 px-3 text-sm">
+                      <span className="min-w-0 flex-1 truncate text-slate-700">{point}</span>
+                      <span className="shrink-0 text-xs font-medium text-orange-600">待突破</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <Sparkles aria-hidden="true" className="size-4 text-emerald-600" />
+                  学习亮点
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {learningReport.highlights.map((highlight) => (
+                    <div key={highlight} className="flex min-h-9 items-center gap-2 rounded-xl bg-emerald-50 px-3 text-sm text-emerald-800">
+                      <Check aria-hidden="true" className="size-4 shrink-0" />
+                      <span className="min-w-0 flex-1">{highlight}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
 
           <section className="mt-4 rounded-3xl border border-blue-100 bg-blue-50/70 p-4 md:p-5">
             <div className="flex items-start gap-3">
@@ -4167,13 +5483,37 @@ function DemoExperience({
   stage,
   setStage,
   onBind,
+  onCompleteProfile,
   onStartTour,
+  moduleHomeEnabled,
+  onOpenModuleHome,
+  onUseConversationHome,
   notify,
 }: {
   stage: DemoStage;
   setStage: (stage: DemoStage) => void;
-  onBind: (deviceCode: string, activationCode: string, deviceName: string) => void;
+  onBind: (
+    deviceCode: string,
+    activationCode: string,
+    deviceName: string,
+    editionId: EditionId,
+  ) => void;
+  onCompleteProfile: (
+    editionId: EditionId,
+    profile: {
+      nickname: string;
+      grade: string;
+      context: string;
+      region?: string;
+      semester?: string;
+      focusSubject?: string;
+      textbook?: string;
+    },
+  ) => void;
   onStartTour: () => void;
+  moduleHomeEnabled: boolean;
+  onOpenModuleHome: () => void;
+  onUseConversationHome: () => void;
   notify: (message: string) => void;
 }) {
   const [phone, setPhone] = useState('13800138000');
@@ -4186,9 +5526,42 @@ function DemoExperience({
   const [deviceCode, setDeviceCode] = useState('');
   const [activationCode, setActivationCode] = useState('');
   const [deviceName, setDeviceName] = useState('我的 BingoMate');
+  const [activatedEdition, setActivatedEdition] =
+    useState<EditionId>('family');
+  const [profileNickname, setProfileNickname] = useState('');
+  const [profileGrade, setProfileGrade] = useState('');
+  const [profileSemester, setProfileSemester] = useState('');
+  const [profileContext, setProfileContext] = useState('');
+  const [profileRegion, setProfileRegion] = useState('');
+  const [profileSubject, setProfileSubject] = useState('');
+  const [profileTextbook, setProfileTextbook] = useState('');
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const normalizedActivationCode = activationCode.trim();
+  const normalizedDeviceCode = deviceCode.trim().toUpperCase();
+  const deviceCodeIsValid = DEVICE_CODE_PATTERN.test(normalizedDeviceCode);
+  const detectedEdition: EditionId | null =
+    normalizedActivationCode.length >= 6
+      ? /teacher|teach|tch|教师/i.test(normalizedActivationCode)
+        ? 'teacher'
+        : 'family'
+      : null;
+  const DetectedEditionIcon = detectedEdition
+    ? editions[detectedEdition].icon
+    : null;
+  const activatedCopy = profileCopy[activatedEdition];
+  const ActivatedProfileIcon = activatedCopy.heroIcon;
+  const selectedProfileSubjects = profileSubject.split('、').filter(Boolean);
+  const toggleProfileSubject = (subject: string) => {
+    setProfileSubject((current) => {
+      const selected = current.split('、').filter(Boolean);
+      return selected.includes(subject)
+        ? selected.filter((item) => item !== subject).join('、')
+        : [...selected, subject].join('、');
+    });
+  };
 
   const startDemo = () => {
+    onUseConversationHome();
     if (successTimerRef.current) clearTimeout(successTimerRef.current);
     setPhone('13800138000');
     setVerificationCode('888888');
@@ -4198,6 +5571,14 @@ function DemoExperience({
     setDeviceCode('');
     setActivationCode('');
     setDeviceName('我的 BingoMate');
+    setActivatedEdition('family');
+    setProfileNickname('');
+    setProfileGrade('');
+    setProfileSemester('');
+    setProfileContext('');
+    setProfileRegion('');
+    setProfileSubject('');
+    setProfileTextbook('');
     setStage('login');
   };
 
@@ -4226,13 +5607,55 @@ function DemoExperience({
   };
 
   const bind = () => {
-    if (!deviceCode.trim() || !activationCode.trim() || !deviceName.trim()) return;
-    onBind(deviceCode.trim(), activationCode.trim(), deviceName.trim());
+    if (!deviceCodeIsValid || !detectedEdition || !deviceName.trim()) return;
+    const resolvedEdition = detectedEdition;
+    setActivatedEdition(resolvedEdition);
+    onBind(
+      normalizedDeviceCode,
+      activationCode.trim(),
+      deviceName.trim(),
+      resolvedEdition,
+    );
     setStage('bind-success');
     successTimerRef.current = setTimeout(() => {
       successTimerRef.current = null;
-      onStartTour();
-    }, 1600);
+      setStage('profile');
+    }, 1400);
+  };
+
+  const completeProfile = () => {
+    if (
+      !profileNickname.trim() ||
+      !profileGrade.trim() ||
+      !profileContext.trim() ||
+      (activatedEdition === 'family' &&
+        (!profileRegion.trim() ||
+          !profileSemester ||
+          !profileSubject ||
+          !profileTextbook)) ||
+      (activatedEdition === 'teacher' &&
+        (!profileSubject || !profileTextbook))
+    )
+      return;
+    onCompleteProfile(activatedEdition, {
+      nickname: profileNickname.trim(),
+      grade: profileGrade,
+      context: profileContext.trim(),
+      ...(activatedEdition === 'family'
+        ? {
+            region: profileRegion.trim(),
+            semester: profileSemester,
+            focusSubject: profileSubject,
+            textbook: profileTextbook,
+          }
+        : activatedEdition === 'teacher'
+        ? {
+            focusSubject: profileSubject,
+            textbook: profileTextbook,
+          }
+        : {}),
+    });
+    onStartTour();
   };
 
   return (
@@ -4255,7 +5678,7 @@ function DemoExperience({
               <X className="size-5" />
             </DrawerClose>
           </DrawerHeader>
-          <div className="px-4 pb-[max(20px,env(safe-area-inset-bottom))]">
+          <div className="space-y-3 px-4 pb-[max(20px,env(safe-area-inset-bottom))]">
             <button
               onClick={startDemo}
               className="flex min-h-[88px] w-full items-center gap-4 rounded-3xl border border-blue-100 bg-gradient-to-r from-blue-50 to-violet-50 p-4 text-left shadow-sm transition-[transform,box-shadow] active:scale-[.98]"
@@ -4266,11 +5689,49 @@ function DemoExperience({
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-slate-900">新手引导演示</span>
                 <span className="mt-1 block text-xs leading-relaxed text-slate-600">
-                  登录、绑定设备并完成第一次对话
+                  登录、激活、建档并完成第一次对话
                 </span>
               </span>
               <ChevronRight className="size-5 shrink-0 text-blue-500" />
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenModuleHome();
+                setStage(null);
+              }}
+              className="flex min-h-[88px] w-full items-center gap-4 rounded-3xl border border-cyan-100 bg-gradient-to-r from-cyan-50 to-blue-50 p-4 text-left shadow-sm transition-[transform,box-shadow] active:scale-[.98]"
+            >
+              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-200">
+                <Blocks aria-hidden="true" className="size-7" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 font-bold text-slate-900">
+                  模块首页演示
+                  {moduleHomeEnabled && (
+                    <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] text-white">
+                      使用中
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-600">
+                  像传统 App 一样，从功能模块直接开始
+                </span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-blue-500" />
+            </button>
+            {moduleHomeEnabled && (
+              <button
+                type="button"
+                onClick={() => {
+                  onUseConversationHome();
+                  setStage(null);
+                }}
+                className="min-h-11 w-full rounded-2xl text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+              >
+                返回现有对话首页
+              </button>
+            )}
           </div>
         </DrawerContent>
       </Drawer>
@@ -4283,10 +5744,7 @@ function DemoExperience({
           className="fixed inset-0 z-[80] overflow-y-auto bg-gradient-to-b from-blue-50 via-white to-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))]"
         >
           <div className="mx-auto flex min-h-full w-full max-w-md flex-col">
-            <div className="flex items-center justify-between">
-              <span className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700">
-                第 1 步 · 登录
-              </span>
+            <div className="flex justify-end">
               <button
                 aria-label="退出新手引导"
                 onClick={() => setStage(null)}
@@ -4433,7 +5891,7 @@ function DemoExperience({
                 <>
                   <p className="font-semibold text-slate-900">一、信息收集</p>
                   <p className="mt-1">
-                    为完成登录、设备绑定和个性化学习服务，我们会处理手机号、设备码、学习记录及用户主动填写的学生档案。
+                    为完成登录、设备绑定和个性化服务，我们会处理手机号、设备码、学习记录及用户主动填写的学生或教师档案。
                   </p>
                   <p className="mt-4 font-semibold text-slate-900">二、信息使用</p>
                   <p className="mt-1">
@@ -4468,9 +5926,6 @@ function DemoExperience({
       >
         <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)]">
           <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
-            <span className="mb-2 w-fit rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700">
-              第 2 步 · 绑定设备
-            </span>
             <DrawerTitle className="text-xl font-bold">连接你的 BingoMate</DrawerTitle>
             <DrawerDescription className="text-left">
               当前账号还没有设备，完成绑定后即可开始使用。
@@ -4490,31 +5945,66 @@ function DemoExperience({
               <div className="mt-2 flex gap-2">
                 <input
                   id="demo-device-code"
+                  aria-describedby="demo-device-code-hint"
+                  aria-invalid={deviceCode.length > 0 && !deviceCodeIsValid}
                   value={deviceCode}
-                  onChange={(event) => setDeviceCode(event.target.value)}
-                  placeholder="例如 BM-20260904"
+                  onChange={(event) => setDeviceCode(normalizeDeviceCode(event.target.value))}
+                  placeholder={`例如 ${DEVICE_CODE_EXAMPLE}`}
+                  maxLength={13}
                   className="h-12 min-w-0 flex-1 rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
                 <button
                   aria-label="扫码录入演示设备码"
-                  onClick={() => setDeviceCode('BM-20260904')}
+                  onClick={() => setDeviceCode(DEVICE_CODE_EXAMPLE)}
                   className="flex min-h-12 shrink-0 items-center gap-1.5 rounded-2xl bg-blue-50 px-3 text-sm font-bold text-blue-700"
                 >
                   <ScanLine className="size-5" />
                   扫码
                 </button>
               </div>
+              <p
+                id="demo-device-code-hint"
+                className={`mt-1.5 text-xs ${deviceCode.length > 0 && !deviceCodeIsValid ? 'text-red-600' : 'text-slate-500'}`}
+              >
+                {deviceCode.length > 0 && !deviceCodeIsValid
+                  ? '设备码格式应为 BC-XXXX-XXXXX'
+                  : '格式：BC-XXXX-XXXXX'}
+              </p>
             </div>
             <label htmlFor="demo-activation-code" className="block text-sm font-semibold">
               激活码
               <input
                 id="demo-activation-code"
+                aria-describedby="demo-activation-result"
                 value={activationCode}
                 onChange={(event) => setActivationCode(event.target.value)}
                 placeholder="请输入设备激活码"
                 className="mt-2 h-12 w-full rounded-2xl border bg-white px-4 text-base outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </label>
+            <div id="demo-activation-result" aria-live="polite">
+              {detectedEdition && DetectedEditionIcon ? (
+                <div
+                  className={`flex min-h-12 items-center gap-3 rounded-2xl border px-3 ${detectedEdition === 'teacher' ? 'border-violet-200 bg-violet-50 text-violet-800' : 'border-blue-200 bg-blue-50 text-blue-800'}`}
+                >
+                  <DetectedEditionIcon
+                    aria-hidden="true"
+                    className="size-5 shrink-0"
+                  />
+                  <span className="min-w-0 text-sm">
+                    已识别为
+                    <strong className="ml-1">
+                      {editions[detectedEdition].name}
+                    </strong>
+                  </span>
+                  <Check className="ml-auto size-5 shrink-0" />
+                </div>
+              ) : (
+                <p className="-mt-2 text-xs text-muted-foreground">
+                  输入完整激活码后，将自动识别对应版本
+                </p>
+              )}
+            </div>
             <label htmlFor="demo-device-name" className="block text-sm font-semibold">
               设备名称
               <input
@@ -4527,48 +6017,454 @@ function DemoExperience({
           </div>
           <DrawerFooter className="px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-5">
             <Button
-              disabled={!deviceCode.trim() || !activationCode.trim() || !deviceName.trim()}
+              disabled={!deviceCodeIsValid || !detectedEdition || !deviceName.trim()}
               onClick={bind}
               className="h-12 w-full rounded-2xl text-base font-bold"
             >
-              绑定设备并进入首页
+              {detectedEdition
+                ? `绑定设备并激活${editions[detectedEdition].shortName}`
+                : '绑定设备并激活版本'}
             </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
       {stage === 'bind-success' && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-blue-50 px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))]"
-        >
-          <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-sm text-center duration-300">
-            <div className="relative mx-auto grid size-24 place-items-center rounded-[32px] bg-gradient-to-br from-emerald-400 to-teal-500 shadow-[0_20px_50px_rgba(16,185,129,.28)]">
-              <span className="absolute inset-2 rounded-[26px] border border-white/35" />
-              <Check className="relative size-12 stroke-[3] text-white" />
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/25 p-5 backdrop-blur-[2px]">
+          <div
+            role="status"
+            aria-live="polite"
+            className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-sm rounded-[30px] bg-white p-6 text-center shadow-2xl duration-300"
+          >
+            <div className="relative mx-auto grid size-16 place-items-center rounded-[22px] bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-200">
+              <span className="absolute inset-1.5 rounded-[17px] border border-white/35" />
+              <Check className="relative size-8 stroke-[3] text-white" />
             </div>
-            <h2 className="mt-7 text-2xl font-black tracking-tight text-slate-950">
-              绑定成功
+            <h2 className="mt-4 text-xl font-black tracking-tight text-slate-950">
+              {editions[activatedEdition].shortName}激活成功
             </h2>
-            <p className="mt-2 text-base font-semibold text-slate-700">
+            <p className="mt-1 text-sm font-semibold text-slate-700">
               {deviceName}
             </p>
-            <p className="mt-2 text-sm text-slate-500">
-              设备已连接，正在进入首页
+            <p className="mt-1 text-xs text-slate-500">
+              设备已连接，正在准备{activatedCopy.title}
             </p>
             <div
               aria-hidden="true"
-              className="mx-auto mt-6 flex w-fit gap-2 motion-safe:animate-pulse"
+              className="mx-auto mt-4 flex w-fit gap-1.5 motion-safe:animate-pulse"
             >
-              <span className="size-2 rounded-full bg-emerald-500" />
-              <span className="size-2 rounded-full bg-emerald-400" />
-              <span className="size-2 rounded-full bg-emerald-300" />
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              <span className="size-1.5 rounded-full bg-emerald-300" />
             </div>
           </div>
         </div>
       )}
+
+      <Drawer
+        open={stage === 'profile'}
+        onOpenChange={(open) => {
+          if (!open) setStage(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[560px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(64dvh,620px)]">
+          <DrawerHeader className="relative px-5 pb-3 pt-2 text-left">
+            <div className="flex items-center gap-3 pr-12">
+              <span
+                className={`grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-white shadow-sm ${activatedEdition === 'teacher' ? 'from-violet-500 to-indigo-600 shadow-violet-200' : 'from-blue-500 to-indigo-600 shadow-blue-200'}`}
+              >
+                <ActivatedProfileIcon className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <DrawerTitle
+                  id="demo-profile-title"
+                  className="text-lg font-bold"
+                >
+                  {activatedEdition === 'teacher'
+                    ? '建立教师档案'
+                    : '建立学生档案'}
+                </DrawerTitle>
+                <DrawerDescription className="mt-0.5 text-left text-xs">
+                  {activatedEdition === 'teacher'
+                    ? '让 AI 更懂你的教学情况'
+                    : '让 AI 更懂孩子的学习情况'}
+                </DrawerDescription>
+              </div>
+            </div>
+            <DrawerClose
+              aria-label="退出新手引导"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted text-slate-600"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-3">
+            <p className="text-sm leading-relaxed text-slate-500">
+              只需填写基础信息，后续生成内容会更贴合实际情况。
+            </p>
+            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-bold text-amber-800">
+              <Gift aria-hidden="true" className="size-5 shrink-0 text-amber-600" />
+              完成基础建档，立即赠送 100 积分
+            </div>
+
+            <div className="mt-3 space-y-3 rounded-[24px] border bg-white p-4">
+              <label htmlFor="demo-profile-nickname" className="block text-sm font-semibold text-slate-800">
+                {activatedCopy.nicknameLabel}
+                <input
+                  id="demo-profile-nickname"
+                  value={profileNickname}
+                  onChange={(event) => setProfileNickname(event.target.value)}
+                  placeholder={activatedCopy.nicknamePlaceholder}
+                  className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              <label htmlFor="demo-profile-grade" className="block text-sm font-semibold text-slate-800">
+                {activatedCopy.gradeLabel}
+                <select
+                  id="demo-profile-grade"
+                  value={profileGrade}
+                  onChange={(event) => setProfileGrade(event.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">{activatedCopy.gradePlaceholder}</option>
+                  {[
+                    '一年级',
+                    '二年级',
+                    '三年级',
+                    '四年级',
+                    '五年级',
+                    '六年级',
+                    '七年级',
+                    '八年级',
+                    '九年级',
+                    '高一',
+                    '高二',
+                    '高三',
+                  ].map((grade) => (
+                    <option key={grade}>{grade}</option>
+                  ))}
+                </select>
+              </label>
+              {activatedEdition === 'family' && (
+                <label htmlFor="demo-profile-semester" className="block text-sm font-semibold text-slate-800">
+                  当前学期
+                  <select
+                    id="demo-profile-semester"
+                    value={profileSemester}
+                    onChange={(event) => setProfileSemester(event.target.value)}
+                    className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">请选择当前学期</option>
+                    {['上学期', '下学期', '寒假', '暑假'].map((semester) => (
+                      <option key={semester}>{semester}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {activatedEdition === 'teacher' ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label htmlFor="demo-profile-subject" className="block text-sm font-semibold text-slate-800">
+                    任教科目
+                    <select
+                      id="demo-profile-subject"
+                      value={profileSubject}
+                      onChange={(event) => setProfileSubject(event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">请选择任教科目</option>
+                      {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治', '多学科'].map((subject) => (
+                        <option key={subject}>{subject}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label htmlFor="demo-profile-textbook" className="block text-sm font-semibold text-slate-800">
+                    教材版本
+                    <select
+                      id="demo-profile-textbook"
+                      value={profileTextbook}
+                      onChange={(event) => setProfileTextbook(event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">请选择教材版本</option>
+                      {['人教版', '北师大版', '苏教版', '沪教版', '浙教版', '鲁教版', '其他版本'].map((textbook) => (
+                        <option key={textbook}>{textbook}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <>
+                  <fieldset>
+                    <legend className="text-sm font-semibold text-slate-800">学习科目</legend>
+                    <p className="mt-1 text-xs font-normal text-slate-500">可多选</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '道德与法治'].map(
+                        (subject) => {
+                          const selected = selectedProfileSubjects.includes(subject);
+                          return (
+                            <button
+                              key={subject}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => toggleProfileSubject(subject)}
+                              className={`min-h-11 rounded-xl border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 ${
+                                selected
+                                  ? 'border-blue-600 bg-blue-600 text-white'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {subject}
+                            </button>
+                          );
+                        },
+                      )}
+                    </div>
+                  </fieldset>
+                  <label htmlFor="demo-profile-textbook" className="block text-sm font-semibold text-slate-800">
+                    主要教材版本
+                    <select
+                      id="demo-profile-textbook"
+                      value={profileTextbook}
+                      onChange={(event) => setProfileTextbook(event.target.value)}
+                      className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="">请选择主要教材版本</option>
+                      {['人教版', '北师大版', '苏教版', '沪教版', '浙教版', '鲁教版', '其他版本'].map((textbook) => (
+                        <option key={textbook}>{textbook}</option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+              {activatedEdition === 'family' && (
+                <label htmlFor="demo-profile-region" className="block text-sm font-semibold text-slate-800">
+                  所在省份/地区
+                  <select
+                    id="demo-profile-region"
+                    value={profileRegion}
+                    onChange={(event) => setProfileRegion(event.target.value)}
+                    className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">请选择所在省份或地区</option>
+                    {regionOptions.map((region) => (
+                      <option key={region}>{region}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label htmlFor="demo-profile-context" className="block text-sm font-semibold text-slate-800">
+                {activatedEdition === 'teacher' ? '任教学校' : '学校'}
+                <input
+                  id="demo-profile-context"
+                  value={profileContext}
+                  onChange={(event) => setProfileContext(event.target.value)}
+                  placeholder={
+                    activatedEdition === 'teacher'
+                      ? '例如：实验中学'
+                      : '可填写学校简称'
+                  }
+                  className="mt-1.5 h-11 w-full rounded-xl border bg-slate-50 px-3 text-base outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+          </div>
+
+          <DrawerFooter className="border-t bg-white px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3">
+            <Button
+              type="button"
+              disabled={
+                !profileNickname.trim() ||
+                !profileGrade ||
+                !profileContext.trim() ||
+                (activatedEdition === 'family' &&
+                  (!profileRegion.trim() ||
+                    !profileSemester ||
+                    !profileSubject ||
+                    !profileTextbook)) ||
+                (activatedEdition === 'teacher' &&
+                  (!profileSubject || !profileTextbook))
+              }
+              onClick={completeProfile}
+              className="h-12 w-full rounded-2xl text-base font-bold"
+            >
+              <Gift className="size-5" />
+              完成建档并领取 100 积分
+            </Button>
+            <button
+              type="button"
+              onClick={onStartTour}
+              className="min-h-10 w-full rounded-xl text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+            >
+              暂时跳过，直接体验
+            </button>
+            <p className="text-center text-xs text-slate-400">
+              稍后可在“设置”中继续完善档案
+            </p>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </>
+  );
+}
+
+function ModuleLauncherHome({
+  edition,
+  onSelectMode,
+  onOpenView,
+}: {
+  edition: Edition;
+  onSelectMode: (modeId: ChatModeId) => void;
+  onOpenView: (view: 'skills' | 'resources' | 'knowledge' | 'growth' | 'tasks') => void;
+}) {
+  const utilityModules =
+    edition.id === 'family'
+      ? [
+          { label: '成长报告', hint: '查看学习变化', icon: BarChart3, view: 'growth' as const, style: 'bg-orange-50 text-orange-600' },
+          { label: '我的知识库', hint: '生成与收藏', icon: LibraryBig, view: 'knowledge' as const, style: 'bg-violet-50 text-violet-600' },
+          { label: '资源广场', hint: '发现优质资料', icon: Search, view: 'resources' as const, style: 'bg-cyan-50 text-cyan-600' },
+          { label: '定时任务', hint: '复习和提醒', icon: CalendarClock, view: 'tasks' as const, style: 'bg-emerald-50 text-emerald-600' },
+        ]
+      : [
+          { label: '技能广场', hint: '扩展教学能力', icon: Blocks, view: 'skills' as const, style: 'bg-violet-50 text-violet-600' },
+          { label: '资源广场', hint: '共享教学资源', icon: Search, view: 'resources' as const, style: 'bg-cyan-50 text-cyan-600' },
+          { label: '我的知识库', hint: '管理生成文件', icon: LibraryBig, view: 'knowledge' as const, style: 'bg-blue-50 text-blue-600' },
+          { label: '定时任务', hint: '安排教学事务', icon: CalendarClock, view: 'tasks' as const, style: 'bg-amber-50 text-amber-600' },
+        ];
+  const primaryModes = edition.recommendedModes.map((modeId) => chatModes[modeId]);
+  const moduleCardStyles: Record<ChatModeId, { surface: string; glow: string; arrow: string }> = {
+    default: {
+      surface: 'border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50',
+      glow: 'bg-blue-300/30',
+      arrow: 'text-blue-500',
+    },
+    photo: {
+      surface: 'border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-cyan-100/80',
+      glow: 'bg-cyan-300/35',
+      arrow: 'text-blue-500',
+    },
+    homework: {
+      surface: 'border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-fuchsia-100/70',
+      glow: 'bg-fuchsia-300/30',
+      arrow: 'text-violet-500',
+    },
+    mistakes: {
+      surface: 'border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-amber-100/80',
+      glow: 'bg-amber-300/35',
+      arrow: 'text-orange-500',
+    },
+    practice: {
+      surface: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-100/80',
+      glow: 'bg-teal-300/30',
+      arrow: 'text-emerald-500',
+    },
+    lesson: {
+      surface: 'border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-indigo-100/75',
+      glow: 'bg-violet-300/35',
+      arrow: 'text-violet-500',
+    },
+    courseware: {
+      surface: 'border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-sky-100/80',
+      glow: 'bg-sky-300/35',
+      arrow: 'text-blue-500',
+    },
+    exam: {
+      surface: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-cyan-100/75',
+      glow: 'bg-emerald-300/30',
+      arrow: 'text-emerald-500',
+    },
+    notice: {
+      surface: 'border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-100/80',
+      glow: 'bg-orange-300/30',
+      arrow: 'text-amber-600',
+    },
+  };
+
+  return (
+    <main className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain bg-gradient-to-b from-blue-50/70 via-slate-50 to-slate-100 px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
+      <div className="mx-auto w-full max-w-4xl space-y-5">
+        <section className={`relative overflow-hidden rounded-[28px] p-5 text-white shadow-lg ${edition.id === 'teacher' ? 'bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 shadow-violet-200' : 'bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 shadow-blue-200'}`}>
+          <div aria-hidden="true" className="absolute -right-10 -top-14 size-36 rounded-full bg-white/10" />
+          <div aria-hidden="true" className="absolute -bottom-16 right-16 size-28 rounded-full bg-white/10" />
+          <div className="relative flex items-center gap-4">
+            <span className="grid size-16 shrink-0 place-items-center rounded-[22px] bg-white/15 ring-1 ring-white/20">
+              <img
+                src="/brand/bingomate-owl.png"
+                alt=""
+                aria-hidden="true"
+                width={56}
+                height={56}
+                className="size-14 object-contain"
+              />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm text-white/80">{edition.name}</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight">
+                {edition.id === 'teacher' ? '今天想完成什么教学任务？' : '今天想从哪里开始？'}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-white/85">
+                选择一个功能，直接进入对应的专属助手。
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-base font-bold text-slate-950">
+            {edition.id === 'teacher' ? '教学工作台' : '学习工具'}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {primaryModes.map((module) => {
+              const cardStyle = moduleCardStyles[module.id];
+              return (
+                <button
+                  key={module.id}
+                  type="button"
+                  onClick={() => onSelectMode(module.id)}
+                  className={`group relative min-h-[148px] overflow-hidden rounded-[24px] border p-4 text-left shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${cardStyle.surface}`}
+                >
+                  <span aria-hidden="true" className={`absolute -bottom-9 -right-8 size-24 rounded-full blur-2xl ${cardStyle.glow}`} />
+                  <span className="relative block">
+                    <ModeArt mode={module} className="size-12 drop-shadow-sm" iconClassName="size-6" />
+                    <span className="mt-4 block text-base font-bold text-slate-950">{module.label}</span>
+                    <span className="mt-1.5 block text-xs font-normal leading-relaxed text-slate-600">
+                      {module.subtitle.split(' · ')[0]}
+                    </span>
+                  </span>
+                  <ChevronRight aria-hidden="true" className={`absolute right-3 top-4 size-4 transition-transform group-hover:translate-x-0.5 ${cardStyle.arrow}`} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-base font-bold text-slate-950">更多服务</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {utilityModules.map((module) => {
+              const UtilityIcon = module.icon;
+              return (
+                <button
+                  key={module.label}
+                  type="button"
+                  onClick={() => onOpenView(module.view)}
+                  className="flex min-h-[88px] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-[border-color,background-color,transform] hover:border-blue-200 hover:bg-blue-50/30 active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${module.style}`}>
+                    <UtilityIcon aria-hidden="true" className="size-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-slate-900">{module.label}</span>
+                    <span className="mt-1 block text-xs leading-snug text-slate-500">{module.hint}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
 
@@ -4576,10 +6472,14 @@ function ChatView({
   edition,
   onMenu,
   onDemo,
+  moduleHomeDemo,
+  onOpenModuleView,
   onCamera,
   onScheduleFromChat,
+  onSaveGeneratedContent,
   installedSkills,
   photoConversation,
+  resourceConversation,
   demoTourStep,
   onDemoTourNext,
   onDemoTourFinish,
@@ -4588,10 +6488,14 @@ function ChatView({
   edition: Edition;
   onMenu: () => void;
   onDemo: () => void;
+  moduleHomeDemo: boolean;
+  onOpenModuleView: (view: 'skills' | 'resources' | 'knowledge' | 'growth' | 'tasks') => void;
   onCamera: (request: string) => void;
   onScheduleFromChat: (text: string) => void;
+  onSaveGeneratedContent: (item: KnowledgeItem) => void;
   installedSkills: Set<string>;
   photoConversation: PhotoConversation | null;
+  resourceConversation: SharedResource | null;
   demoTourStep: number | null;
   onDemoTourNext: () => void;
   onDemoTourFinish: () => void;
@@ -4599,7 +6503,21 @@ function ChatView({
 }) {
   const hasPhotoRequest = Boolean(photoConversation?.request.trim());
   const [messages, setMessages] = useState<Message[]>(() =>
-    photoConversation
+    resourceConversation
+      ? [
+          {
+            id: Date.now(),
+            role: 'assistant',
+            text: `已载入资源《${resourceConversation.title}》。${resourceConversation.summary}\n\n你希望怎样二次编辑？可以直接说要保留的部分和想修改的方向。`,
+            followUps: [
+              '保留结构，换一个主题',
+              '把内容精简一些',
+              '增加互动和练习环节',
+              '根据我的需求重新生成',
+            ],
+          },
+        ]
+      : photoConversation
       ? [
           {
             id: photoConversation.id,
@@ -4622,9 +6540,18 @@ function ChatView({
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [skillSheetOpen, setSkillSheetOpen] = useState(false);
   const [attachmentSheetOpen, setAttachmentSheetOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<GeneratedFile | null>(null);
+  const [quickSkillMode, setQuickSkillMode] = useState<ChatModeId | null>(null);
+  const [quickPopoverLeft, setQuickPopoverLeft] = useState(0);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [selectedModel, setSelectedModel] = useState<ModelOption>(models[0]);
   const [selectedChatSkill, setSelectedChatSkill] = useState<Skill | null>(null);
+  const [moduleHomeOpen, setModuleHomeOpen] = useState(moduleHomeDemo);
+  const [lastConversation, setLastConversation] =
+    useState<SavedConversation | null>(null);
+  const [savedKnowledgeMessages, setSavedKnowledgeMessages] = useState<
+    Set<number>
+  >(() => new Set());
   const [chatMode, setChatMode] = useState<ChatModeId>(
     photoConversation ? 'photo' : 'default',
   );
@@ -4634,6 +6561,10 @@ function ChatView({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const quickSkillRailRef = useRef<HTMLDivElement>(null);
+  const quickModeButtonRefs = useRef<
+    Partial<Record<ChatModeId, HTMLButtonElement | null>>
+  >({});
   const mode = chatModes[chatMode];
   const ModeIcon = mode.icon;
   const availableSkills = skills.filter(
@@ -4644,7 +6575,12 @@ function ChatView({
   const recommendedModes = edition.recommendedModes.map(
     (modeId) => chatModes[modeId],
   );
+  const quickModes = [chatModes.default, ...recommendedModes];
   const currentSkillName = selectedChatSkill?.name ?? mode.label;
+  const hasReferencedSkill = Boolean(selectedChatSkill) || chatMode !== 'default';
+  const quickSuggestionMode = quickSkillMode
+    ? chatModes[quickSkillMode]
+    : null;
   const demoTourContent = [
     {
       title: '选择适合的技能',
@@ -4660,6 +6596,36 @@ function ChatView({
     },
   ];
 
+  useEffect(() => {
+    setLastConversation(null);
+    try {
+      const saved = window.localStorage.getItem(
+        `bingomate-last-conversation-${edition.id}`,
+      );
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as SavedConversation;
+      if (parsed?.modeId && Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+        setLastConversation(parsed);
+      }
+    } catch {
+      // Ignore incomplete demo data and keep the home page usable.
+    }
+  }, [edition.id]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const nextConversation: SavedConversation = {
+      modeId: chatMode,
+      messages,
+      updatedAt: '刚刚',
+    };
+    window.localStorage.setItem(
+      `bingomate-last-conversation-${edition.id}`,
+      JSON.stringify(nextConversation),
+    );
+    setLastConversation(nextConversation);
+  }, [chatMode, edition.id, messages]);
+
   const advanceDemoTour = () => {
     if (demoTourStep === 1 && !input.trim()) {
       setInput('帮我制定一份今天的数学复习计划');
@@ -4672,24 +6638,166 @@ function ChatView({
   };
 
   const selectMode = (nextMode: ChatModeId) => {
+    setModuleHomeOpen(false);
     setChatMode(nextMode);
     setSelectedChatSkill(null);
-    setMessages([]);
-    setInput('');
+    setQuickSkillMode(null);
     setShowPhotoGuidance(false);
   };
 
   const selectInstalledSkill = (skill: Skill) => {
     setChatMode('default');
     setSelectedChatSkill(skill);
-    setMessages([]);
-    setInput('');
+    setQuickSkillMode(null);
     setShowPhotoGuidance(false);
+  };
+
+  const clearReferencedSkill = () => {
+    const removedSkillName = currentSkillName;
+    setChatMode('default');
+    setSelectedChatSkill(null);
+    setQuickSkillMode(null);
+    setShowPhotoGuidance(false);
+    inputRef.current?.focus();
+    notify(`已移除技能：${removedSkillName}`);
+  };
+
+  const positionQuickSkillPopover = (
+    nextMode: ChatModeId,
+    trigger?: HTMLButtonElement | null,
+  ) => {
+    const rail = quickSkillRailRef.current;
+    const anchor = trigger ?? quickModeButtonRefs.current[nextMode];
+    if (!rail || !anchor) return;
+
+    const railRect = rail.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    const popoverWidth = Math.min(280, railRect.width);
+    const centeredLeft =
+      anchorRect.left -
+      railRect.left +
+      anchorRect.width / 2 -
+      popoverWidth / 2;
+    setQuickPopoverLeft(
+      Math.max(0, Math.min(centeredLeft, railRect.width - popoverWidth)),
+    );
+  };
+
+  const activateQuickMode = (
+    nextMode: ChatModeId,
+    trigger?: HTMLButtonElement | null,
+  ) => {
+    const shouldClose = nextMode === 'default' || quickSkillMode === nextMode;
+    setChatMode(nextMode);
+    setSelectedChatSkill(null);
+    setShowPhotoGuidance(false);
+    if (shouldClose) {
+      setQuickSkillMode(null);
+      return;
+    }
+    positionQuickSkillPopover(nextMode, trigger);
+    setQuickSkillMode(nextMode);
   };
 
   const applySuggestion = (suggestion: string) => {
     setInput(suggestion);
     inputRef.current?.focus();
+  };
+
+  const resumeLastConversation = () => {
+    if (!lastConversation) return;
+    setModuleHomeOpen(false);
+    setChatMode(lastConversation.modeId);
+    setSelectedChatSkill(null);
+    setQuickSkillMode(null);
+    setMessages(lastConversation.messages);
+    notify('已继续上次聊天');
+  };
+
+  const buildGeneratedFile = (
+    format: ExportFormat,
+    exportKind: ExportKind,
+  ): GeneratedFile => {
+    const courseware = exportKind === 'courseware';
+    const practice = exportKind === 'practice';
+    const extension = format === 'PDF' ? 'pdf' : format === 'PPT' ? 'pptx' : 'docx';
+    return {
+      format,
+      name: `${practice ? '智能练习' : courseware ? '课件大纲' : '教案初稿'}.${extension}`,
+      size: format === 'PPT' ? '2.4 MB' : format === 'PDF' ? '860 KB' : '1.1 MB',
+      title: practice ? '智能练习' : courseware ? '课件大纲' : '课堂教案',
+      sections: practice
+        ? [
+            { heading: '基础理解', content: '用自己的话说明核心知识点，并完成一道直接应用题。' },
+            { heading: '方法练习', content: '按照关键步骤完成两道练习，并写出必要过程。' },
+            { heading: '综合应用', content: '将所学方法迁移到一个新情境中解决问题。' },
+            { heading: '答案提示', content: '先独立作答，再根据分步提示检查思路和结果。' },
+          ]
+        : courseware
+        ? [
+            { heading: '01 课程导入', content: '从真实情境出发，提出本课的核心问题。' },
+            { heading: '02 核心讲解', content: '分步展示概念、方法和典型案例。' },
+            { heading: '03 课堂互动', content: '通过思考题、合作任务和即时练习巩固理解。' },
+            { heading: '04 总结迁移', content: '回顾重点，引导学生将方法迁移到新情境。' },
+          ]
+        : [
+            { heading: '教学目标', content: '理解核心概念，掌握关键方法，并能进行初步迁移应用。' },
+            { heading: '教学重点', content: '核心概念的建立、关键步骤的表达与常见问题的辨析。' },
+            { heading: '教学流程', content: '情境导入 → 问题探究 → 合作练习 → 归纳小结。' },
+            { heading: '课后任务', content: '完成基础巩固任务，并尝试一项拓展应用。' },
+          ],
+    };
+  };
+
+  const selectExportFormat = (
+    messageId: number,
+    format: ExportFormat,
+    exportKind: ExportKind,
+  ) => {
+    const file = buildGeneratedFile(format, exportKind);
+    const sourceMode = chatModes[exportKind];
+    const userMessageId = messageId + 1;
+    setMessages((current) => [
+      ...current.map((message) =>
+        message.id === messageId
+          ? { ...message, exportOptions: undefined }
+          : message,
+      ),
+      { id: userMessageId, role: 'user', text: `导出为 ${format}` },
+    ]);
+    setSending(true);
+    window.setTimeout(() => {
+      setMessages((current) => [
+        ...current,
+        {
+          id: userMessageId + 1,
+          role: 'assistant',
+          text: `已生成 ${format} 格式的演示文件，可以先预览内容，再下载到本地。`,
+          modeId: exportKind,
+          generatedFile: file,
+          followUps: sourceMode.followUps,
+        },
+      ]);
+      setSending(false);
+    }, 650);
+  };
+
+  const downloadGeneratedFile = (file: GeneratedFile) => {
+    const content = [
+      file.title,
+      '',
+      ...file.sections.flatMap((section) => [section.heading, section.content, '']),
+    ].join('\n');
+    const blob = new Blob(['\ufeff', content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    notify(`${file.name} 已开始下载`);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -4726,6 +6834,49 @@ function ChatView({
     );
   };
 
+  const createSimulatedReply = (
+    modeId: ChatModeId,
+    request: string,
+    skill: Skill | null,
+  ) => {
+    const requestTitle = request.split('\n')[0].slice(0, 36) || '当前任务';
+
+    if (skill?.id === 'focus-timer') {
+      return `已根据“${requestTitle}”生成专注计划：\n\n【任务拆分】5 分钟整理材料，25 分钟集中完成核心任务，5 分钟检查，10 分钟订正与总结。\n【专注规则】计时期间只保留当前材料，遇到卡点先做标记，不立即切换任务。\n【完成标准】核心任务已完成，遗留问题已记录，并用一句话写下今日收获。`;
+    }
+
+    if (skill) {
+      return `已调用“${skill.name}”处理“${requestTitle}”：\n\n【结果摘要】已完成初步分析并生成可继续编辑的内容框架。\n【已完成】${skill.capabilities.slice(0, 3).join('；')}。\n【下一步】可以补充使用场景、目标或限制条件，我会继续完善结果。`;
+    }
+
+    switch (modeId) {
+      case 'photo':
+        return `已针对“${requestTitle}”完成题目分析（演示）：\n\n【题目信息】需要从已知条件中找到关键数量关系，再确定所求目标。\n【关键突破】先把题目条件转换成可计算或可推理的表达式。\n【解题路径】整理条件 → 选择方法 → 分步求解 → 回代检查。\n【下一步提示】试着先写出第一个能由已知条件直接得到的关系式。`;
+      case 'homework':
+        return `已针对“${requestTitle}”完成初步批阅（演示）：\n\n【批阅摘要】整体思路基本正确，核心知识已初步掌握，但部分步骤表达不够完整。\n【典型问题】忽略限定条件；中间步骤跳跃；完成后没有回代检查。\n【错因判断】主要属于解题流程不稳定，而不是核心概念完全不理解。\n【改进建议】订正时用“条件—方法—结果—检查”四步法重写一遍。`;
+      case 'mistakes':
+        return `已针对“${requestTitle}”生成错题复习结果（演示）：\n\n【错题归因】概念边界不清、关键条件遗漏、计算或表达步骤不完整。\n【当前掌握】能够识别题型，但还不能稳定独立完成，建议掌握度暂记为 68%。\n【复习安排】今天重做原题，明天完成一道变式题，三天后无提示自测。\n【达标标准】能说明原错因，并连续独立做对两道同类题。`;
+      case 'practice': {
+        const english = /英语|语法|单词|English/i.test(request);
+        return english
+          ? `已针对“${requestTitle}”生成一组练习（演示）：\n\n1. Choose the correct form: She ___ to school every day. (go / goes)\n2. Complete the sentence: We have lived here ___ three years.\n3. Rewrite the sentence using the requested grammar structure.\n4. Read a short paragraph and identify its main idea.\n\n【答案提示】先完成作答，再点击下方“查看答案解析”。`
+          : `已针对“${requestTitle}”生成一组练习（演示）：\n\n1. 用自己的话说明这个知识点的核心含义。\n2. 完成一道直接应用基本方法的题目。\n3. 比较两种解法，并说明哪种更简洁。\n4. 将知识点迁移到一个新情境中完成综合应用。\n\n【作答建议】先独立完成，再查看答案和解析。`;
+      }
+      case 'lesson':
+        return `已围绕“${requestTitle}”生成教案初稿：\n\n【教学目标】帮助学生理解核心概念，并能在典型情境中进行应用。\n【教学重点】核心概念、关键方法与实际迁移。\n【教学流程】情境导入 → 问题探究 → 合作练习 → 归纳小结。\n【课堂提问】你观察到了什么？关键条件是什么？还有其他方法吗？\n【课后任务】完成基础巩固，并尝试一项拓展应用。\n\n你希望将这份教案导出为什么格式？`;
+      case 'courseware':
+        return `已围绕“${requestTitle}”生成课件大纲：\n\n01 封面：课程主题与学习目标\n02 情境导入：用图片或问题引出本课主题\n03 核心讲解：分步呈现概念、方法和典型示例\n04 对比辨析：呈现常见问题与改正方法\n05 课堂互动：设置思考题、小组任务和即时练习\n06 小结与任务：回顾重点并布置课后任务\n\n你希望将这份课件导出为什么格式？`;
+      case 'exam':
+        return `已围绕“${requestTitle}”生成试卷初稿（演示）：\n\n一、基础题\n1. 请写出本单元核心概念的完整表述。\n2. 判断下列说法是否正确，并说明理由。\n\n二、理解与应用\n3. 根据给定条件完成分步推理，写出关键过程。\n4. 在新情境中选择合适方法解决问题。\n\n【参考答案】基础题考查概念准确性；应用题按关键步骤分层给分。`;
+      case 'notice':
+        return `已围绕“${requestTitle}”完成通知初稿：\n\n【班级通知】\n各位家长您好：\n\n班级近期将开展相关教学活动，请您提前做好准备，并留意班级后续发布的时间、地点及携带材料。如有特殊情况，请及时与老师联系。\n\n感谢您的理解与配合！\n班级教师\n\n【待补充】具体时间、地点、参与对象和准备材料。`;
+      default:
+        return edition.id === 'teacher'
+          ? `已围绕“${requestTitle}”整理了一份教学任务方案：\n\n【任务目标】明确本次要产出的教学内容和实际使用场景。\n【处理步骤】梳理需求 → 生成初稿 → 核对教学条件 → 完善并导出。\n【当前结果】已形成可继续编辑的内容框架，可以转到教案、课件、组卷或通知技能继续处理。`
+          : `已围绕“${requestTitle}”整理了一份学习方案：\n\n【学习目标】先理解核心概念，再通过练习确认是否真正掌握。\n【建议步骤】回顾已知 → 找出卡点 → 分步练习 → 独立复述。\n【今日任务】完成一次无提示作答，记录一个错因，再做一道同类题。`;
+    }
+  };
+
   const send = () => {
     const text = input.trim();
     if ((!text && attachments.length === 0) || sending) return;
@@ -4735,6 +6886,23 @@ function ChatView({
       ? `附件：${attachments.map((attachment) => attachment.name).join('、')}`
       : '';
     const messageText = [text, attachmentSummary].filter(Boolean).join('\n');
+    const simulatedReply = createSimulatedReply(
+      chatMode,
+      messageText,
+      selectedChatSkill,
+    );
+    const exportKind: ExportKind | undefined =
+      chatMode === 'lesson' ||
+      chatMode === 'courseware' ||
+      chatMode === 'practice'
+        ? chatMode
+        : undefined;
+    const exportOptions: ExportFormat[] | undefined =
+      exportKind === 'practice'
+        ? ['PDF', 'Word']
+        : exportKind
+          ? ['PDF', 'PPT', 'Word']
+          : undefined;
     setInput('');
     setAttachments([]);
     setShowPhotoGuidance(false);
@@ -4751,12 +6919,53 @@ function ChatView({
           role: 'assistant',
           text: isSchedulingRequest
             ? '好的，定时任务已经创建。你可以在侧边栏的“定时任务”中查看、暂停或调整安排。'
-            : mode.reply,
+            : simulatedReply,
+          modeId: chatMode,
+          exportOptions,
+          exportKind,
+          followUps: exportKind ? undefined : mode.followUps,
         },
       ]);
       setSending(false);
     }, 650);
   };
+
+  if (moduleHomeOpen) {
+    return (
+      <>
+        <Header
+          title="缤果学伴"
+          subtitle={edition.shortName}
+          onMenu={onMenu}
+          brandMark={
+            <img
+              src="/brand/bingomate-owl.png"
+              alt=""
+              aria-hidden="true"
+              width={44}
+              height={44}
+              className="size-11 shrink-0 object-contain"
+            />
+          }
+          right={
+            <button
+              aria-label="打开演示中心"
+              onClick={onDemo}
+              className="flex min-h-10 items-center gap-1 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-2 text-[11px] font-bold text-orange-700 ring-1 ring-orange-100 transition-[transform,background-color] active:scale-95"
+            >
+              <GraduationCap aria-hidden="true" className="size-4" />
+              演示
+            </button>
+          }
+        />
+        <ModuleLauncherHome
+          edition={edition}
+          onSelectMode={selectMode}
+          onOpenView={onOpenModuleView}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -4788,14 +6997,15 @@ function ChatView({
         }
         right={
           <div className="flex items-center gap-1.5">
-            <button
-              aria-label="打开演示中心"
-              onClick={onDemo}
-              className="flex min-h-10 items-center gap-1 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-2 text-[11px] font-bold text-orange-700 ring-1 ring-orange-100 transition-[transform,background-color] active:scale-95"
-            >
-              <GraduationCap className="size-4" />
-              演示
-            </button>
+            {moduleHomeDemo && (
+              <button
+                aria-label="返回模块首页"
+                onClick={() => setModuleHomeOpen(true)}
+                className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600 transition-[transform,background-color] hover:bg-blue-100 active:scale-95"
+              >
+                <Blocks aria-hidden="true" className="size-4.5" />
+              </button>
+            )}
             <button
               aria-label={`选择模型，当前为${selectedModel.name}`}
               aria-haspopup="dialog"
@@ -4840,7 +7050,134 @@ function ChatView({
                     </span>
                   </span>
                 )}
-                {message.text}
+                <p className="whitespace-pre-line">{message.text}</p>
+                {message.exportOptions && (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="mb-2 text-xs font-semibold text-slate-600">
+                      选择输出格式
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {message.exportOptions.map((format) => {
+                        const FormatIcon =
+                          format === 'PPT' ? Presentation : FileText;
+                        return (
+                          <button
+                            key={format}
+                            onClick={() =>
+                              message.exportKind &&
+                              selectExportFormat(
+                                message.id,
+                                format,
+                                message.exportKind,
+                              )
+                            }
+                            className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl border border-blue-100 bg-blue-50 px-2 font-bold text-blue-700 transition-[background-color,transform] hover:bg-blue-100 active:scale-[.97]"
+                          >
+                            <FormatIcon className="size-4" />
+                            <span className="text-xs">{format}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {message.generatedFile && (
+                  <section className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-blue-600 shadow-sm">
+                        {message.generatedFile.format === 'PPT' ? (
+                          <Presentation className="size-5" />
+                        ) : (
+                          <FileText className="size-5" />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-bold text-slate-900">
+                          {message.generatedFile.name}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-slate-500">
+                          {message.generatedFile.format} · {message.generatedFile.size} · 演示文件
+                        </span>
+                      </span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setPreviewFile(message.generatedFile ?? null)}
+                        className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border bg-white px-3 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <Eye className="size-4" />
+                        预览
+                      </button>
+                      <button
+                        onClick={() =>
+                          message.generatedFile &&
+                          downloadGeneratedFile(message.generatedFile)
+                        }
+                        className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-bold text-white transition-[background-color,transform] hover:bg-blue-700 active:scale-[.97]"
+                      >
+                        <Download className="size-4" />
+                        下载
+                      </button>
+                    </div>
+                    <div className="mt-2 border-t border-slate-200 pt-2">
+                      <button
+                        disabled={savedKnowledgeMessages.has(message.id)}
+                        onClick={() => {
+                          const generatedFile = message.generatedFile;
+                          if (!generatedFile) return;
+                          onSaveGeneratedContent({
+                            id: `chat-generated-${message.id}`,
+                            title: generatedFile.name,
+                            summary: generatedFile.sections
+                              .map((section) => section.heading)
+                              .join('、'),
+                            source: 'generated',
+                            kind: generatedFile.format,
+                            meta: edition.shortName,
+                            createdAt: '刚刚保存',
+                          });
+                          setSavedKnowledgeMessages((current) =>
+                            new Set(current).add(message.id),
+                          );
+                        }}
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:border-emerald-100 disabled:bg-emerald-50 disabled:text-emerald-700"
+                      >
+                        {savedKnowledgeMessages.has(message.id) ? (
+                          <Check aria-hidden="true" className="size-4" />
+                        ) : (
+                          <Database aria-hidden="true" className="size-4" />
+                        )}
+                        {savedKnowledgeMessages.has(message.id)
+                          ? '已存入知识库'
+                          : '存入知识库'}
+                      </button>
+                    </div>
+                  </section>
+                )}
+                {message.followUps && message.followUps.length > 0 && (
+                  <div className="mt-3 border-t pt-3">
+                    <p className="mb-2 text-xs font-semibold text-slate-500">
+                      你还可以继续问
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {message.followUps.map((question) => (
+                        <button
+                          key={question}
+                          onClick={() => {
+                            if (message.modeId) {
+                              setChatMode(message.modeId);
+                              setSelectedChatSkill(null);
+                            }
+                            applySuggestion(question);
+                          }}
+                          className="min-h-10 rounded-xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-normal text-blue-700 transition-[background-color,transform] hover:bg-blue-100 active:scale-[.98]"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -4859,7 +7196,7 @@ function ChatView({
                     setShowPhotoGuidance(false);
                     inputRef.current?.focus();
                   }}
-                  className="flex min-h-12 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-semibold text-blue-800 transition-[background-color,transform] hover:bg-blue-100 active:scale-[.98]"
+                  className="flex min-h-12 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 text-left text-xs font-normal text-blue-800 transition-[background-color,transform] hover:bg-blue-100 active:scale-[.98]"
                 >
                   <Sparkles className="size-4 shrink-0 text-blue-500" />
                   <span className="flex-1">{question}</span>
@@ -4895,7 +7232,15 @@ function ChatView({
                     height={72}
                     className="size-[72px] object-contain drop-shadow-[0_12px_20px_rgba(37,99,235,.2)]"
                   />
-                  <span className="absolute -right-1 -top-1 size-5 rounded-full border-[3px] border-background bg-orange-500" />
+                  <span
+                    className={`absolute -right-10 -top-2 whitespace-nowrap rounded-2xl px-2.5 py-1 text-[10px] font-bold leading-4 text-white shadow-sm ${edition.id === 'teacher' ? 'bg-violet-600 shadow-violet-200' : 'bg-blue-600 shadow-blue-200'}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`absolute -bottom-1 left-3 size-2 rotate-45 ${edition.id === 'teacher' ? 'bg-violet-600' : 'bg-blue-600'}`}
+                    />
+                    <span className="relative">{edition.shortName}</span>
+                  </span>
                 </span>
               ) : (
                 <ModeArt
@@ -4919,28 +7264,34 @@ function ChatView({
                   推荐技能
                 </p>
               )}
-              <div className={`grid w-full max-w-[360px] grid-cols-1 gap-2.5 md:max-w-2xl md:grid-cols-2 ${chatMode === 'default' && !selectedChatSkill ? 'mt-2' : 'mt-7'}`}>
+              <div
+                className={`grid w-full max-w-[360px] gap-2.5 md:max-w-2xl md:grid-cols-2 ${edition.id === 'teacher' && chatMode === 'default' ? 'grid-cols-2' : 'grid-cols-1'} ${chatMode === 'default' && !selectedChatSkill ? 'mt-2' : 'mt-7'}`}
+              >
                 {chatMode === 'default'
                   ? recommendedModes.map((recommendedMode) => (
                       <button
                         key={recommendedMode.id}
                         onClick={() => selectMode(recommendedMode.id)}
-                        className="flex min-h-[64px] items-center gap-3 rounded-2xl border bg-card px-4 text-left text-sm font-semibold shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                        className={`flex items-center rounded-2xl border bg-card text-left text-sm font-semibold transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98] ${edition.id === 'teacher' ? 'min-h-[58px] gap-2.5 px-3 shadow-none' : 'min-h-[64px] gap-3 px-4 shadow-sm'}`}
                       >
                         <ModeArt
                           mode={recommendedMode}
-                          className="size-12 shrink-0 drop-shadow-sm"
+                          className={`${edition.id === 'teacher' ? 'size-10 rounded-xl' : 'size-12 drop-shadow-sm'} shrink-0`}
                           iconClassName="size-6"
                         />
-                        {recommendedMode.label}
-                        <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+                        <span className="min-w-0 leading-tight">
+                          {recommendedMode.label}
+                        </span>
+                        {edition.id !== 'teacher' && (
+                          <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+                        )}
                       </button>
                     ))
                   : mode.suggestions.map((suggestion) => (
                       <button
                         key={suggestion}
                         onClick={() => applySuggestion(suggestion)}
-                        className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-medium shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                        className="flex min-h-[54px] items-center gap-3 rounded-2xl border bg-card px-5 text-left text-sm font-normal shadow-sm transition-[border-color,background-color,transform] duration-200 hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
                       >
                         <span
                           className={`grid size-9 shrink-0 place-items-center rounded-xl ${mode.iconStyle}`}
@@ -4952,11 +7303,120 @@ function ChatView({
                       </button>
                     ))}
               </div>
+              {chatMode === 'default' &&
+                !selectedChatSkill &&
+                lastConversation && (
+                  <div className="mt-4 w-full max-w-[360px] text-left md:max-w-2xl">
+                    <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                      继续上次聊天
+                    </p>
+                    <button
+                      type="button"
+                      onClick={resumeLastConversation}
+                      className="flex min-h-[62px] w-full items-center gap-3 rounded-2xl border border-blue-100 bg-white px-3.5 text-left shadow-sm transition-[border-color,background-color,transform] hover:border-blue-200 hover:bg-blue-50/40 active:scale-[.98]"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                        <History aria-hidden="true" className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-slate-900">
+                          {lastConversation.messages
+                            .filter((message) => message.role === 'user')
+                            .slice(-1)[0]?.text ?? '继续最近的对话'}
+                        </span>
+                        <span className="mt-1 block text-xs font-normal text-slate-500">
+                          {chatModes[lastConversation.modeId].label} · {lastConversation.updatedAt}
+                        </span>
+                      </span>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-slate-400"
+                      />
+                    </button>
+                  </div>
+                )}
             </div>
           )}
           </div>
         </div>
         <div className="shrink-0 bg-background/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-8 md:pb-5">
+          {messages.length > 0 && (
+            <div className="mx-auto mb-2 w-full max-w-4xl">
+              <div className="relative">
+                <div
+                  ref={quickSkillRailRef}
+                  aria-label="对话中快捷技能"
+                  className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  {quickModes.map((quickMode) => {
+                    const active =
+                      !selectedChatSkill && chatMode === quickMode.id;
+                    return (
+                      <button
+                        key={quickMode.id}
+                        ref={(node) => {
+                          quickModeButtonRefs.current[quickMode.id] = node;
+                        }}
+                        aria-pressed={active}
+                        aria-expanded={quickSkillMode === quickMode.id}
+                        onClick={(event) =>
+                          activateQuickMode(quickMode.id, event.currentTarget)
+                        }
+                        className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-[border-color,background-color,transform] active:scale-[.97] ${active ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        <ModeArt
+                          mode={quickMode}
+                          className="size-6 shrink-0 rounded-lg"
+                          iconClassName="size-3.5"
+                        />
+                        {quickMode.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {quickSuggestionMode &&
+                  quickSuggestionMode.suggestions.length > 0 && (
+                    <section
+                      role="menu"
+                      aria-label={`${quickSuggestionMode.label}快捷提示`}
+                      style={{ left: quickPopoverLeft }}
+                      className="absolute bottom-[calc(100%+8px)] z-30 w-[min(280px,100%)] rounded-2xl border border-blue-100 bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,.16)]"
+                    >
+                      <div className="flex items-center gap-2 px-2 py-1.5">
+                        <ModeArt
+                          mode={quickSuggestionMode}
+                          className="size-7 shrink-0 rounded-lg"
+                          iconClassName="size-3.5"
+                        />
+                        <div className="min-w-0 text-left">
+                          <p className="truncate text-xs font-bold text-slate-900">
+                            {quickSuggestionMode.label}
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            选择一条提示词
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-1 space-y-1">
+                        {quickSuggestionMode.suggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            role="menuitem"
+                            onClick={() => {
+                              applySuggestion(suggestion);
+                              setQuickSkillMode(null);
+                            }}
+                            className="flex min-h-11 w-full items-center rounded-xl px-3 py-2 text-left text-xs font-normal leading-relaxed text-slate-700 transition-[background-color,transform] hover:bg-blue-50 hover:text-blue-700 active:scale-[.98]"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+              </div>
+            </div>
+          )}
           <div className={`mx-auto w-full max-w-4xl rounded-[26px] border bg-white p-3 shadow-[0_12px_36px_rgba(15,23,42,.1)] transition-[box-shadow,border-color] focus-within:border-blue-400 focus-within:shadow-[0_14px_42px_rgba(37,99,235,.12)] ${demoTourStep === 1 ? 'relative z-[70] border-orange-300 ring-4 ring-orange-200/80' : ''}`}>
             {attachments.length > 0 && (
               <div
@@ -4998,25 +7458,51 @@ function ChatView({
                 })}
               </div>
             )}
-            <textarea
-              ref={inputRef}
-              aria-label="输入学习问题"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  send();
+            <div className="flex min-w-0 items-start gap-1.5 px-1">
+              {hasReferencedSkill && (
+                <span
+                  className="mt-0.5 max-w-[46%] shrink-0 rounded-[11px] bg-gradient-to-r from-blue-500 via-violet-400 to-emerald-400 p-px"
+                  title={currentSkillName}
+                >
+                  <span className="flex min-h-8 items-center rounded-[10px] bg-white pl-2 text-sm font-normal leading-5 text-slate-900">
+                    <Sparkles
+                      aria-hidden="true"
+                      className="mr-1 size-3.5 shrink-0 text-blue-600"
+                    />
+                    <span className="min-w-0 truncate whitespace-nowrap">
+                      {currentSkillName}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`移除技能${currentSkillName}`}
+                      onClick={clearReferencedSkill}
+                      className="relative grid size-8 shrink-0 place-items-center rounded-[9px] text-slate-600 transition-colors after:absolute after:-inset-1.5 after:content-[''] hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                    >
+                      <X aria-hidden="true" className="size-4" />
+                    </button>
+                  </span>
+                </span>
+              )}
+              <textarea
+                ref={inputRef}
+                aria-label="输入学习问题"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    send();
+                  }
+                }}
+                placeholder={
+                  chatMode === 'default'
+                    ? edition.homePlaceholder
+                    : mode.placeholder
                 }
-              }}
-              placeholder={
-                chatMode === 'default'
-                  ? edition.homePlaceholder
-                  : mode.placeholder
-              }
-              rows={2}
-              className="w-full resize-none bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-500"
-            />
+                rows={1}
+                className="min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-5 text-slate-950 outline-none placeholder:text-slate-500"
+              />
+            </div>
             <div className="mt-2 flex items-center gap-1.5">
               <button
                 aria-label="添加资料"
@@ -5397,6 +7883,75 @@ function ChatView({
           </div>
         </DrawerContent>
       </Drawer>
+      <Drawer
+        open={Boolean(previewFile)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewFile(null);
+        }}
+        showSwipeHandle
+      >
+        <DrawerContent className="mx-auto w-[calc(100%-16px)] max-w-[680px] rounded-t-[30px] sm:w-[calc(100%-32px)] [--drawer-height:min(88dvh,760px)]">
+          <DrawerHeader className="relative px-5 pb-4 pt-2 text-left">
+            <DrawerTitle className="pr-12 text-xl font-bold">
+              文件预览
+            </DrawerTitle>
+            <DrawerDescription className="text-left">
+              {previewFile?.name ?? '生成的教学文件'}
+            </DrawerDescription>
+            <DrawerClose
+              aria-label="关闭文件预览"
+              className="absolute right-4 top-1 grid size-11 place-items-center rounded-2xl bg-muted"
+            >
+              <X className="size-5" />
+            </DrawerClose>
+          </DrawerHeader>
+          {previewFile && (
+            <>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-100 px-4 py-4 sm:px-6">
+                <article className="mx-auto min-h-full max-w-xl rounded-2xl bg-white px-6 py-7 shadow-sm sm:px-10 sm:py-9">
+                  <div className="border-b pb-5 text-center">
+                    <p className="text-xs font-bold tracking-[0.18em] text-blue-600">
+                      BINGOMATE 教学助手
+                    </p>
+                    <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
+                      {previewFile.title}
+                    </h2>
+                    <p className="mt-2 text-xs text-slate-500">
+                      AI 生成初稿 · 请根据实际教学情况调整
+                    </p>
+                  </div>
+                  <div className="mt-6 space-y-6">
+                    {previewFile.sections.map((section, index) => (
+                      <section key={section.heading}>
+                        <div className="flex items-center gap-3">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-50 text-xs font-black text-blue-700">
+                            {index + 1}
+                          </span>
+                          <h3 className="font-bold text-slate-900">
+                            {section.heading}
+                          </h3>
+                        </div>
+                        <p className="mt-2 pl-10 text-sm leading-7 text-slate-600">
+                          {section.content}
+                        </p>
+                      </section>
+                    ))}
+                  </div>
+                </article>
+              </div>
+              <DrawerFooter className="border-t bg-white px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-3">
+                <Button
+                  onClick={() => downloadGeneratedFile(previewFile)}
+                  className="h-12 w-full rounded-2xl text-base font-bold"
+                >
+                  <Download className="size-5" />
+                  下载 {previewFile.format} 文件
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
@@ -5647,6 +8202,35 @@ export function BingoApp() {
     useState<PhotoConversation | null>(null);
   const [view, setView] = useState<AppView>('chat');
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+  const [sharedResources, setSharedResources] = useState<SharedResource[]>(
+    initialSharedResources,
+  );
+  const [selectedResource, setSelectedResource] =
+    useState<SharedResource | null>(null);
+  const [resourceReturnView, setResourceReturnView] = useState<
+    'resources' | 'knowledge'
+  >('resources');
+  const [favoriteResources, setFavoriteResources] = useState<Set<string>>(
+    () => new Set(['interactive-lesson-template']),
+  );
+  const [resourceConversation, setResourceConversation] =
+    useState<SharedResource | null>(null);
+  const [generatedKnowledgeItems, setGeneratedKnowledgeItems] = useState<
+    KnowledgeItem[]
+  >([
+    {
+      id: 'generated-study-plan',
+      title: '一次函数复习方案.pdf',
+      summary: '复习目标、任务拆分、错题巩固安排',
+      source: 'generated',
+      kind: 'PDF',
+      meta: '家庭版',
+      createdAt: '今天 10:20',
+    },
+  ]);
+  const [uploadedKnowledgeItems, setUploadedKnowledgeItems] = useState<
+    KnowledgeItem[]
+  >([]);
   const [installedSkills, setInstalledSkills] = useState<Set<string>>(
     () => new Set(['focus-timer']),
   );
@@ -5658,23 +8242,39 @@ export function BingoApp() {
       nickname: '林小满',
       region: '',
       grade: '八年级',
+      semester: '',
       school: '',
       textbook: '',
       focusSubject: '数学',
       weakTopics: '',
       learningGoal: '',
       guidanceStyle: '先启发思考，再给完整解析',
+      dailyStudyTime: '',
+      encouragementStyle: '',
+      reportFrequency: '',
+      teachingExperience: '',
+      classLevel: '',
+      isHeadTeacher: '',
+      coursewareStyle: '',
     },
     teacher: {
       nickname: '林老师',
       region: '',
       grade: '八年级',
+      semester: '',
       school: '',
       textbook: '',
       focusSubject: '数学',
       weakTopics: '',
       learningGoal: '',
       guidanceStyle: '先给教学目标，再展开分环节流程',
+      dailyStudyTime: '',
+      encouragementStyle: '',
+      reportFrequency: '',
+      teachingExperience: '8—15 年',
+      classLevel: '普通班',
+      isHeadTeacher: '否',
+      coursewareStyle: '简约清晰',
     },
   });
   const [profilesCompleted, setProfilesCompleted] = useState<
@@ -5699,19 +8299,19 @@ export function BingoApp() {
     {
       id: 'my-bingoclaw',
       name: 'My BingoClaw',
-      code: 'BM-20260830',
+      code: 'BC-92A1-4KM8Q',
       online: true,
     },
     {
       id: 'study-room',
       name: '书房 BingoMate',
-      code: 'BM-20260718',
+      code: 'BC-51F7-9PXT2',
       online: true,
     },
     {
       id: 'living-room',
       name: '客厅 BingoMate',
-      code: 'BM-20260526',
+      code: 'BC-30D6-6WRN5',
       online: false,
     },
   ]);
@@ -5778,17 +8378,44 @@ export function BingoApp() {
   const [selectedPlanId, setSelectedPlanId] = useState('popular');
   const [demoStage, setDemoStage] = useState<DemoStage>(null);
   const [demoTourStep, setDemoTourStep] = useState(0);
+  const [moduleHomeDemo, setModuleHomeDemo] = useState(false);
+  const [showEditionUpgradeHint, setShowEditionUpgradeHint] = useState(false);
+  const [hasShownEditionUpgradeHint, setHasShownEditionUpgradeHint] =
+    useState(false);
 
   const notify = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 2300);
   };
   const chooseFeature = (label: string) => {
+    if (label === '成长报告') {
+      setMenuOpen(false);
+      setPhotoStep(null);
+      setSelectedSkill(null);
+      setSelectedResource(null);
+      setView('growth');
+      return;
+    }
     setMenuOpen(false);
     if (label === '技能广场') {
       setPhotoStep(null);
       setSelectedSkill(null);
+      setSelectedResource(null);
       setView('skills');
+      return;
+    }
+    if (label === '资源广场') {
+      setPhotoStep(null);
+      setSelectedSkill(null);
+      setSelectedResource(null);
+      setView('resources');
+      return;
+    }
+    if (label === '我的知识库') {
+      setPhotoStep(null);
+      setSelectedSkill(null);
+      setSelectedResource(null);
+      setView('knowledge');
       return;
     }
     if (label === '定时任务') {
@@ -5797,20 +8424,16 @@ export function BingoApp() {
       setView('tasks');
       return;
     }
-    if (label === '成长报告') {
-      setPhotoStep(null);
-      setSelectedSkill(null);
-      setView('growth');
-      return;
-    }
     notify(`已进入${label}`);
   };
   const chooseHistory = (title: string) => {
     setMenuOpen(false);
     setView('chat');
     setSelectedSkill(null);
+    setSelectedResource(null);
     setPhotoStep(null);
     setPhotoConversation(null);
+    setResourceConversation(null);
     setPendingPhotoRequest('');
     setConversationKey((key) => key + 1);
     notify(title === '新对话' ? '已开始新对话' : `已打开聊天记录：${title}`);
@@ -5900,6 +8523,7 @@ export function BingoApp() {
     deviceCode: string,
     _activationCode: string,
     deviceName: string,
+    activatedEdition?: EditionId,
   ) => {
     const deviceId = `device-${Date.now()}`;
     const normalizedCode = deviceCode.toUpperCase();
@@ -5913,7 +8537,73 @@ export function BingoApp() {
       },
     ]);
     setCurrentDeviceId(deviceId);
-    notify('设备绑定成功，已设为当前连接设备');
+    if (activatedEdition) {
+      setOwnedEditions((current) =>
+        new Set(current).add(activatedEdition),
+      );
+      setCurrentEdition(activatedEdition);
+    }
+    notify(
+      activatedEdition
+        ? `${editions[activatedEdition].shortName}激活成功，设备已连接`
+        : '设备绑定成功，已设为当前连接设备',
+    );
+  };
+
+  const completeOnboardingProfile = (
+    editionId: EditionId,
+    profile: {
+      nickname: string;
+      grade: string;
+      context: string;
+      region?: string;
+      semester?: string;
+      focusSubject?: string;
+      textbook?: string;
+    },
+  ) => {
+    const firstCompletion = !profilesCompleted[editionId];
+    setProfiles((current) => ({
+      ...current,
+      [editionId]: {
+        ...current[editionId],
+        nickname: profile.nickname,
+        grade: profile.grade,
+        ...(profile.semester ? { semester: profile.semester } : {}),
+        ...(profile.focusSubject
+          ? { focusSubject: profile.focusSubject }
+          : {}),
+        ...(profile.textbook ? { textbook: profile.textbook } : {}),
+        ...(editionId === 'teacher'
+          ? { school: profile.context }
+          : {
+              region: profile.region ?? current[editionId].region,
+              school: profile.context,
+            }),
+      },
+    }));
+    setProfilesCompleted((current) => ({
+      ...current,
+      [editionId]: true,
+    }));
+    if (firstCompletion) {
+      setPoints((current) => current + 100);
+      setPointTransactions((current) => [
+        {
+          id: `onboarding-profile-${Date.now()}`,
+          title: profileCopy[editionId].rewardTitle,
+          detail: profileCopy[editionId].rewardDetail,
+          time: '刚刚',
+          amount: 100,
+        },
+        ...current,
+      ]);
+    }
+    notify(
+      firstCompletion
+        ? `${profileCopy[editionId].title}已建立，100 积分已到账`
+        : `${profileCopy[editionId].title}已更新`,
+    );
   };
   const renameDevice = (deviceId: string, name: string) => {
     setDevices((current) =>
@@ -6008,6 +8698,79 @@ export function BingoApp() {
     );
   };
 
+  const toggleFavoriteResource = (resource: SharedResource) => {
+    const currentlyFavorited = favoriteResources.has(resource.id);
+    setFavoriteResources((current) => {
+      const next = new Set(current);
+      if (next.has(resource.id)) next.delete(resource.id);
+      else next.add(resource.id);
+      return next;
+    });
+    notify(currentlyFavorited ? '已取消收藏' : '资源已收藏');
+  };
+
+  const publishResource = (resource: SharedResource) => {
+    setSharedResources((current) => [resource, ...current]);
+  };
+
+  const editResourceInChat = (resource: SharedResource) => {
+    setResourceConversation(resource);
+    setSelectedResource(null);
+    setSelectedSkill(null);
+    setPhotoConversation(null);
+    setPhotoStep(null);
+    setView('chat');
+    setConversationKey((key) => key + 1);
+    notify(`已载入《${resource.title}》，可以继续编辑`);
+  };
+
+  const saveGeneratedKnowledge = (item: KnowledgeItem) => {
+    if (generatedKnowledgeItems.some((current) => current.id === item.id)) {
+      notify('该文件已在知识库中');
+      return;
+    }
+    setGeneratedKnowledgeItems((current) => [item, ...current]);
+    notify('生成文件已存入“我的知识库”');
+  };
+
+  const uploadKnowledgeItems = (items: KnowledgeItem[]) => {
+    setUploadedKnowledgeItems((current) => [
+      ...items.filter(
+        (item) => !current.some((existing) => existing.id === item.id),
+      ),
+      ...current,
+    ]);
+  };
+
+  const shareKnowledgeItem = async (
+    title: string,
+    channel: KnowledgeShareChannel,
+  ) => {
+    if (channel === 'download') {
+      const content = `${title}\n\n来自 BingoMate 我的知识库\n该文件为演示下载副本。`;
+      const blob = new Blob(['\ufeff', content], {
+        type: 'text/plain;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title.replace(/\.[^.]+$/, '')}-知识库副本.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      notify('知识库内容已下载到本地');
+      return;
+    }
+    const shareUrl = `${window.location.origin}/knowledge/${encodeURIComponent(title)}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      notify(`已准备分享到${channel === 'wechat' ? '微信' : 'QQ'}，分享链接已复制`);
+    } catch {
+      notify(`已生成${channel === 'wechat' ? '微信' : 'QQ'}分享链接`);
+    }
+  };
+
   const switchEdition = (editionId: EditionId) => {
     if (!ownedEditions.has(editionId)) {
       setEditionSwitcherOpen(false);
@@ -6041,7 +8804,11 @@ export function BingoApp() {
   };
 
   const startDemoTour = () => {
-    setMenuOpen(false);
+    const shouldShowEditionHint =
+      !ownedEditions.has('teacher') && !hasShownEditionUpgradeHint;
+    setMenuOpen(shouldShowEditionHint);
+    setShowEditionUpgradeHint(shouldShowEditionHint);
+    if (shouldShowEditionHint) setHasShownEditionUpgradeHint(true);
     setView('chat');
     setSelectedSkill(null);
     setPhotoStep(null);
@@ -6053,6 +8820,7 @@ export function BingoApp() {
   };
 
   const finishDemoTour = () => {
+    setShowEditionUpgradeHint(false);
     setDemoStage(null);
     setDemoTourStep(0);
     notify('新手引导已完成');
@@ -6063,18 +8831,40 @@ export function BingoApp() {
       <div className="relative flex h-dvh w-full overflow-hidden bg-background">
         <Sidebar
           open={menuOpen}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => {
+            setMenuOpen(false);
+            setShowEditionUpgradeHint(false);
+          }}
           onFeature={chooseFeature}
           onHistory={chooseHistory}
           onSettings={chooseSettings}
           onPoints={choosePoints}
           edition={editions[currentEdition]}
-          onSwitchEdition={() => setEditionSwitcherOpen(true)}
+          onSwitchEdition={() => {
+            setShowEditionUpgradeHint(false);
+            setEditionSwitcherOpen(true);
+          }}
+          showEditionUpgradeHint={showEditionUpgradeHint}
           points={points}
           notify={notify}
         />
         <div className="min-w-0 flex-1">
-          {selectedSkill ? (
+          {selectedResource ? (
+            <ResourceDetailView
+              resource={selectedResource}
+              favorited={favoriteResources.has(selectedResource.id)}
+              backLabel={
+                resourceReturnView === 'knowledge'
+                  ? '返回知识库'
+                  : '返回资源广场'
+              }
+              onBack={() => setSelectedResource(null)}
+              onToggleFavorite={() =>
+                toggleFavoriteResource(selectedResource)
+              }
+              onEdit={() => editResourceInChat(selectedResource)}
+            />
+          ) : selectedSkill ? (
             <SkillDetailView
               skill={selectedSkill}
               installed={installedSkills.has(selectedSkill.id)}
@@ -6087,6 +8877,36 @@ export function BingoApp() {
               onBack={() => setView('chat')}
               onSelect={setSelectedSkill}
               installedSkills={installedSkills}
+            />
+          ) : view === 'resources' ? (
+            <ResourcesView
+              edition={editions[currentEdition]}
+              resources={sharedResources}
+              favoriteResources={favoriteResources}
+              onBack={() => setView('chat')}
+              onSelect={(resource) => {
+                setResourceReturnView('resources');
+                setSelectedResource(resource);
+              }}
+              onToggleFavorite={toggleFavoriteResource}
+              onPublish={publishResource}
+              notify={notify}
+            />
+          ) : view === 'knowledge' ? (
+            <KnowledgeBaseView
+              generatedItems={generatedKnowledgeItems}
+              favoriteItems={sharedResources.filter((resource) =>
+                favoriteResources.has(resource.id),
+              )}
+              uploadedItems={uploadedKnowledgeItems}
+              onBack={() => setView('chat')}
+              onUpload={uploadKnowledgeItems}
+              onShare={shareKnowledgeItem}
+              onOpenFavorite={(resource) => {
+                setResourceReturnView('knowledge');
+                setSelectedResource(resource);
+              }}
+              notify={notify}
             />
           ) : view === 'settings' ? (
             <SettingsView
@@ -6107,6 +8927,7 @@ export function BingoApp() {
             />
           ) : view === 'profile' ? (
             <ProfileView
+              edition={currentEdition}
               profile={profiles[currentEdition]}
               completed={profilesCompleted[currentEdition]}
               copy={profileCopy[currentEdition]}
@@ -6179,15 +9000,31 @@ export function BingoApp() {
               edition={editions[currentEdition]}
               onMenu={() => setMenuOpen(true)}
               onDemo={() => setDemoStage('menu')}
+              moduleHomeDemo={moduleHomeDemo}
+              onOpenModuleView={(nextView) => {
+                setSelectedSkill(null);
+                setSelectedResource(null);
+                setPhotoStep(null);
+                setView(nextView);
+              }}
               onCamera={(request) => {
                 setView('chat');
                 setPendingPhotoRequest(request);
                 setPhotoStep('camera');
               }}
               onScheduleFromChat={createTaskFromChat}
+              onSaveGeneratedContent={saveGeneratedKnowledge}
               installedSkills={installedSkills}
               photoConversation={photoConversation}
-              demoTourStep={demoStage === 'tour' ? demoTourStep : null}
+              resourceConversation={resourceConversation}
+              demoTourStep={
+                demoStage === 'tour' &&
+                !showEditionUpgradeHint &&
+                !editionSwitcherOpen &&
+                !upgradeTarget
+                  ? demoTourStep
+                  : null
+              }
               onDemoTourNext={() =>
                 setDemoTourStep((step) => Math.min(step + 1, 2))
               }
@@ -6209,7 +9046,25 @@ export function BingoApp() {
         stage={demoStage}
         setStage={setDemoStage}
         onBind={bindDevice}
+        onCompleteProfile={completeOnboardingProfile}
         onStartTour={startDemoTour}
+        moduleHomeEnabled={moduleHomeDemo}
+        onOpenModuleHome={() => {
+          setModuleHomeDemo(true);
+          setView('chat');
+          setPhotoStep(null);
+          setSelectedSkill(null);
+          setSelectedResource(null);
+          setConversationKey((key) => key + 1);
+          notify('已进入模块首页演示');
+        }}
+        onUseConversationHome={() => {
+          if (!moduleHomeDemo) return;
+          setModuleHomeDemo(false);
+          setView('chat');
+          setConversationKey((key) => key + 1);
+          notify('已返回现有对话首页');
+        }}
         notify={notify}
       />
       <Drawer

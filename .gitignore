@@ -21,6 +21,8 @@
 # misc
 .DS_Store
 *.pem
+.qoder/
+tsconfig.tsbuildinfo
 
 # debug
 npm-debug.log*
