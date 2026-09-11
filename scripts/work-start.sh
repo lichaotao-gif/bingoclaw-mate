@@ -9,6 +9,7 @@ port=${PORT:-3000}
 url="http://localhost:$port"
 session_dir="$project_dir/.work-session"
 pid_file="$session_dir/dev.pid"
+port_file="$session_dir/dev.port"
 log_file="$session_dir/dev.log"
 
 case "$port" in
@@ -22,18 +23,29 @@ npm run sync:down
 
 if [ -f "$pid_file" ]; then
   running_pid=$(cat "$pid_file")
-  if kill -0 "$running_pid" 2>/dev/null; then
-    echo "本次工作服务已在运行：$url"
-    exit 0
+  if [ -n "$running_pid" ] && kill -0 "$running_pid" 2>/dev/null; then
+    process_command=$(ps -p "$running_pid" -o command= 2>/dev/null || true)
+    case "$process_command" in
+      *"$project_dir"*vinext*"--port $port"*)
+        echo "本次工作服务已在运行：$url"
+        exit 0
+        ;;
+      *)
+        echo "启动已停止：记录的进程号 $running_pid 不属于当前项目。"
+        echo "为避免影响其他项目，脚本不会停止或替换该进程。"
+        exit 1
+        ;;
+    esac
   fi
-  rm -f "$pid_file"
+  rm -f "$pid_file" "$port_file"
 fi
 
 mkdir -p "$session_dir"
 echo "正在启动本地预览服务…"
-nohup npm run dev -- --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
+nohup "$project_dir/node_modules/.bin/vinext" dev --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
 server_pid=$!
 printf '%s\n' "$server_pid" >"$pid_file"
+printf '%s\n' "$port" >"$port_file"
 
 attempt=0
 while [ "$attempt" -lt 40 ]; do
@@ -50,7 +62,7 @@ while [ "$attempt" -lt 40 ]; do
   if ! kill -0 "$server_pid" 2>/dev/null; then
     echo "启动失败，开发服务已退出。日志如下："
     sed -n '1,160p' "$log_file"
-    rm -f "$pid_file"
+    rm -f "$pid_file" "$port_file"
     exit 1
   fi
   attempt=$((attempt + 1))
@@ -59,4 +71,5 @@ done
 
 echo "启动超时：$url 未能在 40 秒内响应。"
 echo "请查看日志：$log_file"
+sh scripts/work-stop.sh || true
 exit 1

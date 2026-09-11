@@ -10,6 +10,7 @@
     "sync:down": "sh scripts/sync-down.sh",
     "sync:up": "sh scripts/sync-up.sh",
     "work:start": "sh scripts/work-start.sh",
+    "work:stop": "sh scripts/work-stop.sh",
     "build": "STATIC_EXPORT=1 vinext build && node scripts/prepare-static-output.mjs",
     "build:tencent": "STATIC_EXPORT=1 vinext build",
     "build:worker": "vinext build",

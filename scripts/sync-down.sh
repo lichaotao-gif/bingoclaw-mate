@@ -18,8 +18,14 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
+sh scripts/ensure-github-ssh.sh
+
 echo "正在从 GitHub 拉取 $branch 分支…"
-git pull --ff-only origin "$branch"
+if ! git pull --ff-only origin "$branch"; then
+  echo "同步已停止：远程更新无法安全快进，或 SSH 连接失败。"
+  echo "本机文件没有被覆盖，请先检查上方 Git 提示。"
+  exit 1
+fi
 
 echo "正在检查项目依赖…"
 if npm ls --depth=0 >/dev/null 2>&1; then
