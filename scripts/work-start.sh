@@ -42,10 +42,17 @@ fi
 
 mkdir -p "$session_dir"
 echo "正在启动本地预览服务…"
-nohup "$project_dir/node_modules/.bin/vinext" dev --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
+"$project_dir/node_modules/.bin/vinext" dev --host 127.0.0.1 --port "$port" >"$log_file" 2>&1 &
 server_pid=$!
 printf '%s\n' "$server_pid" >"$pid_file"
 printf '%s\n' "$port" >"$port_file"
+
+cleanup_on_signal() {
+  sh scripts/work-stop.sh >/dev/null 2>&1 || true
+  exit 130
+}
+
+trap 'cleanup_on_signal' INT TERM HUP
 
 attempt=0
 while [ "$attempt" -lt 40 ]; do
@@ -57,7 +64,17 @@ while [ "$attempt" -lt 40 ]; do
       MINGW*|MSYS*|CYGWIN*) start "$url" >/dev/null 2>&1 || true ;;
     esac
     echo "本地预览已启动，开发服务将保持运行。"
-    exit 0
+
+    if wait "$server_pid"; then
+      server_status=0
+    else
+      server_status=$?
+    fi
+    trap - INT TERM HUP
+    if [ -f "$pid_file" ] && [ "$(cat "$pid_file")" = "$server_pid" ]; then
+      rm -f "$pid_file" "$port_file"
+    fi
+    exit "$server_status"
   fi
   if ! kill -0 "$server_pid" 2>/dev/null; then
     echo "启动失败，开发服务已退出。日志如下："
