@@ -7006,6 +7006,16 @@ function ChatView({
                 <Blocks aria-hidden="true" className="size-4.5" />
               </button>
             )}
+            {chatMode === 'default' && (
+              <button
+                aria-label="打开演示中心"
+                onClick={onDemo}
+                className="flex min-h-10 items-center gap-1 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 px-2 text-[11px] font-bold text-orange-700 ring-1 ring-orange-100 transition-[transform,background-color] active:scale-95"
+              >
+                <GraduationCap aria-hidden="true" className="size-4" />
+                演示
+              </button>
+            )}
             <button
               aria-label={`选择模型，当前为${selectedModel.name}`}
               aria-haspopup="dialog"
