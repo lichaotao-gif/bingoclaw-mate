@@ -49,6 +49,8 @@ import {
   MonitorSmartphone,
   MoreHorizontal,
   MousePointerClick,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pencil,
   PenLine,
   Plus,
@@ -1542,7 +1544,7 @@ function Header({
         <button
           aria-label={onMenu ? '打开菜单' : backLabel}
           onClick={onMenu ?? onBack}
-          className="grid size-11 shrink-0 place-items-center rounded-2xl border bg-card transition-colors hover:bg-muted"
+          className={`size-11 shrink-0 place-items-center rounded-2xl border bg-card transition-colors hover:bg-muted ${onMenu ? 'grid lg:hidden' : 'grid'}`}
         >
           {onMenu ? (
             <Menu className="size-5" />
@@ -2550,11 +2552,11 @@ function Sidebar({
   const EditionIcon = edition.icon;
   return (
     <div
-      className={`${open ? 'flex' : 'hidden'} fixed inset-0 z-50 justify-start bg-slate-950/55 backdrop-blur-[2px]`}
+      className={`${open ? 'flex' : 'hidden'} fixed inset-0 z-50 justify-start bg-slate-950/55 backdrop-blur-[2px] lg:static lg:z-auto lg:flex lg:h-dvh lg:w-[300px] lg:shrink-0 lg:bg-transparent lg:backdrop-blur-none xl:w-[320px]`}
     >
       <aside
         aria-label="功能与聊天记录"
-        className="flex h-dvh w-[min(340px,88vw)] flex-col border-r bg-white shadow-2xl"
+        className="flex h-dvh w-[min(340px,88vw)] flex-col border-r bg-white shadow-2xl lg:w-full lg:shadow-none"
       >
         <div className="flex items-center justify-between border-b px-4 pb-4 pt-[max(20px,env(safe-area-inset-top))]">
           <div className="flex items-center gap-3">
@@ -2603,7 +2605,7 @@ function Sidebar({
           <button
             aria-label="关闭菜单"
             onClick={onClose}
-            className="grid size-10 place-items-center rounded-xl bg-muted"
+            className="grid size-10 place-items-center rounded-xl bg-muted lg:hidden"
           >
             <X className="size-5" />
           </button>
@@ -2724,7 +2726,7 @@ function Sidebar({
       <button
         aria-label="关闭侧栏"
         onClick={onClose}
-        className="h-full flex-1"
+        className="h-full flex-1 lg:hidden"
       />
     </div>
   );
@@ -4626,12 +4628,18 @@ function ChannelsView({
   const [actionChannel, setActionChannel] = useState<RemoteChannel | null>(null);
   const [configChannel, setConfigChannel] = useState<RemoteChannel | null>(null);
   const [setupChannel, setSetupChannel] = useState<RemoteChannel | null>(null);
+  const [selectedChannelId, setSelectedChannelId] = useState(
+    channels.find((channel) => channel.connected)?.id ?? channels[0]?.id ?? '',
+  );
+  const [channelListCollapsed, setChannelListCollapsed] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('小满学习助手');
   const [appId, setAppId] = useState('');
   const [appSecret, setAppSecret] = useState('');
   const canConnect = Boolean(
     setupChannel && selectedAgent && appId.trim() && appSecret.trim(),
   );
+  const selectedChannel =
+    channels.find((channel) => channel.id === selectedChannelId) ?? channels[0];
   const openSetup = (channel: RemoteChannel) => {
     setSetupChannel(channel);
     setSelectedAgent('小满学习助手');
@@ -4654,7 +4662,7 @@ function ChannelsView({
         backLabel="返回设置"
       />
       <div className="h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 md:px-8 md:pt-6">
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="mx-auto w-full max-w-6xl">
           <div className="mb-3 flex items-end justify-between px-1">
             <div>
               <h2 className="text-lg font-bold">通道列表</h2>
@@ -4667,7 +4675,7 @@ function ChannelsView({
             </Badge>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
+          <div className="grid gap-3 md:hidden">
             {channels.map((channel) => {
               return (
                 <article
@@ -4730,6 +4738,171 @@ function ChannelsView({
                 </article>
               );
             })}
+          </div>
+
+          <div className="hidden min-h-[560px] items-stretch gap-4 md:flex">
+            <aside
+              aria-label="通道列表"
+              className={`flex shrink-0 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm ${channelListCollapsed ? 'w-[76px]' : 'w-[280px]'}`}
+            >
+              <div className={`flex min-h-16 items-center border-b px-3 ${channelListCollapsed ? 'justify-center' : 'justify-between gap-3'}`}>
+                {!channelListCollapsed && (
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-900">通道列表</p>
+                    <p className="mt-0.5 text-xs text-slate-500">选择平台查看详情</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  aria-label={channelListCollapsed ? '展开通道列表' : '收起通道列表'}
+                  aria-expanded={!channelListCollapsed}
+                  aria-controls="desktop-channel-list"
+                  onClick={() => setChannelListCollapsed((collapsed) => !collapsed)}
+                  className="grid size-11 shrink-0 place-items-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  {channelListCollapsed ? (
+                    <PanelLeftOpen aria-hidden="true" className="size-5" />
+                  ) : (
+                    <PanelLeftClose aria-hidden="true" className="size-5" />
+                  )}
+                </button>
+              </div>
+              <nav id="desktop-channel-list" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2.5">
+                {channels.map((channel) => {
+                  const isSelected = channel.id === selectedChannel?.id;
+                  return (
+                    <button
+                      key={channel.id}
+                      type="button"
+                      aria-label={`${channel.name}，${channel.connected ? '已连接' : '未连接'}`}
+                      aria-current={isSelected ? 'page' : undefined}
+                      title={channelListCollapsed ? channel.name : undefined}
+                      onClick={() => setSelectedChannelId(channel.id)}
+                      className={`flex min-h-14 w-full items-center rounded-2xl text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${channelListCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} ${isSelected ? 'bg-blue-50 text-blue-950 ring-1 ring-blue-100' : 'text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      <span className="relative grid size-10 shrink-0 place-items-center rounded-xl border bg-white p-2 shadow-sm">
+                        <img
+                          src={channel.logo}
+                          alt=""
+                          aria-hidden="true"
+                          width={28}
+                          height={28}
+                          className="size-7 object-contain"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-white ${channel.connected ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        />
+                      </span>
+                      {!channelListCollapsed && (
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate text-sm font-semibold">{channel.name}</span>
+                            {channel.recommended && (
+                              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">推荐</span>
+                            )}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-slate-500">
+                            {channel.connected ? channel.account : '暂未连接'}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
+
+            {selectedChannel && (
+              <section className="min-w-0 flex-1 rounded-[28px] border bg-white p-5 shadow-sm lg:p-6">
+                <div className="flex items-start gap-4">
+                  <span className="grid size-16 shrink-0 place-items-center rounded-[20px] border bg-white p-3 shadow-sm">
+                    <img
+                      src={selectedChannel.logo}
+                      alt={`${selectedChannel.name} Logo`}
+                      width={44}
+                      height={44}
+                      className="size-11 object-contain"
+                    />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl font-bold text-slate-950">{selectedChannel.name}</h2>
+                      {selectedChannel.recommended && (
+                        <Badge className="bg-emerald-50 text-emerald-700">推荐</Badge>
+                      )}
+                      <Badge variant="outline" className={selectedChannel.connected ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'}>
+                        {selectedChannel.connected ? '已连接' : '未连接'}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                      {selectedChannel.description}
+                    </p>
+                  </div>
+                  {selectedChannel.connected ? (
+                    <button
+                      type="button"
+                      aria-label={`${selectedChannel.name}更多操作`}
+                      onClick={() => setActionChannel(selectedChannel)}
+                      className="grid size-11 shrink-0 place-items-center rounded-xl border text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    >
+                      <MoreHorizontal aria-hidden="true" className="size-5" />
+                    </button>
+                  ) : (
+                    <Button onClick={() => openSetup(selectedChannel)} className="h-11 shrink-0 rounded-xl px-5">
+                      添加通道
+                    </Button>
+                  )}
+                </div>
+
+                <div className="mt-6 grid gap-3 lg:grid-cols-2">
+                  <div className="rounded-2xl border bg-slate-50/70 p-4">
+                    <p className="text-xs font-semibold text-slate-500">当前绑定</p>
+                    <p className="mt-2 truncate text-base font-bold text-slate-900">{selectedChannel.account}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {selectedChannel.connected ? '通道运行正常，可以通过该平台唤醒 BingoMate。' : '完成开放平台配置后即可开始使用。'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border bg-blue-50/70 p-4">
+                    <p className="text-xs font-semibold text-blue-600">使用方式</p>
+                    <p className="mt-2 text-base font-bold text-slate-900">发送消息即可调用</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">支持学习咨询、任务提醒和生成结果通知。</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl border p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-bold text-slate-900">连接信息</h3>
+                      <p className="mt-1 text-xs text-slate-500">管理当前平台与 BingoMate 的连接状态。</p>
+                    </div>
+                    {selectedChannel.connected && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setConfigChannel(selectedChannel)}
+                        className="h-10 rounded-xl px-4"
+                      >
+                        查看配置
+                      </Button>
+                    )}
+                  </div>
+                  <dl className="mt-4 overflow-hidden rounded-2xl bg-slate-50 text-sm">
+                    <div className="flex min-h-12 items-center gap-4 px-4">
+                      <dt className="text-slate-500">平台</dt>
+                      <dd className="ml-auto font-semibold text-slate-900">{selectedChannel.name}</dd>
+                    </div>
+                    <div className="flex min-h-12 items-center gap-4 border-t px-4">
+                      <dt className="text-slate-500">连接状态</dt>
+                      <dd className="ml-auto font-semibold text-slate-900">{selectedChannel.connected ? '已连接' : '未连接'}</dd>
+                    </div>
+                    <div className="flex min-h-12 items-center gap-4 border-t px-4">
+                      <dt className="text-slate-500">绑定账号</dt>
+                      <dd className="ml-auto max-w-[65%] truncate text-right font-semibold text-slate-900">{selectedChannel.account}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>
